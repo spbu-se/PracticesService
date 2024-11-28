@@ -1,15 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace CoreService.OutputDirectory;
+namespace CoreService.Models;
 
 public partial class Practice
 {
     public int Id { get; set; }
 
-    public string Title { get; set; } = null!;
+    public int Studentid { get; set; }
 
-    public string Description { get; set; } = null!;
+    public int Themeid { get; set; }
 
-    public string Owner { get; set; } = null!;
+    public string? Finalgrade { get; set; }
+
+    public string Status { get; set; } = null!;
+
+    public DateTime Createddate { get; set; }
+
+    public DateTime Updateddate { get; set; }
+
+    public virtual Student Student { get; set; } = null!;
+
+    public virtual Theme Theme { get; set; } = null!;
 }

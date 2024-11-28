@@ -28,19 +28,39 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/api/practice", (CoreContext coreContext) =>
+// Mock user database
+var mockUsers = new List<object>
 {
-    var practices = coreContext.Practices;
-    return practices;
-})
-.WithTags("Practice");
+    new { Id = 1, Name = "John Doe", Email = "student@example.com", Roles = new[] { "Student" } },
+    new { Id = 2, Name = "Jane Smith", Email = "lecturer@example.com", Roles = new[] { "Lecturer" } },
+    new { Id = 3, Name = "Admin User", Email = "admin@example.com", Roles = new[] { "Admin", "Lecturer" } }
+};
 
-app.MapPost("/api/practice", (CoreContext coreContext, Practice practice) =>
+// Endpoint to get all users
+app.MapGet("/api/authmock/users", () =>
 {
-    coreContext.Attach(practice);
-    coreContext.SaveChanges();
-})
-.WithTags("Practice");
+    return Results.Ok(mockUsers);
+});
+
+// Endpoint to validate token and return user info
+app.MapGet("/api/authmock/validate", (string token) =>
+{
+    // Simulate token-to-user mapping (mocked)
+    var user = token switch
+    {
+        "token-student" => mockUsers[0],
+        "token-lecturer" => mockUsers[1],
+        "token-admin" => mockUsers[2],
+        _ => null
+    };
+
+    if (user == null)
+    {
+        return Results.Unauthorized();
+    }
+
+    return Results.Ok(user);
+});
 
 app.Run();
 
