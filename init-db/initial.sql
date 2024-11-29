@@ -30,7 +30,7 @@ CREATE TABLE Themes
     Tags JSONB,
     Department VARCHAR(500),
     IsArchived BOOLEAN NOT NULL DEFAULT FALSE,
-    SuggestedBy VARCHAR(255) NOT NULL, -- Может быть UUID, имя или название компании
+    SuggestedBy VARCHAR(255) NOT NULL, 
     ConsultantName VARCHAR(255),
     ConsultantContact VARCHAR(255),
     SupervisorId INT NOT NULL,
@@ -51,3 +51,5 @@ CREATE TABLE Practices
     CONSTRAINT Student_FK FOREIGN KEY (StudentId) REFERENCES Students (Id),
     CONSTRAINT Theme_FK FOREIGN KEY (ThemeId) REFERENCES Themes (Id)
 );
+
+INSERT INTO Lecturers (UserId, Department, CanSuperviseVKR) VALUES ('e5c49d19-89a1-4a67-8b7c-9b3c6b84e90d', 'Software Enginering', TRUE);

@@ -1,35 +1,73 @@
-﻿using System;
+﻿// <copyright file="CoreContext.cs" company="Gleb Kargin">
+// Copyright (c) Gleb Kargin. All rights reserved.
+// </copyright>
+
+namespace CoreService.Core;
+
+using System;
 using System.Collections.Generic;
-using CoreService.Models;
+using CoreService.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CoreService.OutputDirectory;
-
+/// <summary>
+/// Core service db context.
+/// </summary>
 public partial class CoreContext : DbContext
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CoreContext"/> class.
+    /// </summary>
     public CoreContext()
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CoreContext"/> class.
+    /// </summary>
+    /// <param name="options">Db context options.</param>
     public CoreContext(DbContextOptions<CoreContext> options)
         : base(options)
     {
     }
 
+    /// <summary>
+    /// Gets or sets DbSet Groups.
+    /// </summary>
     public virtual DbSet<Group> Groups { get; set; }
 
+    /// <summary>
+    /// Gets or sets DbSet Lecturers.
+    /// </summary>
     public virtual DbSet<Lecturer> Lecturers { get; set; }
 
+    /// <summary>
+    /// Gets or sets DbSet Practices.
+    /// </summary>
     public virtual DbSet<Practice> Practices { get; set; }
 
+    /// <summary>
+    /// Gets or sets DbSet Students.
+    /// </summary>
     public virtual DbSet<Student> Students { get; set; }
 
+    /// <summary>
+    /// Gets or sets DbSet Themes.
+    /// </summary>
     public virtual DbSet<Theme> Themes { get; set; }
 
+    /// <summary>
+    /// On configuring method.
+    /// </summary>
+    /// <param name="optionsBuilder">Db context options builder.</param>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Host=localhost:5435;Database=postgres;Username=postgres;Password=postgres");
+    {
+        optionsBuilder.UseNpgsql("Host=localhost:5435;Database=postgres;Username=postgres;Password=postgres");
+    }
 
+    /// <summary>
+    /// On model creating method.
+    /// </summary>
+    /// <param name="modelBuilder">Model builder.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Group>(entity =>
@@ -162,7 +200,7 @@ public partial class CoreContext : DbContext
                 .HasConstraintName("lecturer_fk");
         });
 
-        OnModelCreatingPartial(modelBuilder);
+        this.OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

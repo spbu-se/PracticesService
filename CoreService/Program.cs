@@ -1,4 +1,9 @@
-using CoreService.OutputDirectory;
+// <copyright file="Program.cs" company="Gleb Kargin">
+// Copyright (c) Gleb Kargin. All rights reserved.
+// </copyright>
+
+using CoreService;
+using CoreService.Core;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,7 +38,7 @@ var mockUsers = new List<object>
 {
     new { Id = 1, Name = "John Doe", Email = "student@example.com", Roles = new[] { "Student" } },
     new { Id = 2, Name = "Jane Smith", Email = "lecturer@example.com", Roles = new[] { "Lecturer" } },
-    new { Id = 3, Name = "Admin User", Email = "admin@example.com", Roles = new[] { "Admin", "Lecturer" } }
+    new { Id = 3, Name = "Admin User", Email = "admin@example.com", Roles = new[] { "Admin", "Lecturer" } },
 };
 
 // Endpoint to get all users
@@ -51,7 +56,7 @@ app.MapGet("/api/authmock/validate", (string token) =>
         "token-student" => mockUsers[0],
         "token-lecturer" => mockUsers[1],
         "token-admin" => mockUsers[2],
-        _ => null
+        _ => null,
     };
 
     if (user == null)
@@ -62,5 +67,7 @@ app.MapGet("/api/authmock/validate", (string token) =>
     return Results.Ok(user);
 });
 
-app.Run();
+// Themes Endpoints
+app.MapGroup("api/core/themes/").ThemesGroup().WithTags("Themes");
 
+app.Run();
