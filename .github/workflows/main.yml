@@ -15,10 +15,10 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Build
-        run: dotnet build
+        run: dotnet build PracticesService.sln
 
       - name: Tests
-        run: dotnet test
+        run: dotnet test PracticesService.sln
 
-      - name: Dotnet format
-        run: dotnet format
+      - name: Dotnet format 
+        run: dotnet format PracticesService.sln
