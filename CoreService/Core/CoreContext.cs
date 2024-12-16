@@ -31,6 +31,11 @@ public partial class CoreContext : DbContext
     }
 
     /// <summary>
+    /// Gets or sets DbSet Consultants.
+    /// </summary>
+    public virtual DbSet<Consultant> Consultants { get; set; }
+
+    /// <summary>
     /// Gets or sets DbSet Groups.
     /// </summary>
     public virtual DbSet<Group> Groups { get; set; }
@@ -70,6 +75,22 @@ public partial class CoreContext : DbContext
     /// <param name="modelBuilder">Model builder.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Consultant>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("consultants_pkey");
+
+            entity.ToTable("consultants");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Contact)
+                .HasMaxLength(255)
+                .HasColumnName("contact");
+            entity.Property(e => e.Name)
+                .HasMaxLength(255)
+                .HasColumnName("name");
+            entity.Property(e => e.Userid).HasColumnName("userid");
+        });
+
         modelBuilder.Entity<Group>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("groups_pkey");
@@ -160,12 +181,7 @@ public partial class CoreContext : DbContext
             entity.ToTable("themes");
 
             entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Consultantcontact)
-                .HasMaxLength(255)
-                .HasColumnName("consultantcontact");
-            entity.Property(e => e.Consultantname)
-                .HasMaxLength(255)
-                .HasColumnName("consultantname");
+            entity.Property(e => e.Consultantid).HasColumnName("consultantid");
             entity.Property(e => e.Createddate)
                 .HasDefaultValueSql("now()")
                 .HasColumnType("timestamp without time zone")
@@ -193,6 +209,11 @@ public partial class CoreContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("updateddate");
+
+            entity.HasOne(d => d.Consultant).WithMany(p => p.Themes)
+                .HasForeignKey(d => d.Consultantid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("consultant_fk");
 
             entity.HasOne(d => d.Supervisor).WithMany(p => p.Themes)
                 .HasForeignKey(d => d.Supervisorid)

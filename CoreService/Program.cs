@@ -70,4 +70,19 @@ app.MapGet("/api/authmock/validate", (string token) =>
 // Themes Endpoints
 app.MapGroup("api/core/themes/").ThemesGroup().WithTags("Themes");
 
+// Consultants Endpoints
+app.MapGroup("api/core/consultants/").ConsultantsGroup().WithTags("Consultants");
+
+// Groups Endpoints
+app.MapGroup("api/core/groups/").GroupsGroup().WithTags("Groups");
+
+// Lecturers Endpoints
+app.MapGroup("api/core/lecturers/").LecturersGroup().WithTags("Lecturers");
+
+// Practices Endpoints
+app.MapGroup("api/core/practices/").PracticesGroup().WithTags("Practices");
+
+// Students Endpoints
+app.MapGroup("api/core/students/").StudentsGroup().WithTags("Students");
+
 app.Run();

@@ -22,6 +22,14 @@ CREATE TABLE Students
     CONSTRAINT Group_FK FOREIGN KEY (GroupId) REFERENCES Groups (Id)
 );
 
+CREATE TABLE Consultants
+(
+    Id SERIAL PRIMARY KEY,
+    Name VARCHAR(255) NOT NULL,
+    Contact VARCHAR(255) NOT NULL,
+    UserId UUID -- Внешний идентификатор пользователя, может не быть
+);
+
 CREATE TABLE Themes
 (
     Id SERIAL PRIMARY KEY,
@@ -31,12 +39,12 @@ CREATE TABLE Themes
     Department VARCHAR(500),
     IsArchived BOOLEAN NOT NULL DEFAULT FALSE,
     SuggestedBy VARCHAR(255) NOT NULL, 
-    ConsultantName VARCHAR(255),
-    ConsultantContact VARCHAR(255),
+    ConsultantId INT NOT NULL,
     SupervisorId INT NOT NULL,
     CreatedDate TIMESTAMP NOT NULL DEFAULT NOW(),
     UpdatedDate TIMESTAMP NOT NULL DEFAULT NOW(),
-    CONSTRAINT Lecturer_FK FOREIGN KEY (SupervisorId) REFERENCES Lecturers (Id)
+    CONSTRAINT Lecturer_FK FOREIGN KEY (SupervisorId) REFERENCES Lecturers (Id),
+    CONSTRAINT Consultant_FK FOREIGN KEY (ConsultantId) REFERENCES Consultants (Id)
 );
 
 CREATE TABLE Practices

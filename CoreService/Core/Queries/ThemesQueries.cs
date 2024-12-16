@@ -61,8 +61,7 @@ public class ThemesQueries(CoreContext context)
             prev.Description = theme.Description;
             prev.Title = theme.Title;
             prev.Suggestedby = theme.Suggestedby;
-            prev.Consultantcontact = theme.Consultantcontact;
-            prev.Consultantname = theme.Consultantname;
+            prev.Consultantid = theme.Consultantid;
             prev.Department = theme.Department;
             prev.Isarchived = theme.Isarchived;
             prev.Tags = theme.Tags;

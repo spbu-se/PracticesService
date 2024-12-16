@@ -48,14 +48,9 @@ public partial class Theme
     public string Suggestedby { get; set; } = null!;
 
     /// <summary>
-    /// Gets or sets ConsultantName column.
+    /// Gets or sets ConsultantId column.
     /// </summary>
-    public string? Consultantname { get; set; }
-
-    /// <summary>
-    /// Gets or sets COnsultantContact column.
-    /// </summary>
-    public string? Consultantcontact { get; set; }
+    public int Consultantid { get; set; }
 
     /// <summary>
     /// Gets or sets SupervisorId.
@@ -81,4 +76,9 @@ public partial class Theme
     /// Gets or sets virtual Supervisor.
     /// </summary>
     public virtual Lecturer Supervisor { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets virtual Consultant.
+    /// </summary>
+    public virtual Consultant Consultant { get; set; } = null!;
 }
