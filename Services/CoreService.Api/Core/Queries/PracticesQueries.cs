@@ -59,6 +59,7 @@ public class PracticesQueries(CoreContext context)
             prev.Finalgrade = practice.Finalgrade;
             prev.Status = practice.Status;
             prev.Updateddate = DateTime.UtcNow;
+            prev.Type = practice.Type;
             await context.SaveChangesAsync();
             return Results.Ok();
         }

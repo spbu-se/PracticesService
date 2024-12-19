@@ -83,7 +83,7 @@ public partial class CoreContext : DbContext
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Contact)
-                .HasMaxLength(255)
+                .HasMaxLength(500)
                 .HasColumnName("contact");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
@@ -118,7 +118,7 @@ public partial class CoreContext : DbContext
                 .HasDefaultValue(false)
                 .HasColumnName("cansupervisevkr");
             entity.Property(e => e.Department)
-                .HasMaxLength(255)
+                .HasMaxLength(500)
                 .HasColumnName("department");
             entity.Property(e => e.Userid).HasColumnName("userid");
         });
@@ -142,6 +142,9 @@ public partial class CoreContext : DbContext
                 .HasColumnName("status");
             entity.Property(e => e.Studentid).HasColumnName("studentid");
             entity.Property(e => e.Themeid).HasColumnName("themeid");
+            entity.Property(e => e.Type)
+                .HasMaxLength(255)
+                .HasColumnName("type");
             entity.Property(e => e.Updateddate)
                 .HasDefaultValueSql("now()")
                 .HasColumnType("timestamp without time zone")
@@ -190,13 +193,16 @@ public partial class CoreContext : DbContext
                 .HasMaxLength(500)
                 .HasColumnName("department");
             entity.Property(e => e.Description)
-                .HasMaxLength(500)
+                .HasColumnType("character varying")
                 .HasColumnName("description");
             entity.Property(e => e.Isarchived)
                 .HasDefaultValue(false)
                 .HasColumnName("isarchived");
-            entity.Property(e => e.Suggestedby)
+            entity.Property(e => e.Level)
                 .HasMaxLength(255)
+                .HasColumnName("level");
+            entity.Property(e => e.Suggestedby)
+                .HasMaxLength(500)
                 .HasColumnName("suggestedby");
             entity.Property(e => e.Supervisorid).HasColumnName("supervisorid");
             entity.Property(e => e.Tags)

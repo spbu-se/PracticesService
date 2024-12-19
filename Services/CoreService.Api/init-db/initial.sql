@@ -10,7 +10,7 @@ CREATE TABLE Lecturers
 (
     Id SERIAL PRIMARY KEY,
     UserId UUID NOT NULL, -- Внешний идентификатор пользователя
-    Department VARCHAR(255),
+    Department VARCHAR(500),
     CanSuperviseVKR BOOLEAN NOT NULL DEFAULT FALSE
 );
 
@@ -26,7 +26,7 @@ CREATE TABLE Consultants
 (
     Id SERIAL PRIMARY KEY,
     Name VARCHAR(255) NOT NULL,
-    Contact VARCHAR(255) NOT NULL,
+    Contact VARCHAR(500) NOT NULL,
     UserId UUID -- Внешний идентификатор пользователя, может не быть
 );
 
@@ -34,11 +34,12 @@ CREATE TABLE Themes
 (
     Id SERIAL PRIMARY KEY,
     Title VARCHAR(50) NOT NULL,
-    Description VARCHAR(500) NOT NULL,
+    Description VARCHAR NOT NULL,
     Tags JSONB,
+    Level VARCHAR(255) NOT NULL, 
     Department VARCHAR(500),
     IsArchived BOOLEAN NOT NULL DEFAULT FALSE,
-    SuggestedBy VARCHAR(255) NOT NULL, 
+    SuggestedBy VARCHAR(500) NOT NULL, 
     ConsultantId INT NOT NULL,
     SupervisorId INT NOT NULL,
     CreatedDate TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -52,6 +53,7 @@ CREATE TABLE Practices
     Id SERIAL PRIMARY KEY,
     StudentId INT NOT NULL,
     ThemeId INT NOT NULL,
+    Type VARCHAR(255) NOT NULL, 
     FinalGrade VARCHAR(5),
     Status VARCHAR(50) NOT NULL,
     CreatedDate TIMESTAMP NOT NULL DEFAULT NOW(),

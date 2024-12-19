@@ -28,6 +28,11 @@ public partial class Practice
     public int Themeid { get; set; }
 
     /// <summary>
+    /// Gets or sets Type column.
+    /// </summary>
+    public string Type { get; set; } = null!;
+
+    /// <summary>
     /// Gets or sets FinalGrade column.
     /// </summary>
     public string? Finalgrade { get; set; }

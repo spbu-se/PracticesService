@@ -66,6 +66,7 @@ public class ThemesQueries(CoreContext context)
             prev.Isarchived = theme.Isarchived;
             prev.Tags = theme.Tags;
             prev.Supervisorid = theme.Supervisorid;
+            prev.Level = theme.Level;
             await context.SaveChangesAsync();
             return Results.Ok();
         }

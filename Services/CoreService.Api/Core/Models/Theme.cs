@@ -33,6 +33,11 @@ public partial class Theme
     public string? Tags { get; set; }
 
     /// <summary>
+    /// Gets or sets Level column.
+    /// </summary>
+    public string Level { get; set; } = null!;
+
+    /// <summary>
     /// Gets or sets Department column.
     /// </summary>
     public string? Department { get; set; }
