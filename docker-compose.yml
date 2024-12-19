@@ -1,11 +1,13 @@
 version: "3.9"
+name: practices-service
+
 services:
-  db:
+  core.db:
     container_name: core_db
     image: postgres:14.5-alpine
     volumes:
-      - ./init-db/:/docker-entrypoint-initdb.d
-      - ./pg-data:/var/lib/postgresql/data
+      - ./Services/CoreService.Api/init-db/:/docker-entrypoint-initdb.d
+      - ./Services/CoreService.Api/pg-data:/var/lib/postgresql/data
     ports:
       - "5435:5432"
     environment:
@@ -26,11 +28,18 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     build:
-      dockerfile: CoreService/Dockerfile
+      dockerfile: Services/CoreService.Api/Dockerfile
     volumes:
       - './:/core'
     ports:
       - "5000:8080"
     depends_on:
-      db:
+      core.db:
         condition: service_healthy
+    networks: 
+       - proxybackend
+
+networks:
+  proxybackend:
+    name: proxybackend
+    driver: bridge
