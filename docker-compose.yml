@@ -1,9 +1,20 @@
 version: "3.9"
-name: practices-service
+name: "practices-service"
 
 services:
+  gateway.api:
+    image: ${DOCKER_REGISTRY-}gatewayapi
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    build:
+      context: .
+      dockerfile: Gateway/Gateway.Api/Dockerfile
+    ports:
+      - "5000:8080"
+    networks: 
+       - proxybackend
   core.db:
-    container_name: core_db
+    container_name: core.db
     image: postgres:14.5-alpine
     volumes:
       - ./Services/CoreService.Api/init-db/:/docker-entrypoint-initdb.d
@@ -19,9 +30,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks: 
+       - proxybackend
 
-  core:
-    container_name: core
+  core.api:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ENVIRONMENT=Docker
@@ -32,7 +44,7 @@ services:
     volumes:
       - './:/core'
     ports:
-      - "5000:8080"
+      - "5001:8080"
     depends_on:
       core.db:
         condition: service_healthy

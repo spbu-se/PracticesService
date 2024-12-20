@@ -61,15 +61,6 @@ public partial class CoreContext : DbContext
     public virtual DbSet<Theme> Themes { get; set; }
 
     /// <summary>
-    /// On configuring method.
-    /// </summary>
-    /// <param name="optionsBuilder">Db context options builder.</param>
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseNpgsql("Host=localhost:5435;Database=postgres;Username=postgres;Password=postgres");
-    }
-
-    /// <summary>
     /// On model creating method.
     /// </summary>
     /// <param name="modelBuilder">Model builder.</param>
