@@ -51,6 +51,43 @@ services:
     networks: 
        - proxybackend
 
+  auth.db:
+    container_name: auth.db
+    image: postgres:14.5-alpine
+    volumes:
+      - ./Services/AuthService.Api/pg-data:/var/lib/postgresql/data
+    ports:
+      - "1435:1432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks: 
+       - proxybackend
+
+  auth.api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ENVIRONMENT=Docker
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    build:
+      dockerfile: Services/AuthService.Api/Dockerfile
+    volumes:
+      - './:/auth'
+    ports:
+      - "5002:8080"
+    depends_on:
+      auth.db:
+        condition: service_healthy
+    networks: 
+       - proxybackend
+
 networks:
   proxybackend:
     name: proxybackend

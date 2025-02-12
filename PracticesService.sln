@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Gateway", "Gateway", "{222D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gateway.Api", "Gateway\Gateway.Api\Gateway.Api.csproj", "{C5116E8B-8D09-406D-80CD-0039B4AC5B68}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthService.Api", "Services\AuthService.Api\AuthService.Api.csproj", "{924ED870-509D-4512-A12A-1DC2E81A6E41}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,10 @@ Global
 		{C5116E8B-8D09-406D-80CD-0039B4AC5B68}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C5116E8B-8D09-406D-80CD-0039B4AC5B68}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C5116E8B-8D09-406D-80CD-0039B4AC5B68}.Release|Any CPU.Build.0 = Release|Any CPU
+		{924ED870-509D-4512-A12A-1DC2E81A6E41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{924ED870-509D-4512-A12A-1DC2E81A6E41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{924ED870-509D-4512-A12A-1DC2E81A6E41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{924ED870-509D-4512-A12A-1DC2E81A6E41}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -38,6 +44,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{94A409B2-9D11-41F4-9BB8-6B89AC26764E} = {89CC78B4-9A7B-46F4-B786-7FB0D49911B2}
 		{C5116E8B-8D09-406D-80CD-0039B4AC5B68} = {222D815F-4394-417D-AF31-DA86AE6E21C1}
+		{924ED870-509D-4512-A12A-1DC2E81A6E41} = {89CC78B4-9A7B-46F4-B786-7FB0D49911B2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DC6C6DEA-3EB6-439A-AE03-43698361909A}
