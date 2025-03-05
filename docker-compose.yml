@@ -57,7 +57,7 @@ services:
     volumes:
       - ./Services/AuthService.Api/pg-data:/var/lib/postgresql/data
     ports:
-      - "1435:1432"
+      - "1435:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres

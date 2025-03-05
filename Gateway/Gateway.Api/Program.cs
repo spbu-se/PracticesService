@@ -1,3 +1,7 @@
+// <copyright file="Program.cs" company="Gleb Kargin">
+// Copyright (c) Gleb Kargin. All rights reserved.
+// </copyright>
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();

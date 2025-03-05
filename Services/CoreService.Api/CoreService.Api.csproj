@@ -10,10 +10,10 @@
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
-  <ItemGroup>
-    <AdditionalFiles Include="stylecop.json" />
-  </ItemGroup>
-
+	<ItemGroup>
+        <AdditionalFiles Include="..\..\stylecop.json" />
+    </ItemGroup>
+		
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
