@@ -109,7 +109,7 @@ public static class EndpointGroups
             (int lecturerId, CoreContext context) => new LecturersQueries(context).GetLecturers(lecturerId).Result);
         group.MapPost(
             "/",
-            (Lecturer lecturer, CoreContext context) => new LecturersQueries(context).InsertLecturer(lecturer).Result);
+            (Lecturer lecturer, CoreContext context) => new LecturersQueries(context).InsertLecturer(lecturer).Result).RequireAuthorization("AdminOnly");
         group.MapPut(
             "/",
             (Lecturer lecturer, CoreContext context) =>

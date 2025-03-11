@@ -41,7 +41,7 @@ builder.Services.AddAuthentication(cfg =>
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(key),
         };
     });
@@ -119,7 +119,7 @@ app.MapPost("/login", async (UserManager<ApplicationUser> userManager, string em
 
     var token = new JwtSecurityToken(
         issuer: builder.Configuration["Jwt:Issuer"],
-        audience: builder.Configuration["Jwt:Issuer"],
+        audience: builder.Configuration["Jwt:Audience"],
         claims: claims,
         expires: DateTime.UtcNow.AddDays(1),
         signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256));

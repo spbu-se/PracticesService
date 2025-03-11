@@ -4,7 +4,9 @@
 
 using CoreService;
 using CoreService.Core;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +14,36 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Enter JWT token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
+            },
+            new List<string>()
+        },
+    });
+});
+
+builder.Services.AddAuthentication("GatewayAuth")
+    .AddScheme<AuthenticationSchemeOptions, GatewayAuthHandler.GatewayAuthHandler>("GatewayAuth", null);
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Администратор"));
+});
 
 // Current environment
 var currentEnvironment = Environment.GetEnvironmentVariable("ENVIRONMENT") ?? "Default";
@@ -33,40 +64,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Mock user database
-var mockUsers = new List<object>
-{
-    new { Id = 1, Name = "John Doe", Email = "student@example.com", Roles = new[] { "Student" } },
-    new { Id = 2, Name = "Jane Smith", Email = "lecturer@example.com", Roles = new[] { "Lecturer" } },
-    new { Id = 3, Name = "Admin User", Email = "admin@example.com", Roles = new[] { "Admin", "Lecturer" } },
-};
-
-// Endpoint to get all users
-app.MapGet("/api/authmock/users", () =>
-{
-    return Results.Ok(mockUsers);
-});
-
-// Endpoint to validate token and return user info
-app.MapGet("/api/authmock/validate", (string token) =>
-{
-    // Simulate token-to-user mapping (mocked)
-    var user = token switch
-    {
-        "token-student" => mockUsers[0],
-        "token-lecturer" => mockUsers[1],
-        "token-admin" => mockUsers[2],
-        _ => null,
-    };
-
-    if (user == null)
-    {
-        return Results.Unauthorized();
-    }
-
-    return Results.Ok(user);
-});
-
 // Themes Endpoints
 app.MapGroup("api/themes/").ThemesGroup().WithTags("Themes");
 
@@ -84,5 +81,8 @@ app.MapGroup("api/practices/").PracticesGroup().WithTags("Practices");
 
 // Students Endpoints
 app.MapGroup("api/students/").StudentsGroup().WithTags("Students");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Run();
