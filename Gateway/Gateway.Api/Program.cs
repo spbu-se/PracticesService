@@ -41,8 +41,21 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+builder.Services.AddCors(
+    options =>
+    {
+        options.AddPolicy(
+            "CorsPolicy",
+            policyBuilder => policyBuilder
+                .AllowAnyMethod()
+                .AllowCredentials()
+                .SetIsOriginAllowed((_) => true)
+                .AllowAnyHeader());
+    });
 
 var app = builder.Build();
+
+app.UseCors("CorsPolicy");
 
 if (app.Environment.IsDevelopment())
 {

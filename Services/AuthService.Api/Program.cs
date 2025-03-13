@@ -5,6 +5,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using AuthService.Api.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -23,7 +24,6 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AuthDbContext>()
     .AddDefaultTokenProviders();
-builder.Services.AddCors();
 
 byte[] key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing."));
 
@@ -75,7 +75,21 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddCors(
+    options =>
+    {
+        options.AddPolicy(
+            "CorsPolicy",
+            policyBuilder => policyBuilder
+                .AllowAnyMethod()
+                .AllowCredentials()
+                .SetIsOriginAllowed((_) => true)
+                .AllowAnyHeader());
+    });
+
 var app = builder.Build();
+
+app.UseCors("CorsPolicy");
 
 // Enable Swagger in Development Mode
 if (app.Environment.IsDevelopment())
@@ -98,10 +112,10 @@ app.MapPost("/register", async (UserManager<ApplicationUser> userManager, string
 });
 
 // **Login & Token Generation**
-app.MapPost("/login", async (UserManager<ApplicationUser> userManager, string email, string password) =>
+app.MapPost("/login", async (UserManager<ApplicationUser> userManager, LoginModel model) =>
 {
-    var user = await userManager.FindByEmailAsync(email);
-    if (user == null || !await userManager.CheckPasswordAsync(user, password))
+    var user = await userManager.FindByEmailAsync(model.Email);
+    if (user == null || !await userManager.CheckPasswordAsync(user, model.Password))
     {
         return Results.Unauthorized();
     }

@@ -52,7 +52,21 @@ var currentEnvironment = Environment.GetEnvironmentVariable("ENVIRONMENT") ?? "D
 builder.Services.AddDbContext<CoreContext>(
     opt => opt.UseNpgsql(builder.Configuration.GetConnectionString(currentEnvironment)));
 
+builder.Services.AddCors(
+    options =>
+    {
+        options.AddPolicy(
+            "CorsPolicy",
+            policyBuilder => policyBuilder
+                .AllowAnyMethod()
+                .AllowCredentials()
+                .SetIsOriginAllowed((_) => true)
+                .AllowAnyHeader());
+    });
+
 var app = builder.Build();
+
+app.UseCors("CorsPolicy");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
