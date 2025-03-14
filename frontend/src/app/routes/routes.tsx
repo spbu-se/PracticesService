@@ -1,15 +1,19 @@
-import {createBrowserRouter} from "react-router-dom";
-import {LoginPage} from "@pages/LoginPage.tsx";
-import {BasePage} from "@pages/BasePage.tsx";
+import { createBrowserRouter } from "react-router-dom";
+import { LoginPage } from "@pages/LoginPage.tsx";
+import { BasePage } from "@pages/BasePage.tsx";
+import { ThemePage } from "@pages/ThemePage.tsx"; // Import ThemePage
 
-// Create routes
 export const routes = createBrowserRouter([
     {
         path: "/",
-        element: <BasePage/>
+        element: <BasePage />,
     },
     {
         path: "/login",
-        element: <LoginPage/>
+        element: <LoginPage />,
+    },
+    {
+        path: "/theme/:id",
+        element: <ThemePage />,
     }
-])
+]);

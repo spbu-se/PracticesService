@@ -88,6 +88,13 @@ services:
     networks: 
        - proxybackend
 
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+
 networks:
   proxybackend:
     name: proxybackend
