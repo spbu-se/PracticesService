@@ -1,52 +1,48 @@
 import React, { useState } from "react";
-import { Navbar, Nav, Container, Dropdown } from "react-bootstrap";
+import { AppBar, Toolbar, Typography, Button, IconButton, Menu, MenuItem, Container, useMediaQuery } from "@mui/material";
+import { AccountCircle } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { logout } from "@shared/services/auth.service.ts";
 
 export default function Header() {
     const navigate = useNavigate();
-    const [showDropdown, setShowDropdown] = useState(false);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const isMenuOpen = Boolean(anchorEl);
 
-    const isProjectOpen = window.location.pathname !== "/" && window.location.pathname !== "/login";
+    const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
 
     const handleNavigate = (path: string) => {
         navigate(path);
+        handleMenuClose();
     };
 
     return (
-        <Navbar expand="lg" bg="primary" variant="dark">
+        <AppBar position="static" color="primary">
             <Container>
-                {/* Brand Logo */}
-                <Navbar.Brand href="/" className="fw-bold">PracticesService</Navbar.Brand>
+                <Toolbar>
+                    <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: "bold", cursor: "pointer" }} onClick={() => navigate("/")}>
+                        PracticesService
+                    </Typography>
 
-                {/* Navbar Toggle for Mobile */}
-                {isProjectOpen && <Navbar.Toggle aria-controls="navbar-nav" />}
-
-                {/* Navbar Content */}
-                <Navbar.Collapse id="navbar-nav">
-                    <Nav className="mx-auto">
-                        {isProjectOpen && (
-                            <>
-                                <Nav.Link href="/dashboard">Dashboard</Nav.Link>
-                                <Nav.Link href="/settings">Settings</Nav.Link>
-                            </>
-                        )}
-                    </Nav>
-
-                    {/* User Dropdown */}
                     {window.location.pathname !== "/login" && (
-                        <Dropdown show={showDropdown} onToggle={() => setShowDropdown(!showDropdown)}>
-                            <Dropdown.Toggle variant="light" className="border-0">
-                                <i className="bi bi-person-circle"></i>
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu align="end">
-                            <Dropdown.Item onClick={() => handleNavigate("/profile")}>Профиль</Dropdown.Item>
-                                <Dropdown.Item onClick={() => logout()}>Выйти</Dropdown.Item>
-                            </Dropdown.Menu>
-                        </Dropdown>
+                        <>
+                            <IconButton color="inherit" onClick={handleMenuOpen}>
+                                <AccountCircle />
+                            </IconButton>
+                            <Menu anchorEl={anchorEl} open={isMenuOpen} onClose={handleMenuClose}>
+                                <MenuItem onClick={() => handleNavigate("/profile")}>Профиль</MenuItem>
+                                <MenuItem onClick={() => { logout(); handleMenuClose(); }}>Выйти</MenuItem>
+                            </Menu>
+                        </>
                     )}
-                </Navbar.Collapse>
+                </Toolbar>
             </Container>
-        </Navbar>
+        </AppBar>
     );
 }

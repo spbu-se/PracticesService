@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getThemes } from "../shared/services/axios.service.ts";
 import { Theme } from "../entities/Theme.ts";
 import { Layout } from "@shared/ui/layout/Layout.tsx";
-import { Button, Container } from "react-bootstrap";
+import { Button, Container, Typography, Paper, CircularProgress, Box } from "@mui/material";
 
 export function ThemePage() {
     const { id } = useParams();
@@ -17,19 +17,35 @@ export function ThemePage() {
         });
     }, [id]);
 
-    if (!theme) return <p className="text-center mt-5">Загрузка...</p>;
+    if (!theme) {
+        return (
+            <Container sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+                <CircularProgress />
+            </Container>
+        );
+    }
 
     return (
         <Layout>
-            <Container className="mt-4 p-4">
-                <Button variant="secondary" onClick={() => navigate(-1)}>← Назад</Button>
-                <h1 className="text-center mt-4">{theme.title}</h1>
-                <p>Уровень: {theme.level}</p>
-                <p>Кафедра: {theme.department}</p>
-                <p>Источник: {theme.suggestedby}</p>
-                <p>Научный руководитель: {theme.supervisorid}</p>
-                <p>Консультант: {theme.consultantid}</p>
-                <p>Описание: {theme.description}</p>
+            <Container maxWidth="md" sx={{ mt: 4 }}>
+                <Button variant="contained" color="secondary" onClick={() => navigate(-1)}>
+                    ← Назад
+                </Button>
+
+                <Paper elevation={3} sx={{ mt: 3, p: 4, borderRadius: 2 }}>
+                    <Typography variant="h4" align="center" gutterBottom>
+                        {theme.title}
+                    </Typography>
+
+                    <Box sx={{ mt: 2 }}>
+                        <Typography variant="subtitle1"><strong>Уровень:</strong> {theme.level}</Typography>
+                        <Typography variant="subtitle1"><strong>Кафедра:</strong> {theme.department}</Typography>
+                        <Typography variant="subtitle1"><strong>Источник:</strong> {theme.suggestedby}</Typography>
+                        <Typography variant="subtitle1"><strong>Научный руководитель:</strong> {theme.supervisorid}</Typography>
+                        <Typography variant="subtitle1"><strong>Консультант:</strong> {theme.consultantid}</Typography>
+                        <Typography variant="body1" sx={{ mt: 2 }}><strong>Описание:</strong> {theme.description}</Typography>
+                    </Box>
+                </Paper>
             </Container>
         </Layout>
     );

@@ -3,7 +3,14 @@ import { ChangeEvent, FormEvent, useState } from "react";
 import { login } from "@shared/services/axios.service.ts";
 import { LoginResponse } from "@entities/LoginResponse.ts";
 import { setJWTToken } from "@shared/services/localStorage.service.ts";
-import { Form, Button, Container, Row, Col } from "react-bootstrap";
+import {
+    Container,
+    TextField,
+    Button,
+    Typography,
+    Paper,
+    Box
+} from "@mui/material";
 
 // Page for login
 export function LoginPage() {
@@ -34,38 +41,46 @@ export function LoginPage() {
 
     return (
         <Layout>
-            <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: "100vh" }}>
-                <Row>
-                    <Col>
-                        <Form onSubmit={onSubmit} className="p-4 border rounded bg-light shadow">
-                            <h3 className="text-center mb-4">Вход</h3>
+            <Container maxWidth="xs" sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Paper elevation={3} sx={{ padding: 4, width: "100%", borderRadius: 2 }}>
+                    <Typography variant="h5" align="center" gutterBottom>
+                        Вход
+                    </Typography>
 
-                            <Form.Group className="mb-3">
-                                <Form.Label>Логин:</Form.Label>
-                                <Form.Control
-                                    type="text"
-                                    placeholder="Введите email"
-                                    value={email}
-                                    onChange={onChangeLogin}
-                                    required
-                                />
-                            </Form.Group>
+                    <Box component="form" onSubmit={onSubmit}>
+                        <TextField
+                            fullWidth
+                            label="Логин"
+                            variant="outlined"
+                            margin="normal"
+                            type="text"
+                            value={email}
+                            onChange={onChangeLogin}
+                            required
+                        />
 
-                            <Form.Group className="mb-3">
-                                <Form.Label>Пароль:</Form.Label>
-                                <Form.Control
-                                    type="password"
-                                    placeholder="Введите пароль"
-                                    value={password}
-                                    onChange={onChangePassword}
-                                    required
-                                />
-                            </Form.Group>
+                        <TextField
+                            fullWidth
+                            label="Пароль"
+                            variant="outlined"
+                            margin="normal"
+                            type="password"
+                            value={password}
+                            onChange={onChangePassword}
+                            required
+                        />
 
-                            <Button variant="primary" type="submit" className="w-100">Войти</Button>
-                        </Form>
-                    </Col>
-                </Row>
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            color="primary"
+                            sx={{ mt: 2 }}
+                        >
+                            Войти
+                        </Button>
+                    </Box>
+                </Paper>
             </Container>
         </Layout>
     );
