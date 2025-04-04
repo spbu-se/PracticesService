@@ -23,6 +23,7 @@ export function BasePage() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5; // Themes per page
     const navigate = useNavigate();
+    const levels = ["2 курс", "3 курс", "Бакалаврская ВКР", "Магистерская ВКР"]
 
     // Filter state
     const [level, setLevel] = useState<string>("");
@@ -41,7 +42,7 @@ export function BasePage() {
     useEffect(() => {
         let filtered = themes;
 
-        if (level) filtered = filtered.filter(theme => theme.level === level);
+        if (level) filtered = filtered.filter(theme =>  theme.level.includes(level));
         if (department) filtered = filtered.filter(theme => theme.department === department);
         if (source) filtered = filtered.filter(theme => theme.suggestedby === source);
         if (supervisor) filtered = filtered.filter(theme => theme.supervisorid.toString() === supervisor);
@@ -79,11 +80,9 @@ export function BasePage() {
                                 margin="dense"
                             >
                                 <MenuItem value="">Все</MenuItem>
-                                <>
-                                    {Array.from(new Set(themes.map((t) => t.level))).map((lvl, i) => (
-                                        <MenuItem key={i} value={lvl}>{lvl}</MenuItem>
-                                    ))}
-                                </>
+                                {levels.map((lvl, i) => (
+                                    <MenuItem key={i} value={lvl}>{lvl}</MenuItem>
+                                ))}
                             </TextField>
 
                             <TextField
@@ -96,11 +95,9 @@ export function BasePage() {
                                 margin="dense"
                             >
                                 <MenuItem value="">Все</MenuItem>
-                                <>
-                                    {Array.from(new Set(themes.map((t) => t.department))).map((dep, i) => (
-                                        <MenuItem key={i} value={dep}>{dep}</MenuItem>
-                                    ))}
-                                </>
+                                {Array.from(new Set(themes.map((t) => t.department))).map((dep, i) => (
+                                    <MenuItem key={i} value={dep}>{dep}</MenuItem>
+                                ))}
                             </TextField>
 
                             <TextField
@@ -113,11 +110,9 @@ export function BasePage() {
                                 margin="dense"
                             >
                                 <MenuItem value="">Все</MenuItem>
-                                <>
-                                    {Array.from(new Set(themes.map((t) => t.suggestedby))).map((src, i) => (
-                                        <MenuItem key={i} value={src}>{src}</MenuItem>
-                                    ))}
-                                </>
+                                {Array.from(new Set(themes.map((t) => t.suggestedby))).map((src, i) => (
+                                    <MenuItem key={i} value={src}>{src}</MenuItem>
+                                ))}
                             </TextField>
 
                             <TextField
@@ -130,11 +125,9 @@ export function BasePage() {
                                 margin="dense"
                             >
                                 <MenuItem value="">Все</MenuItem>
-                                <>
-                                    {Array.from(new Set(themes.map((t) => t.supervisorid.toString()))).map((sup, i) => (
-                                        <MenuItem key={i} value={sup}>{sup}</MenuItem>
-                                    ))}
-                                </>
+                                {Array.from(new Set(themes.map((t) => t.supervisorid.toString()))).map((sup, i) => (
+                                    <MenuItem key={i} value={sup}>{sup}</MenuItem>
+                                ))}
                             </TextField>
 
                             <Button
