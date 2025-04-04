@@ -55,12 +55,12 @@ public partial class Theme
     /// <summary>
     /// Gets or sets ConsultantId column.
     /// </summary>
-    public int Consultantid { get; set; }
+    public int? Consultantid { get; set; }
 
     /// <summary>
     /// Gets or sets SupervisorId.
     /// </summary>
-    public int Supervisorid { get; set; }
+    public int? Supervisorid { get; set; }
 
     /// <summary>
     /// Gets or sets CreatedDate column.

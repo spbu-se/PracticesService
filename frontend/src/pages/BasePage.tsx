@@ -13,7 +13,7 @@ import {
     Typography,
     MenuItem,
     Button,
-    Pagination, TextField, Paper
+    Pagination, TextField, Paper, Box
 } from "@mui/material";
 
 export function BasePage() {
@@ -67,6 +67,25 @@ export function BasePage() {
 
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={3}>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                mb: 2
+                            }}
+                        >
+                            <Button
+                                variant="contained"
+                                onClick={() => navigate("/createTheme")}
+                                sx={{
+                                    width: '100%',
+                                    maxWidth: 300
+                                }}
+                            >
+                                Предложить тему
+                            </Button>
+                        </Box>
+
                         <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
                             <Typography variant="h6" gutterBottom>Фильтры</Typography>
 
@@ -125,7 +144,7 @@ export function BasePage() {
                                 margin="dense"
                             >
                                 <MenuItem value="">Все</MenuItem>
-                                {Array.from(new Set(themes.map((t) => t.supervisorid.toString()))).map((sup, i) => (
+                                {Array.from(new Set(themes.map((t) => t.supervisorid?.toString()))).map((sup, i) => (
                                     <MenuItem key={i} value={sup}>{sup}</MenuItem>
                                 ))}
                             </TextField>
@@ -151,9 +170,17 @@ export function BasePage() {
                         <>
                             {currentThemes.length > 0 ? (
                                 currentThemes.map((theme, index) => (
-                                    <Grid item key={index}>
+                                    <Grid item key={index} xs={12} sm={6} md={4}>
                                         <Card
-                                            sx={{ cursor: "pointer", boxShadow: 3 }}
+                                            sx={{
+                                                cursor: "pointer",
+                                                boxShadow: 3,
+                                                width: "30vw",
+                                                minWidth: "250px",
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                justifyContent: 'space-between'
+                                            }}
                                             onClick={() => navigate(`/theme/${theme.id}`)}
                                         >
                                             <CardHeader title={theme.title} />

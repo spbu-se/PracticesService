@@ -1,5 +1,6 @@
 import axios, {AxiosHeaders} from "axios";
 import {authHeader} from "@shared/services/auth.service.ts";
+import {InputTheme} from "../../entities/Theme.ts";
 
 // Axios service for API requesting
 export const axiosService = axios.create({
@@ -30,3 +31,8 @@ axiosService.interceptors.response
 export const login = (email: string, password: string) => axiosService.post(`auth-api/login`, {email: email, password: password})
 
 export const getThemes = () => axiosService.get("core-api/themes")
+
+export const postTheme = (inputTheme: InputTheme) => axiosService.post("core-api/themes", inputTheme)
+
+export const getLecturers = () => axiosService.get("core-api/lecturers")
+export const getConsultants = () => axiosService.get("core-api/consultants")

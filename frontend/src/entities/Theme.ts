@@ -12,3 +12,15 @@ export interface Theme {
     createddate: Date;
     updateddate: Date;
 }
+
+export interface InputTheme {
+    title: string;
+    description: string;
+    tags: string;
+    level: string;
+    department: string;
+    isarchived: boolean;
+    suggestedby: string;
+    consultantid: number;
+    supervisorid: number;
+}
