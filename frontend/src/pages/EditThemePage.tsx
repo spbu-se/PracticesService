@@ -15,14 +15,15 @@ import {
     FormControl,
     Stack
 } from "@mui/material";
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import {InputTheme, Theme} from "../entities/Theme.ts";
-import {getConsultants, getLecturers, getMe, getThemes, postTheme} from "../shared/services/axios.service.ts";
+import {getConsultants, getLecturers, getMe, getThemes, postTheme, putTheme} from "../shared/services/axios.service.ts";
 import MDEditor from '@uiw/react-md-editor';
 import {Lecturer} from "../entities/Lecturer.ts";
 import {Consultant} from "../entities/Consultant.ts";
 
-export function CreateThemePage() {
+export function EditThemePage() {
+    const {id} = useParams();
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [levels, setLevels] = useState({
@@ -50,6 +51,13 @@ export function CreateThemePage() {
     useEffect(() => {
         getThemes().then(response => {
             const themes: Theme[] = response.data;
+            const currentTheme = themes.find(s => s.id == id);
+            setTitle(currentTheme?.title ?? title);
+            setDescription(currentTheme?.description ?? description);
+            setDepartment(currentTheme?.department ?? department);
+            setSource(currentTheme?.source ?? source);
+            transformStringToLevels(currentTheme?.level);
+
             setSources(Array.from(new Set(themes.map((t) => t.source))));
         });
 
@@ -82,11 +90,33 @@ export function CreateThemePage() {
         return selectedLevels.join(", ");
     };
 
+    const transformStringToLevels = (levelString: string | undefined | null) => {
+        if (!levelString) {
+            setLevels({
+                secondCourse: false,
+                thirdCourse: false,
+                bachelor: false,
+                master: false
+            });
+            return;
+        }
+
+        const levelParts = levelString.split(',').map(part => part.trim());
+
+        setLevels({
+            secondCourse: levelParts.includes("2 курс"),
+            thirdCourse: levelParts.includes("3 курс"),
+            bachelor: levelParts.includes("Бакалаврская ВКР"),
+            master: levelParts.includes("Магистерская ВКР")
+        })
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         try {
-            const theme: InputTheme = {
+            const theme: Theme = {
+                id: id,
                 title: title,
                 description: description,
                 level: transformLevelsToString(levels),
@@ -97,11 +127,11 @@ export function CreateThemePage() {
                 consultantid: consultantId
             };
 
-            await postTheme(theme);
+            await putTheme(theme);
             navigate("/");
 
         } catch (error) {
-            console.error("Ошибка при создании темы:", error);
+            console.error("Ошибка при обновлении темы:", error);
             alert("Не удалось создать тему. Проверьте данные и повторите попытку. " + error);
         }
     };
@@ -115,7 +145,7 @@ export function CreateThemePage() {
 
                 <Paper elevation={3} sx={{p: 4}}>
                     <Typography variant="h4" gutterBottom sx={{mb: 3}}>
-                        Предложить новую тему
+                        Изменить тему
                     </Typography>
 
                     <form onSubmit={handleSubmit}>
@@ -261,7 +291,7 @@ export function CreateThemePage() {
                                     fullWidth
                                     sx={{mt: 2}}
                                 >
-                                    Предложить тему
+                                    Сохранить
                                 </Button>
                             </Grid>
                         </Grid>

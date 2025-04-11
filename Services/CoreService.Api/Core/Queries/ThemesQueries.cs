@@ -27,7 +27,7 @@ public class ThemesQueries(CoreContext context)
             result = result.Where(theme => theme.Id == id);
         }
 
-        return await result.ToListAsync();
+        return await result.Include(theme => theme.Consultant).Include(theme => theme.Supervisor).ToListAsync();
     }
 
     /// <summary>
@@ -58,15 +58,18 @@ public class ThemesQueries(CoreContext context)
             }
 
             prev.Updateddate = DateTime.Now;
-            prev.Description = theme.Description;
-            prev.Title = theme.Title;
-            prev.Suggestedby = theme.Suggestedby;
-            prev.Consultantid = theme.Consultantid;
-            prev.Department = theme.Department;
+            prev.Description = string.IsNullOrEmpty(theme.Description) ? prev.Description : theme.Description;
+            prev.Title = string.IsNullOrEmpty(theme.Title) ? prev.Title : theme.Title;
+            prev.Description = string.IsNullOrEmpty(theme.Description) ? prev.Description : theme.Description;
+            prev.Suggestedby = string.IsNullOrEmpty(theme.Suggestedby) ? prev.Suggestedby : theme.Suggestedby;
+            prev.Source = string.IsNullOrEmpty(theme.Source) ? prev.Source : theme.Source;
+            prev.Department = string.IsNullOrEmpty(theme.Department) ? prev.Department : theme.Department;
+            prev.Tags = string.IsNullOrEmpty(theme.Tags) ? prev.Tags : theme.Tags;
+            prev.Level = string.IsNullOrEmpty(theme.Level) ? prev.Level : theme.Level;
+            prev.Consultantid = theme.Consultantid ?? prev.Consultantid;
+            prev.Supervisorid = theme.Supervisorid ?? prev.Supervisorid;
             prev.Isarchived = theme.Isarchived;
-            prev.Tags = theme.Tags;
-            prev.Supervisorid = theme.Supervisorid;
-            prev.Level = theme.Level;
+
             await context.SaveChangesAsync();
             return Results.Ok();
         }

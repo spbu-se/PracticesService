@@ -105,6 +105,15 @@ public partial class CoreContext : DbContext
             entity.ToTable("lecturers");
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(100)
+                .HasColumnName("firstname");
+            entity.Property(e => e.LastName)
+                .HasMaxLength(100)
+                .HasColumnName("lastname");
+            entity.Property(e => e.MiddleName)
+                .HasMaxLength(100)
+                .HasColumnName("middlename");
             entity.Property(e => e.Cansupervisevkr)
                 .HasDefaultValue(false)
                 .HasColumnName("cansupervisevkr");
@@ -192,8 +201,11 @@ public partial class CoreContext : DbContext
             entity.Property(e => e.Level)
                 .HasMaxLength(255)
                 .HasColumnName("level");
-            entity.Property(e => e.Suggestedby)
+            entity.Property(e => e.Source)
                 .HasMaxLength(500)
+                .HasColumnName("source");
+            entity.Property(e => e.Suggestedby)
+                .HasMaxLength(100)
                 .HasColumnName("suggestedby");
             entity.Property(e => e.Supervisorid).HasColumnName("supervisorid");
             entity.Property(e => e.Tags)

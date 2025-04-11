@@ -2,13 +2,20 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
+using System.Text.Json.Serialization;
 using CoreService;
 using CoreService.Core;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<JsonOptions>(options =>
+{
+    options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -95,6 +102,12 @@ app.MapGroup("api/practices/").PracticesGroup().WithTags("Practices");
 
 // Students Endpoints
 app.MapGroup("api/students/").StudentsGroup().WithTags("Students");
+
+app.MapGet("api/me", (HttpContext context) =>
+{
+    var username = context.User.Identity?.Name;
+    return username;
+}).RequireAuthorization();
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -9,6 +9,9 @@ CREATE TABLE Groups
 CREATE TABLE Lecturers
 (
     Id SERIAL PRIMARY KEY,
+    FirstName VARCHAR(100) NOT NULL,
+    LastName VARCHAR(100) NOT NULL,
+    MiddleName VARCHAR(100) NOT NULL,
     UserId UUID NOT NULL, -- Внешний идентификатор пользователя
     Department VARCHAR(500),
     CanSuperviseVKR BOOLEAN NOT NULL DEFAULT FALSE
@@ -39,7 +42,8 @@ CREATE TABLE Themes
     Level VARCHAR(255) NOT NULL, 
     Department VARCHAR(500),
     IsArchived BOOLEAN NOT NULL DEFAULT FALSE,
-    SuggestedBy VARCHAR(500) NOT NULL, 
+    SuggestedBy VARCHAR(100), 
+    Source VARCHAR(500) NOT NULL, 
     ConsultantId INT,
     SupervisorId INT,
     CreatedDate TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -61,5 +65,3 @@ CREATE TABLE Practices
     CONSTRAINT Student_FK FOREIGN KEY (StudentId) REFERENCES Students (Id),
     CONSTRAINT Theme_FK FOREIGN KEY (ThemeId) REFERENCES Themes (Id)
 );
-
-INSERT INTO Lecturers (UserId, Department, CanSuperviseVKR) VALUES ('e5c49d19-89a1-4a67-8b7c-9b3c6b84e90d', 'Software Enginering', TRUE);

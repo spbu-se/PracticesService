@@ -1,3 +1,6 @@
+import {Lecturer} from "./Lecturer.ts";
+import {Consultant} from "./Consultant.ts";
+
 export interface Theme {
     id: number;
     title: string;
@@ -7,10 +10,13 @@ export interface Theme {
     department: string;
     isarchived: boolean;
     suggestedby: string;
+    source: string;
     consultantid: number;
     supervisorid: number;
     createddate: Date;
     updateddate: Date;
+    consultant: Consultant;
+    supervisor: Lecturer;
 }
 
 export interface InputTheme {

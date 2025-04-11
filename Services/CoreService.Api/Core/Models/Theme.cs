@@ -48,6 +48,11 @@ public partial class Theme
     public bool Isarchived { get; set; }
 
     /// <summary>
+    /// Gets or sets Source column.
+    /// </summary>
+    public string Source { get; set; } = null!;
+
+    /// <summary>
     /// Gets or sets SuggestedBy column.
     /// </summary>
     public string Suggestedby { get; set; } = null!;

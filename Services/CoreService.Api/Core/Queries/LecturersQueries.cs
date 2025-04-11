@@ -56,6 +56,9 @@ public class LecturersQueries(CoreContext context)
                 return Results.BadRequest();
             }
 
+            prev.FirstName = lecturer.FirstName;
+            prev.LastName = lecturer.LastName;
+            prev.MiddleName = lecturer.MiddleName;
             prev.Department = lecturer.Department;
             prev.Cansupervisevkr = lecturer.Cansupervisevkr;
             await context.SaveChangesAsync();
