@@ -223,7 +223,7 @@ export function BasePage() {
                                                     <Typography variant="body2">Кафедра: {theme.department}</Typography>
                                                     <Typography variant="body2">Источник: {theme.source}</Typography>
                                                     <Typography variant="body2">Научный
-                                                        руководитель: {theme.supervisor ? `${theme.supervisor.lastname} ${theme.supervisor.firstname} ${theme.supervisor.middlename}` : "Не назначен"}</Typography>
+                                                        руководитель: {theme.supervisor ? `${theme.supervisor.lastName} ${theme.supervisor.firstName} ${theme.supervisor.middleName}` : "Не назначен"}</Typography>
                                                     <Typography
                                                         variant="body2">Консультант: {theme.consultant?.name ?? "Не назначен"}</Typography>
                                                 </CardContent>

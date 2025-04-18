@@ -30,7 +30,7 @@ public partial class Consultant
     /// <summary>
     /// Gets or sets UserId column.
     /// </summary>
-    public Guid? Userid { get; set; }
+    public string? Userid { get; set; }
 
     /// <summary>
     /// Gets or sets virtual Themes.

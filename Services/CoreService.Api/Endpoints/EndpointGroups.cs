@@ -4,9 +4,11 @@
 
 namespace CoreService;
 
+using Contracts;
 using CoreService.Core;
 using CoreService.Core.Models;
 using CoreService.Core.Queries;
+using MassTransit;
 
 /// <summary>
 /// Endpoints groups.
@@ -109,14 +111,55 @@ public static class EndpointGroups
             (int lecturerId, CoreContext context) => new LecturersQueries(context).GetLecturers(lecturerId).Result);
         group.MapPost(
             "/",
-            (Lecturer lecturer, CoreContext context) => new LecturersQueries(context).InsertLecturer(lecturer).Result).RequireAuthorization("AdminOnly");
+            async (Lecturer lecturer, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var result = await new LecturersQueries(context).InsertOrUpdateLecturer(lecturer);
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        lecturer.Userid,
+                        lecturer.FirstName,
+                        lecturer.LastName,
+                        lecturer.MiddleName,
+                        UserActionType.Create,
+                        "Научный руководитель",
+                        DateTime.UtcNow));
+
+                return result;
+            }).RequireAuthorization("AdminOnly");
         group.MapPut(
             "/",
-            (Lecturer lecturer, CoreContext context) =>
-                new LecturersQueries(context).UpdateLecturer(lecturer).Result);
+            async (Lecturer lecturer, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var result = await new LecturersQueries(context).UpdateLecturer(lecturer);
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        lecturer.Userid,
+                        lecturer.FirstName,
+                        lecturer.LastName,
+                        lecturer.MiddleName,
+                        UserActionType.Update,
+                        "Научный руководитель",
+                        DateTime.UtcNow));
+                return result;
+            });
         group.MapDelete(
             "/{lecturerId:int}",
-            (int lecturerId, CoreContext context) => new LecturersQueries(context).DeleteLecturer(lecturerId).Result);
+            async (int lecturerId, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var result = await new LecturersQueries(context).DeleteLecturer(lecturerId);
+                var lecturer = context.Lecturers.First(lecturer => lecturer.Id == lecturerId);
+
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        lecturer.Userid,
+                        lecturer.FirstName,
+                        lecturer.LastName,
+                        lecturer.MiddleName,
+                        UserActionType.Delete,
+                        "Научный руководитель",
+                        DateTime.UtcNow));
+                return result;
+            });
 
         return group;
     }

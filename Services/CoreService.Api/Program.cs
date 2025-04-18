@@ -3,8 +3,11 @@
 // </copyright>
 
 using System.Text.Json.Serialization;
+using Contracts;
 using CoreService;
+using CoreService.Api.Consumers;
 using CoreService.Core;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
@@ -70,6 +73,27 @@ builder.Services.AddCors(
                 .SetIsOriginAllowed((_) => true)
                 .AllowAnyHeader());
     });
+
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<UserCreatedConsumer>();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(builder.Configuration["RabbitMQ:Host"], "/", h =>
+        {
+            h.Username(builder.Configuration["RabbitMQ:Username"]);
+            h.Password(builder.Configuration["RabbitMQ:Password"]);
+        });
+
+        cfg.ReceiveEndpoint("user-events", e =>
+        {
+            e.ConfigureConsumer<UserCreatedConsumer>(context);
+        });
+
+        cfg.Message<UserWithRoleActionEvent>(x => x.SetEntityName("user-with-role-events"));
+    });
+});
 
 var app = builder.Build();
 

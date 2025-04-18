@@ -30,12 +30,12 @@ public partial class Lecturer
     /// <summary>
     /// Gets or sets MiddleName column.
     /// </summary>
-    public string MiddleName { get; set; } = null!;
+    public string? MiddleName { get; set; }
 
     /// <summary>
     /// Gets or sets UserId column.
     /// </summary>
-    public Guid Userid { get; set; }
+    public string Userid { get; set; } = null!;
 
     /// <summary>
     /// Gets or sets Department column.

@@ -1,14 +1,15 @@
-// <copyright file="ApplicationUser.cs" company="Gleb Kargin">
+﻿// <copyright file="ApplicationUserDTO.cs" company="Gleb Kargin">
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
+namespace AuthService.Api.Models;
+
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Identity;
 
 /// <summary>
-/// Application User model.
+/// Application User DTO.
 /// </summary>
-public class ApplicationUser : IdentityUser
+public class ApplicationUserDTO
 {
     /// <summary>
     /// Gets or sets FirstName column.
@@ -27,4 +28,9 @@ public class ApplicationUser : IdentityUser
     /// </summary>
     [MaxLength(100)]
     public string? MiddleName { get; set; }
+
+    /// <summary>
+    /// Gets or sets Roles.
+    /// </summary>
+    public string[]? Roles { get; set; }
 }

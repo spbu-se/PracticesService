@@ -34,11 +34,17 @@ public class LecturersQueries(CoreContext context)
     /// </summary>
     /// <param name="lecturer">Input lecturer.</param>
     /// <returns>Response status.</returns>
-    public async Task<int> InsertLecturer(Lecturer lecturer)
+    public async Task<IResult> InsertOrUpdateLecturer(Lecturer lecturer)
     {
+        var prev = await context.Lecturers.FindAsync(lecturer.Id);
+        if (prev != null)
+        {
+            return await this.UpdateLecturer(lecturer);
+        }
+
         context.Lecturers.Add(lecturer);
         await context.SaveChangesAsync();
-        return lecturer.Id;
+        return Results.Ok(lecturer.Id);
     }
 
     /// <summary>

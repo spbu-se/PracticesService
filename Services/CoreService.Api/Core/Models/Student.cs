@@ -20,7 +20,7 @@ public partial class Student
     /// <summary>
     /// Gets or sets UserId column.
     /// </summary>
-    public Guid Userid { get; set; }
+    public string Userid { get; set; } = null!;
 
     /// <summary>
     /// Gets or sets GroupId.

@@ -246,7 +246,7 @@ export function CreateThemePage() {
                                         onChange={(e) => setLecturerId(e.target.value)}
                                     >
                                         {lecturers?.map((lecturer, i) => (
-                                            <MenuItem key={i} value={lecturer.id}>{lecturer.id}</MenuItem>
+                                            <MenuItem key={i} value={lecturer.id}>{lecturer.lastName} {lecturer.firstName} {lecturer.middleName}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>

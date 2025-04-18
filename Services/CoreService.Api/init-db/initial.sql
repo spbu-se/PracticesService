@@ -11,8 +11,8 @@ CREATE TABLE Lecturers
     Id SERIAL PRIMARY KEY,
     FirstName VARCHAR(100) NOT NULL,
     LastName VARCHAR(100) NOT NULL,
-    MiddleName VARCHAR(100) NOT NULL,
-    UserId UUID NOT NULL, -- Внешний идентификатор пользователя
+    MiddleName VARCHAR(100),
+    UserId VARCHAR(255) NOT NULL,
     Department VARCHAR(500),
     CanSuperviseVKR BOOLEAN NOT NULL DEFAULT FALSE
 );
@@ -20,7 +20,7 @@ CREATE TABLE Lecturers
 CREATE TABLE Students
 (
     Id SERIAL PRIMARY KEY,
-    UserId UUID NOT NULL, -- Внешний идентификатор пользователя
+    UserId VARCHAR(255) NOT NULL,
     GroupId INT NOT NULL,
     CONSTRAINT Group_FK FOREIGN KEY (GroupId) REFERENCES Groups (Id)
 );
@@ -30,7 +30,7 @@ CREATE TABLE Consultants
     Id SERIAL PRIMARY KEY,
     Name VARCHAR(255) NOT NULL,
     Contact VARCHAR(500) NOT NULL,
-    UserId UUID -- Внешний идентификатор пользователя, может не быть
+    UserId VARCHAR(255)
 );
 
 CREATE TABLE Themes

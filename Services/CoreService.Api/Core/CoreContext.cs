@@ -4,8 +4,6 @@
 
 namespace CoreService.Core;
 
-using System;
-using System.Collections.Generic;
 using CoreService.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -79,7 +77,7 @@ public partial class CoreContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
                 .HasColumnName("name");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+            entity.Property(e => e.Userid).HasMaxLength(255).HasColumnName("userid");
         });
 
         modelBuilder.Entity<Group>(entity =>
@@ -120,7 +118,7 @@ public partial class CoreContext : DbContext
             entity.Property(e => e.Department)
                 .HasMaxLength(500)
                 .HasColumnName("department");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+            entity.Property(e => e.Userid).HasMaxLength(255).HasColumnName("userid");
         });
 
         modelBuilder.Entity<Practice>(entity =>
@@ -169,7 +167,7 @@ public partial class CoreContext : DbContext
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Groupid).HasColumnName("groupid");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+            entity.Property(e => e.Userid).HasMaxLength(255).HasColumnName("userid");
 
             entity.HasOne(d => d.Group).WithMany(p => p.Students)
                 .HasForeignKey(d => d.Groupid)

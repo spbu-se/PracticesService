@@ -2,17 +2,41 @@ version: "3.9"
 name: "practices-service"
 
 services:
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672" 
+      - "15672:15672" 
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin123
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - proxybackend
+
   gateway.api:
     image: ${DOCKER_REGISTRY-}gatewayapi
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin123
     build:
       context: .
       dockerfile: Gateway/Gateway.Api/Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     ports:
       - "5000:8080"
     networks: 
        - proxybackend
+
   core.db:
     container_name: core.db
     image: postgres:14.5-alpine
@@ -37,6 +61,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ENVIRONMENT=Docker
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin123
     extra_hosts:
       - "host.docker.internal:host-gateway"
     build:
@@ -46,6 +73,8 @@ services:
     ports:
       - "5001:8080"
     depends_on:
+      rabbitmq:
+        condition: service_healthy
       core.db:
         condition: service_healthy
     networks: 
@@ -74,6 +103,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ENVIRONMENT=Docker
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin123
     extra_hosts:
       - "host.docker.internal:host-gateway"
     build:
@@ -84,6 +116,8 @@ services:
       - "5002:8080"
     depends_on:
       auth.db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks: 
        - proxybackend

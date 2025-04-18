@@ -1,7 +1,7 @@
 export interface Lecturer {
     id: number;
-    firstname: string;
-    lastname: string;
-    middlename: string;
+    firstName: string;
+    lastName: string;
+    middleName: string;
     department: string;
 }

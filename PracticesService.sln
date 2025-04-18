@@ -19,6 +19,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Helpers", "Helpers", "{8CD6
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GatewayAuthHandler", "Helpers\GatewayAuthHandler\GatewayAuthHandler.csproj", "{48704C05-2136-429D-A249-628CDEF16B0D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{1665257F-51D8-4832-A7ED-94603EA35B23}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contracts", "Shared\Contracts\Contracts.csproj", "{712BF23F-5D58-4EB5-94F5-8525ED05965D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +49,10 @@ Global
 		{48704C05-2136-429D-A249-628CDEF16B0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{48704C05-2136-429D-A249-628CDEF16B0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{48704C05-2136-429D-A249-628CDEF16B0D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{712BF23F-5D58-4EB5-94F5-8525ED05965D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{712BF23F-5D58-4EB5-94F5-8525ED05965D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{712BF23F-5D58-4EB5-94F5-8525ED05965D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{712BF23F-5D58-4EB5-94F5-8525ED05965D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -54,6 +62,7 @@ Global
 		{C5116E8B-8D09-406D-80CD-0039B4AC5B68} = {222D815F-4394-417D-AF31-DA86AE6E21C1}
 		{924ED870-509D-4512-A12A-1DC2E81A6E41} = {89CC78B4-9A7B-46F4-B786-7FB0D49911B2}
 		{48704C05-2136-429D-A249-628CDEF16B0D} = {8CD65409-E7E2-4FC3-8AA5-3BFA5D08779B}
+		{712BF23F-5D58-4EB5-94F5-8525ED05965D} = {1665257F-51D8-4832-A7ED-94603EA35B23}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DC6C6DEA-3EB6-439A-AE03-43698361909A}
