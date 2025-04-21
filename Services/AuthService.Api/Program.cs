@@ -17,10 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
-var predefinedRoles = new[]
-    {
-        "Студент", "Научный руководитель", "Консультант", "Руководитель практики", "Рецензент", "Администратор",
-    };
+var predefinedRoles = RoleNames.GetAllRoleNames();
 
 var builder = WebApplication.CreateBuilder(args);
 

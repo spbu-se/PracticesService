@@ -34,11 +34,17 @@ public class StudentsQueries(CoreContext context)
     /// </summary>
     /// <param name="student">Input student.</param>
     /// <returns>Response status.</returns>
-    public async Task<int> InsertStudent(Student student)
+    public async Task<IResult> InsertOrUpdateStudent(Student student)
     {
+        var prev = await context.Students.FindAsync(student.Id);
+        if (prev != null)
+        {
+            return await this.UpdateStudent(student);
+        }
+
         context.Students.Add(student);
         await context.SaveChangesAsync();
-        return student.Id;
+        return Results.Ok(student.Id);
     }
 
     /// <summary>

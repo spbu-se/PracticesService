@@ -16,6 +16,8 @@ namespace CoreService.Api.Consumers
     public class UserCreatedConsumer : IConsumer<UserCreatedEvent>
     {
         private readonly LecturersQueries lecturersQueries;
+        private readonly StudentsQueries studentsQueries;
+        private readonly ConsultantsQueries consultantsQueries;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UserCreatedConsumer"/> class.
@@ -24,6 +26,8 @@ namespace CoreService.Api.Consumers
         public UserCreatedConsumer(CoreContext context)
         {
             this.lecturersQueries = new LecturersQueries(context);
+            this.studentsQueries = new StudentsQueries(context);
+            this.consultantsQueries = new ConsultantsQueries(context);
         }
 
         /// <summary>
@@ -33,7 +37,7 @@ namespace CoreService.Api.Consumers
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public async Task Consume(ConsumeContext<UserCreatedEvent> context)
         {
-            if (context.Message.Roles.Contains("Научный руководитель"))
+            if (context.Message.Roles.Contains(RoleNames.GetName(UserRoleType.Supervisor)))
             {
                 var lecturer = new Lecturer()
                 {
@@ -43,6 +47,28 @@ namespace CoreService.Api.Consumers
                     MiddleName = context.Message.MiddleName,
                 };
                 await this.lecturersQueries.InsertOrUpdateLecturer(lecturer);
+            }
+            else if (context.Message.Roles.Contains(RoleNames.GetName(UserRoleType.Student)))
+            {
+                var student = new Student()
+                {
+                    Userid = context.Message.UserId,
+                    FirstName = context.Message.FirstName,
+                    LastName = context.Message.LastName,
+                    MiddleName = context.Message.MiddleName,
+                };
+                await this.studentsQueries.InsertOrUpdateStudent(student);
+            }
+            else if (context.Message.Roles.Contains(RoleNames.GetName(UserRoleType.Consultant)))
+            {
+                var consultant = new Consultant()
+                {
+                    Userid = context.Message.UserId,
+                    FirstName = context.Message.FirstName,
+                    LastName = context.Message.LastName,
+                    MiddleName = context.Message.MiddleName,
+                };
+                await this.consultantsQueries.InsertOrUpdateConsultant(consultant);
             }
         }
     }

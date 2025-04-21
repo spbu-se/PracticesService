@@ -18,6 +18,21 @@ public partial class Student
     public int Id { get; set; }
 
     /// <summary>
+    /// Gets or sets FirstName column.
+    /// </summary>
+    public string FirstName { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets LastName column.
+    /// </summary>
+    public string LastName { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets MiddleName column.
+    /// </summary>
+    public string? MiddleName { get; set; }
+
+    /// <summary>
     /// Gets or sets UserId column.
     /// </summary>
     public string Userid { get; set; } = null!;

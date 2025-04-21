@@ -39,22 +39,14 @@ public class UserWithRoleActionConsumer : IConsumer<UserWithRoleActionEvent>
     {
         try
         {
-            const string targetRole = "Научный руководитель";
-
-            if (consumeContext.Message.Role != targetRole)
-            {
-                this.logger.LogDebug("Skipping message for non-target role: {Role}", consumeContext.Message.Role);
-                return;
-            }
-
             switch (consumeContext.Message.Action)
             {
                 case UserActionType.Delete:
-                    await this.HandleRoleRemoval(consumeContext.Message.UserId, targetRole);
+                    await this.HandleRoleRemoval(consumeContext.Message.UserId, consumeContext.Message.Role);
                     break;
 
                 case UserActionType.Create:
-                    await this.HandleRoleAssignment(consumeContext.Message.UserId, targetRole);
+                    await this.HandleRoleAssignment(consumeContext.Message.UserId, consumeContext.Message.Role);
                     break;
 
                 case UserActionType.Update:

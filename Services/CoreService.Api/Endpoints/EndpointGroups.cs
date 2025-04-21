@@ -57,14 +57,53 @@ public static class EndpointGroups
             (int consultantId, CoreContext context) => new ConsultantsQueries(context).GetConsultants(consultantId).Result);
         group.MapPost(
             "/",
-            (Consultant consultant, CoreContext context) => new ConsultantsQueries(context).InsertConsultant(consultant).Result);
+            async (Consultant consultant, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var result = await new ConsultantsQueries(context).InsertOrUpdateConsultant(consultant);
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        consultant.Userid,
+                        consultant.FirstName,
+                        consultant.LastName,
+                        consultant.MiddleName,
+                        UserActionType.Update,
+                        RoleNames.GetName(UserRoleType.Student),
+                        DateTime.UtcNow));
+                return result;
+            });
         group.MapPut(
             "/",
-            (Consultant consultant, CoreContext context) =>
-                new ConsultantsQueries(context).UpdateConsultant(consultant).Result);
+            async (Consultant consultant, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var result = await new ConsultantsQueries(context).UpdateConsultant(consultant);
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        consultant.Userid,
+                        consultant.FirstName,
+                        consultant.LastName,
+                        consultant.MiddleName,
+                        UserActionType.Update,
+                        RoleNames.GetName(UserRoleType.Student),
+                        DateTime.UtcNow));
+                return result;
+            });
         group.MapDelete(
             "/{consultantId:int}",
-            (int consultantId, CoreContext context) => new ConsultantsQueries(context).DeleteConsultant(consultantId).Result);
+            async (int consultantId, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var consultant = await context.Consultants.FindAsync(consultantId);
+                var result = await new ConsultantsQueries(context).DeleteConsultant(consultantId);
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        consultant.Userid,
+                        consultant.FirstName,
+                        consultant.LastName,
+                        consultant.MiddleName,
+                        UserActionType.Update,
+                        RoleNames.GetName(UserRoleType.Student),
+                        DateTime.UtcNow));
+                return result;
+            });
 
         return group;
     }
@@ -121,7 +160,7 @@ public static class EndpointGroups
                         lecturer.LastName,
                         lecturer.MiddleName,
                         UserActionType.Create,
-                        "Научный руководитель",
+                        RoleNames.GetName(UserRoleType.Supervisor),
                         DateTime.UtcNow));
 
                 return result;
@@ -138,7 +177,7 @@ public static class EndpointGroups
                         lecturer.LastName,
                         lecturer.MiddleName,
                         UserActionType.Update,
-                        "Научный руководитель",
+                        RoleNames.GetName(UserRoleType.Supervisor),
                         DateTime.UtcNow));
                 return result;
             });
@@ -146,18 +185,22 @@ public static class EndpointGroups
             "/{lecturerId:int}",
             async (int lecturerId, CoreContext context, IPublishEndpoint publishEndpoint) =>
             {
+                var lecturer = await context.Lecturers.FindAsync(lecturerId);
                 var result = await new LecturersQueries(context).DeleteLecturer(lecturerId);
-                var lecturer = context.Lecturers.First(lecturer => lecturer.Id == lecturerId);
 
-                await publishEndpoint.Publish(
-                    new UserWithRoleActionEvent(
-                        lecturer.Userid,
-                        lecturer.FirstName,
-                        lecturer.LastName,
-                        lecturer.MiddleName,
-                        UserActionType.Delete,
-                        "Научный руководитель",
-                        DateTime.UtcNow));
+                if (lecturer != null)
+                {
+                    await publishEndpoint.Publish(
+                        new UserWithRoleActionEvent(
+                            lecturer.Userid,
+                            lecturer.FirstName,
+                            lecturer.LastName,
+                            lecturer.MiddleName,
+                            UserActionType.Delete,
+                            RoleNames.GetName(UserRoleType.Supervisor),
+                            DateTime.UtcNow));
+                }
+
                 return result;
             });
 
@@ -206,14 +249,58 @@ public static class EndpointGroups
             (int studentId, CoreContext context) => new StudentsQueries(context).GetStudents(studentId).Result);
         group.MapPost(
             "/",
-            (Student student, CoreContext context) => new StudentsQueries(context).InsertStudent(student).Result);
+            async (Student student, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var result = await new StudentsQueries(context).InsertOrUpdateStudent(student);
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        student.Userid,
+                        student.FirstName,
+                        student.LastName,
+                        student.MiddleName,
+                        UserActionType.Update,
+                        RoleNames.GetName(UserRoleType.Student),
+                        DateTime.UtcNow));
+                return result;
+            });
         group.MapPut(
             "/",
-            (Student student, CoreContext context) =>
-                new StudentsQueries(context).UpdateStudent(student).Result);
+            async (Student student, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var result = await new StudentsQueries(context).UpdateStudent(student);
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        student.Userid,
+                        student.FirstName,
+                        student.LastName,
+                        student.MiddleName,
+                        UserActionType.Update,
+                        RoleNames.GetName(UserRoleType.Student),
+                        DateTime.UtcNow));
+                return result;
+            });
         group.MapDelete(
             "/{studentId:int}",
-            (int studentId, CoreContext context) => new StudentsQueries(context).DeleteStudent(studentId).Result);
+            async (int studentId, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var student = await context.Students.FindAsync(studentId);
+                var result = await new LecturersQueries(context).DeleteLecturer(studentId);
+
+                if (student != null)
+                {
+                    await publishEndpoint.Publish(
+                        new UserWithRoleActionEvent(
+                            student.Userid,
+                            student.FirstName,
+                            student.LastName,
+                            student.MiddleName,
+                            UserActionType.Update,
+                            RoleNames.GetName(UserRoleType.Student),
+                            DateTime.UtcNow));
+                }
+
+                return result;
+            });
 
         return group;
     }

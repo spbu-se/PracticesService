@@ -34,11 +34,17 @@ public class ConsultantsQueries(CoreContext context)
     /// </summary>
     /// <param name="consultant">Input consultant.</param>
     /// <returns>Response status.</returns>
-    public async Task<int> InsertConsultant(Consultant consultant)
+    public async Task<IResult> InsertOrUpdateConsultant(Consultant consultant)
     {
+        var prev = await context.Consultants.FindAsync(consultant.Id);
+        if (prev == null)
+        {
+            return await this.UpdateConsultant(consultant);
+        }
+
         context.Consultants.Add(consultant);
         await context.SaveChangesAsync();
-        return consultant.Id;
+        return Results.Ok(consultant.Id);
     }
 
     /// <summary>
@@ -56,7 +62,9 @@ public class ConsultantsQueries(CoreContext context)
                 return Results.BadRequest();
             }
 
-            prev.Name = consultant.Name;
+            prev.FirstName = consultant.FirstName;
+            prev.LastName = consultant.LastName;
+            prev.MiddleName = consultant.MiddleName;
             prev.Contact = consultant.Contact;
             await context.SaveChangesAsync();
             return Results.Ok();

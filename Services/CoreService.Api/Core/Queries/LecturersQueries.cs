@@ -83,8 +83,12 @@ public class LecturersQueries(CoreContext context)
     /// <returns>Response status.</returns>
     public async Task<IResult> DeleteLecturer(int id)
     {
-        var deletedLecturer = context.Lecturers.First(lecturer => lecturer.Id == id);
-        context.Lecturers.Remove(deletedLecturer);
+        var deletedLecturer = await context.Lecturers.FindAsync(id);
+        if (deletedLecturer != null)
+        {
+            context.Lecturers.Remove(deletedLecturer);
+        }
+
         await context.SaveChangesAsync();
         return Results.Ok();
     }

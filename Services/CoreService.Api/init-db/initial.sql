@@ -20,6 +20,9 @@ CREATE TABLE Lecturers
 CREATE TABLE Students
 (
     Id SERIAL PRIMARY KEY,
+    FirstName VARCHAR(100) NOT NULL,
+    LastName VARCHAR(100) NOT NULL,
+    MiddleName VARCHAR(100),
     UserId VARCHAR(255) NOT NULL,
     GroupId INT NOT NULL,
     CONSTRAINT Group_FK FOREIGN KEY (GroupId) REFERENCES Groups (Id)
@@ -28,7 +31,9 @@ CREATE TABLE Students
 CREATE TABLE Consultants
 (
     Id SERIAL PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL,
+    FirstName VARCHAR(100) NOT NULL,
+    LastName VARCHAR(100) NOT NULL,
+    MiddleName VARCHAR(100),
     Contact VARCHAR(500) NOT NULL,
     UserId VARCHAR(255)
 );

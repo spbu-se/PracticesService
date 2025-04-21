@@ -70,13 +70,19 @@ public partial class CoreContext : DbContext
 
             entity.ToTable("consultants");
 
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(100)
+                .HasColumnName("firstname");
+            entity.Property(e => e.LastName)
+                .HasMaxLength(100)
+                .HasColumnName("lastname");
+            entity.Property(e => e.MiddleName)
+                .HasMaxLength(100)
+                .HasColumnName("middlename");
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Contact)
                 .HasMaxLength(500)
                 .HasColumnName("contact");
-            entity.Property(e => e.Name)
-                .HasMaxLength(255)
-                .HasColumnName("name");
             entity.Property(e => e.Userid).HasMaxLength(255).HasColumnName("userid");
         });
 
@@ -165,6 +171,15 @@ public partial class CoreContext : DbContext
 
             entity.ToTable("students");
 
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(100)
+                .HasColumnName("firstname");
+            entity.Property(e => e.LastName)
+                .HasMaxLength(100)
+                .HasColumnName("lastname");
+            entity.Property(e => e.MiddleName)
+                .HasMaxLength(100)
+                .HasColumnName("middlename");
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Groupid).HasColumnName("groupid");
             entity.Property(e => e.Userid).HasMaxLength(255).HasColumnName("userid");

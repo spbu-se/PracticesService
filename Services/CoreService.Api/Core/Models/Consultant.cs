@@ -18,9 +18,19 @@ public partial class Consultant
     public int Id { get; set; }
 
     /// <summary>
-    /// Gets or sets Name column.
+    /// Gets or sets FirstName column.
     /// </summary>
-    public string Name { get; set; } = null!;
+    public string FirstName { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets LastName column.
+    /// </summary>
+    public string LastName { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets MiddleName column.
+    /// </summary>
+    public string? MiddleName { get; set; }
 
     /// <summary>
     /// Gets or sets Contact column.
