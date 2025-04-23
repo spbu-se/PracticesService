@@ -1,5 +1,7 @@
 export interface Consultant {
     id: number;
-    name: string;
+    firstName: string;
+    lastName: string;
+    middleName: string;
     contact: string;
 }

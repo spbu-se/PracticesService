@@ -258,7 +258,7 @@ export function EditThemePage() {
                                         onChange={(e) => setConsultantId(e.target.value)}
                                     >
                                         {consultants?.map((con, i) => (
-                                            <MenuItem key={i} value={con.id}>{con.name}</MenuItem>
+                                            <MenuItem key={i} value={con.id}>{con.lastName} {con.firstName} {con.middleName}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>

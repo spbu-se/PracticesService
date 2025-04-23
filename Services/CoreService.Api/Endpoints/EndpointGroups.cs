@@ -30,14 +30,14 @@ public static class EndpointGroups
             (int themeId, CoreContext context) => new ThemesQueries(context).GetThemes(themeId).Result);
         group.MapPost(
             "/",
-            (Theme theme, CoreContext context) => new ThemesQueries(context).InsertTheme(theme).Result);
+            (Theme theme, CoreContext context) => new ThemesQueries(context).InsertTheme(theme).Result).RequireAuthorization();
         group.MapPut(
             "/",
             (Theme theme, CoreContext context) =>
-                new ThemesQueries(context).UpdateTheme(theme).Result);
+                new ThemesQueries(context).UpdateTheme(theme).Result).RequireAuthorization();
         group.MapDelete(
             "/{themeId:int}",
-            (int themeId, CoreContext context) => new ThemesQueries(context).DeleteTheme(themeId).Result);
+            (int themeId, CoreContext context) => new ThemesQueries(context).DeleteTheme(themeId).Result).RequireAuthorization();
 
         return group;
     }
@@ -70,7 +70,7 @@ public static class EndpointGroups
                         RoleNames.GetName(UserRoleType.Student),
                         DateTime.UtcNow));
                 return result;
-            });
+            }).RequireAuthorization();
         group.MapPut(
             "/",
             async (Consultant consultant, CoreContext context, IPublishEndpoint publishEndpoint) =>
@@ -86,7 +86,7 @@ public static class EndpointGroups
                         RoleNames.GetName(UserRoleType.Student),
                         DateTime.UtcNow));
                 return result;
-            });
+            }).RequireAuthorization();
         group.MapDelete(
             "/{consultantId:int}",
             async (int consultantId, CoreContext context, IPublishEndpoint publishEndpoint) =>
@@ -103,7 +103,7 @@ public static class EndpointGroups
                         RoleNames.GetName(UserRoleType.Student),
                         DateTime.UtcNow));
                 return result;
-            });
+            }).RequireAuthorization();
 
         return group;
     }
@@ -123,14 +123,14 @@ public static class EndpointGroups
             (int groupId, CoreContext context) => new GroupsQueries(context).GetGroups(groupId).Result);
         group.MapPost(
             "/",
-            (Group group, CoreContext context) => new GroupsQueries(context).InsertGroup(group).Result);
+            (Group group, CoreContext context) => new GroupsQueries(context).InsertGroup(group).Result).RequireAuthorization();
         group.MapPut(
             "/",
             (Group group, CoreContext context) =>
-                new GroupsQueries(context).UpdateGroup(group).Result);
+                new GroupsQueries(context).UpdateGroup(group).Result).RequireAuthorization();
         group.MapDelete(
             "/{groupId:int}",
-            (int groupId, CoreContext context) => new GroupsQueries(context).DeleteGroup(groupId).Result);
+            (int groupId, CoreContext context) => new GroupsQueries(context).DeleteGroup(groupId).Result).RequireAuthorization();
 
         return group;
     }
@@ -180,7 +180,7 @@ public static class EndpointGroups
                         RoleNames.GetName(UserRoleType.Supervisor),
                         DateTime.UtcNow));
                 return result;
-            });
+            }).RequireAuthorization("AdminOnly");
         group.MapDelete(
             "/{lecturerId:int}",
             async (int lecturerId, CoreContext context, IPublishEndpoint publishEndpoint) =>
@@ -202,7 +202,7 @@ public static class EndpointGroups
                 }
 
                 return result;
-            });
+            }).RequireAuthorization("AdminOnly");
 
         return group;
     }
@@ -222,14 +222,14 @@ public static class EndpointGroups
             (int practiceId, CoreContext context) => new PracticesQueries(context).GetPractices(practiceId).Result);
         group.MapPost(
             "/",
-            (Practice practice, CoreContext context) => new PracticesQueries(context).InsertPractice(practice).Result);
+            (Practice practice, CoreContext context) => new PracticesQueries(context).InsertPractice(practice).Result).RequireAuthorization();
         group.MapPut(
             "/",
             (Practice practice, CoreContext context) =>
-                new PracticesQueries(context).UpdatePractice(practice).Result);
+                new PracticesQueries(context).UpdatePractice(practice).Result).RequireAuthorization();
         group.MapDelete(
             "/{practiceId:int}",
-            (int practiceId, CoreContext context) => new PracticesQueries(context).DeletePractice(practiceId).Result);
+            (int practiceId, CoreContext context) => new PracticesQueries(context).DeletePractice(practiceId).Result).RequireAuthorization();
 
         return group;
     }
@@ -262,7 +262,7 @@ public static class EndpointGroups
                         RoleNames.GetName(UserRoleType.Student),
                         DateTime.UtcNow));
                 return result;
-            });
+            }).RequireAuthorization();
         group.MapPut(
             "/",
             async (Student student, CoreContext context, IPublishEndpoint publishEndpoint) =>
@@ -278,7 +278,7 @@ public static class EndpointGroups
                         RoleNames.GetName(UserRoleType.Student),
                         DateTime.UtcNow));
                 return result;
-            });
+            }).RequireAuthorization();
         group.MapDelete(
             "/{studentId:int}",
             async (int studentId, CoreContext context, IPublishEndpoint publishEndpoint) =>
@@ -300,7 +300,7 @@ public static class EndpointGroups
                 }
 
                 return result;
-            });
+            }).RequireAuthorization();
 
         return group;
     }

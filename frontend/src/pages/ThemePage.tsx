@@ -42,10 +42,10 @@ export function ThemePage() {
                         <Typography variant="subtitle1"><strong>Кафедра:</strong> {theme.department}</Typography>
                         <Typography variant="subtitle1"><strong>Источник:</strong> {theme.source}</Typography>
                         <Typography variant="subtitle1"><strong>Научный
-                            руководитель:</strong> {theme.supervisor ? `${theme.supervisor.lastname} ${theme.supervisor.firstname} ${theme.supervisor.middlename}` : "Не назначен"}
+                            руководитель:</strong> {theme.supervisor ? `${theme.supervisor.lastName} ${theme.supervisor.firstName} ${theme.supervisor.middleName}` : "Не назначен"}
                         </Typography>
                         <Typography
-                            variant="subtitle1"><strong>Консультант:</strong> {theme.consultant?.name ?? "Не назначен"}
+                            variant="subtitle1"><strong>Консультант:</strong> {theme.consultant ? `${theme.consultant.lastName} ${theme.consultant.firstName} ${theme.consultant.middleName}` : "Не назначен"}
                         </Typography>
                         <Typography variant="subtitle1"><strong>Контакты
                             консультанта:</strong> {theme.consultant?.contact ?? ""}</Typography>

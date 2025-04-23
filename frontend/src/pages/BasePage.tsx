@@ -160,7 +160,7 @@ export function BasePage() {
                                 margin="dense"
                             >
                                 <MenuItem value="">Все</MenuItem>
-                                {Array.from(new Set(themes.map((t) => t.supervisorid?.toString()))).map((sup, i) => (
+                                {Array.from(new Set(themes.map((t) => `${t.supervisor.lastName} ${t.supervisor.firstName} ${t.supervisor.middleName}`))).map((sup, i) => (
                                     <MenuItem key={i} value={sup}>{sup}</MenuItem>
                                 ))}
                             </TextField>
@@ -225,7 +225,7 @@ export function BasePage() {
                                                     <Typography variant="body2">Научный
                                                         руководитель: {theme.supervisor ? `${theme.supervisor.lastName} ${theme.supervisor.firstName} ${theme.supervisor.middleName}` : "Не назначен"}</Typography>
                                                     <Typography
-                                                        variant="body2">Консультант: {theme.consultant?.name ?? "Не назначен"}</Typography>
+                                                        variant="body2">Консультант: {theme.consultant ? `${theme.consultant.lastName} ${theme.consultant.firstName} ${theme.consultant.middleName}` : "Не назначен"}</Typography>
                                                 </CardContent>
                                             </Card>
                                         </Grid>
