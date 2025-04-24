@@ -208,6 +208,9 @@ app.MapPost(
         {
             new Claim(ClaimTypes.Name, user.UserName ?? "UnknownUser"),
             new Claim(ClaimTypes.Email, user.Email ?? "unknown@example.com"),
+            new(ClaimTypes.GivenName, user.FirstName),
+            new(ClaimTypes.Surname, user.LastName),
+            new("middle_name", user.MiddleName ?? string.Empty),
         };
 
         // Add roles to token

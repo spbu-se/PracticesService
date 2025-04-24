@@ -2,11 +2,13 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
+using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Contracts;
 using CoreService;
 using CoreService.Api.Consumers;
 using CoreService.Core;
+using CoreService.Core.Models;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.Json;
@@ -129,8 +131,25 @@ app.MapGroup("api/students/").StudentsGroup().WithTags("Students");
 
 app.MapGet("api/me", (HttpContext context) =>
 {
-    var username = context.User.Identity?.Name;
-    return username;
+    var user = context.User;
+
+    var username = user.Identity?.Name ?? string.Empty;
+    var firstName = user.FindFirst(ClaimTypes.GivenName)?.Value ?? string.Empty;
+    var lastName = user.FindFirst(ClaimTypes.Surname)?.Value ?? string.Empty;
+    var middleName = user.FindFirst("middle_name")?.Value; // Custom claim
+    var email = user.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
+
+    var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+
+    return new ApplicationUserDTO()
+    {
+        UserName = username,
+        FirstName = firstName,
+        LastName = lastName,
+        MiddleName = middleName,
+        Email = email,
+        Roles = roles,
+    };
 }).RequireAuthorization();
 
 app.UseAuthentication();
