@@ -62,10 +62,10 @@ public class ConsultantsQueries(CoreContext context)
                 return Results.BadRequest();
             }
 
-            prev.FirstName = consultant.FirstName;
-            prev.LastName = consultant.LastName;
-            prev.MiddleName = consultant.MiddleName;
-            prev.Contact = consultant.Contact;
+            prev.FirstName = string.IsNullOrEmpty(consultant.FirstName) ? prev.FirstName : consultant.FirstName;
+            prev.LastName = string.IsNullOrEmpty(consultant.LastName) ? prev.LastName : consultant.LastName;
+            prev.MiddleName = string.IsNullOrEmpty(consultant.MiddleName) ? prev.MiddleName : consultant.MiddleName;
+            prev.Contact = string.IsNullOrEmpty(consultant.Contact) ? prev.Contact : consultant.Contact;
             await context.SaveChangesAsync();
             return Results.Ok();
         }

@@ -14,8 +14,10 @@ import {
 } from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
 import { User } from "@/entities/User.ts";
+import {useNavigate} from "react-router-dom";
 
 export function ProfilePage() {
+    const navigate = useNavigate();
     const tokenIsEmpty = getJWTToken() === "";
     const [user, setUser] = useState<User>();
     const [loading, setLoading] = useState(true);
@@ -50,6 +52,9 @@ export function ProfilePage() {
     return (
         <Layout>
             <Container maxWidth="md" sx={{ mt: 4 }}>
+                <Button variant="contained" color="secondary" onClick={() => navigate(-1)}>
+                    ← Назад
+                </Button>
                 <Paper elevation={3} sx={{ p: 4 }}>
                     {/*<Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>*/}
                     {/*    <Typography variant="h4">Профиль пользователя</Typography>*/}

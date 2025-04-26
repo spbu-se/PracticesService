@@ -56,8 +56,8 @@ public class GroupsQueries(CoreContext context)
                 return Results.BadRequest();
             }
 
-            prev.Name = group.Name;
-            prev.Program = group.Program;
+            prev.Name = string.IsNullOrEmpty(group.Name) ? prev.Name : group.Name;
+            prev.Program = string.IsNullOrEmpty(group.Program) ? prev.Program : group.Program;
             prev.Year = group.Year;
             await context.SaveChangesAsync();
             return Results.Ok();

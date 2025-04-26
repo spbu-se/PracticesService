@@ -145,7 +145,7 @@ export function BasePage() {
                                 margin="dense"
                             >
                                 <MenuItem value="">Все</MenuItem>
-                                {Array.from(new Set(themes.map((t) => t.source))).map((src, i) => (
+                                {Array.from(new Set(themes.filter(t => t.source).map((t) => t.source))).map((src, i) => (
                                     <MenuItem key={i} value={src}>{src}</MenuItem>
                                 ))}
                             </TextField>
@@ -160,7 +160,7 @@ export function BasePage() {
                                 margin="dense"
                             >
                                 <MenuItem value="">Все</MenuItem>
-                                {Array.from(new Set(themes.map((t) => `${t.supervisor.lastName} ${t.supervisor.firstName} ${t.supervisor.middleName}`))).map((sup, i) => (
+                                {Array.from(new Set(themes.filter(t => t.supervisor).map((t) => `${t.supervisor?.lastName} ${t.supervisor?.firstName} ${t.supervisor?.middleName}`))).map((sup, i) => (
                                     <MenuItem key={i} value={sup}>{sup}</MenuItem>
                                 ))}
                             </TextField>

@@ -67,7 +67,7 @@ public static class EndpointGroups
                         consultant.LastName,
                         consultant.MiddleName,
                         UserActionType.Update,
-                        RoleNames.GetName(UserRoleType.Student),
+                        RoleNames.GetName(UserRoleType.Consultant),
                         DateTime.UtcNow));
                 return result;
             }).RequireAuthorization();
@@ -76,14 +76,20 @@ public static class EndpointGroups
             async (Consultant consultant, CoreContext context, IPublishEndpoint publishEndpoint) =>
             {
                 var result = await new ConsultantsQueries(context).UpdateConsultant(consultant);
+                var prev = await context.Consultants.FindAsync(consultant.Id);
+                if (prev == null)
+                {
+                    return Results.BadRequest();
+                }
+
                 await publishEndpoint.Publish(
                     new UserWithRoleActionEvent(
                         consultant.Userid,
-                        consultant.FirstName,
-                        consultant.LastName,
-                        consultant.MiddleName,
+                        string.IsNullOrEmpty(consultant.FirstName) ? prev.FirstName : consultant.FirstName,
+                        string.IsNullOrEmpty(consultant.LastName) ? prev.LastName : consultant.LastName,
+                        string.IsNullOrEmpty(consultant.MiddleName) ? prev.MiddleName : consultant.MiddleName,
                         UserActionType.Update,
-                        RoleNames.GetName(UserRoleType.Student),
+                        RoleNames.GetName(UserRoleType.Consultant),
                         DateTime.UtcNow));
                 return result;
             }).RequireAuthorization();
@@ -100,7 +106,7 @@ public static class EndpointGroups
                         consultant.LastName,
                         consultant.MiddleName,
                         UserActionType.Update,
-                        RoleNames.GetName(UserRoleType.Student),
+                        RoleNames.GetName(UserRoleType.Consultant),
                         DateTime.UtcNow));
                 return result;
             }).RequireAuthorization();
@@ -170,12 +176,18 @@ public static class EndpointGroups
             async (Lecturer lecturer, CoreContext context, IPublishEndpoint publishEndpoint) =>
             {
                 var result = await new LecturersQueries(context).UpdateLecturer(lecturer);
+                var prev = await context.Lecturers.FindAsync(lecturer.Id);
+                if (prev == null)
+                {
+                    return Results.BadRequest();
+                }
+
                 await publishEndpoint.Publish(
                     new UserWithRoleActionEvent(
                         lecturer.Userid,
-                        lecturer.FirstName,
-                        lecturer.LastName,
-                        lecturer.MiddleName,
+                        string.IsNullOrEmpty(lecturer.FirstName) ? prev.FirstName : lecturer.FirstName,
+                        string.IsNullOrEmpty(lecturer.LastName) ? prev.LastName : lecturer.LastName,
+                        string.IsNullOrEmpty(lecturer.MiddleName) ? prev.MiddleName : lecturer.MiddleName,
                         UserActionType.Update,
                         RoleNames.GetName(UserRoleType.Supervisor),
                         DateTime.UtcNow));
@@ -268,12 +280,18 @@ public static class EndpointGroups
             async (Student student, CoreContext context, IPublishEndpoint publishEndpoint) =>
             {
                 var result = await new StudentsQueries(context).UpdateStudent(student);
+                var prev = await context.Students.FindAsync(student.Id);
+                if (prev == null)
+                {
+                    return Results.BadRequest();
+                }
+
                 await publishEndpoint.Publish(
                     new UserWithRoleActionEvent(
                         student.Userid,
-                        student.FirstName,
-                        student.LastName,
-                        student.MiddleName,
+                        string.IsNullOrEmpty(student.FirstName) ? prev.FirstName : student.FirstName,
+                        string.IsNullOrEmpty(student.LastName) ? prev.LastName : student.LastName,
+                        string.IsNullOrEmpty(student.MiddleName) ? prev.MiddleName : student.MiddleName,
                         UserActionType.Update,
                         RoleNames.GetName(UserRoleType.Student),
                         DateTime.UtcNow));

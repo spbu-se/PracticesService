@@ -62,10 +62,10 @@ public class LecturersQueries(CoreContext context)
                 return Results.BadRequest();
             }
 
-            prev.FirstName = lecturer.FirstName;
-            prev.LastName = lecturer.LastName;
-            prev.MiddleName = lecturer.MiddleName;
-            prev.Department = lecturer.Department;
+            prev.FirstName = string.IsNullOrEmpty(lecturer.FirstName) ? prev.FirstName : lecturer.FirstName;
+            prev.LastName = string.IsNullOrEmpty(lecturer.LastName) ? prev.LastName : lecturer.LastName;
+            prev.MiddleName = string.IsNullOrEmpty(lecturer.MiddleName) ? prev.MiddleName : lecturer.MiddleName;
+            prev.Department = string.IsNullOrEmpty(lecturer.Department) ? prev.Department : lecturer.Department;
             prev.Cansupervisevkr = lecturer.Cansupervisevkr;
             await context.SaveChangesAsync();
             return Results.Ok();

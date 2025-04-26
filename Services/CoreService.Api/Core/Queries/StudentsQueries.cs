@@ -62,6 +62,9 @@ public class StudentsQueries(CoreContext context)
                 return Results.BadRequest();
             }
 
+            prev.FirstName = string.IsNullOrEmpty(student.FirstName) ? prev.FirstName : student.FirstName;
+            prev.LastName = string.IsNullOrEmpty(student.LastName) ? prev.LastName : student.LastName;
+            prev.MiddleName = string.IsNullOrEmpty(student.MiddleName) ? prev.MiddleName : student.MiddleName;
             prev.Groupid = student.Groupid;
             await context.SaveChangesAsync();
             return Results.Ok();
