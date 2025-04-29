@@ -6,6 +6,7 @@ using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using AuthService.Api;
 using AuthService.Api.Consumers;
 using AuthService.Api.Models;
 using Contracts;
@@ -124,6 +125,8 @@ builder.Services.AddMassTransit(
             });
     });
 
+builder.Services.AddScoped<TokenService>();
+
 var app = builder.Build();
 
 app.UseCors("CorsPolicy");
@@ -192,39 +195,51 @@ app.MapPost(
     });
 
 // **Login & Token Generation**
-app.MapPost(
-    "/login",
-    async (UserManager<ApplicationUser> userManager, LoginModel model) =>
+app.MapPost("/login", async (LoginModel login, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, TokenService tokenService) =>
+{
+    var user = await userManager.FindByEmailAsync(login.Email);
+    if (user == null)
     {
-        var user = await userManager.FindByEmailAsync(model.Email);
-        if (user == null || !await userManager.CheckPasswordAsync(user, model.Password))
-        {
-            return Results.Unauthorized();
-        }
+        return Results.BadRequest("Invalid credentials");
+    }
 
-        var userRoles = await userManager.GetRolesAsync(user);
+    var result = await signInManager.CheckPasswordSignInAsync(user, login.Password, false);
+    if (!result.Succeeded)
+    {
+        return Results.BadRequest("Invalid credentials");
+    }
 
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, user.UserName ?? "UnknownUser"),
-            new Claim(ClaimTypes.Email, user.Email ?? "unknown@example.com"),
-            new(ClaimTypes.GivenName, user.FirstName),
-            new(ClaimTypes.Surname, user.LastName),
-            new("middle_name", user.MiddleName ?? string.Empty),
-        };
+    var token = tokenService.GenerateJwtToken(user);
+    var refreshToken = await tokenService.GenerateRefreshToken(user);
 
-        // Add roles to token
-        claims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
-
-        var token = new JwtSecurityToken(
-            issuer: builder.Configuration["Jwt:Issuer"],
-            audience: builder.Configuration["Jwt:Audience"],
-            claims: claims,
-            expires: DateTime.UtcNow.AddDays(1),
-            signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256));
-
-        return Results.Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token) });
+    return Results.Ok(new AuthResponse
+    {
+        Token = token,
+        RefreshToken = refreshToken,
+        Expiration = DateTime.Now.AddMinutes(Convert.ToDouble(builder.Configuration["Jwt:ExpireMinutes"])),
     });
+});
+
+app.MapPost("/refresh", async (HttpContext context, TokenService tokenService) =>
+{
+    var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", string.Empty);
+    var refreshToken = context.Request.Headers["X-Refresh-Token"];
+
+    if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(refreshToken))
+    {
+        return Results.BadRequest("Invalid tokens");
+    }
+
+    try
+    {
+        var response = await tokenService.RefreshTokenAsync(token, refreshToken);
+        return Results.Ok(response);
+    }
+    catch (SecurityTokenException ex)
+    {
+        return Results.BadRequest(ex.Message);
+    }
+});
 
 // **Add Role to User (Admin Only)**
 app.MapPost(

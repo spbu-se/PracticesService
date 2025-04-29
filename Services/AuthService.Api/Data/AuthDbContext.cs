@@ -2,6 +2,7 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
+using AuthService.Api.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +20,11 @@ public class AuthDbContext : IdentityDbContext<ApplicationUser>
         : base(options)
     {
     }
+
+    /// <summary>
+    /// Gets or sets refresh token table.
+    /// </summary>
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     /// <summary>
     /// On model creating method.
