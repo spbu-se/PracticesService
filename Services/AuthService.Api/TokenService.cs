@@ -122,7 +122,6 @@ namespace AuthService.Api
             {
                 Token = newToken,
                 RefreshToken = newRefreshToken,
-                Expiration = DateTime.Now.AddMinutes(Convert.ToDouble(this.config["Jwt:ExpireMinutes"])),
             };
         }
 

@@ -1,6 +1,8 @@
 import axios, {AxiosHeaders} from "axios";
 import {authHeader} from "@shared/services/auth.service.ts";
 import {InputTheme, Theme} from "../../entities/Theme.ts";
+import {setRefreshToken, setJWTToken} from "@shared/services/localStorage.service.ts";
+import {refreshToken} from "@shared/services/auth.service.ts";
 
 // Axios service for API requesting
 export const axiosService = axios.create({
@@ -23,11 +25,24 @@ axiosService.interceptors.response
     .use(function (response) {
         return response;
     }, async function (error) {
-        if (error.response && error.response.status === 401) {
-            const loginUrl = "/login";
+        const loginUrl = "/login"
+        try {
+            if (error.response.status === 401) {
+                if (error.config.url === "api/refresh/") {
+                    setJWTToken("");
+                    setRefreshToken("");
+                    window.location.assign(loginUrl);
+                    return Promise.reject(error);
+                }
+
+                await refreshToken()
+                return axiosService(error.config);
+            }
+            return Promise.reject(error);
+        } catch {
             window.location.assign(loginUrl);
+            return;
         }
-        return Promise.reject(error);
     });
 
 export const login = (email: string, password: string) => axiosService.post(`auth-api/login`, {

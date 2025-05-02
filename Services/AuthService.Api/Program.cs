@@ -216,14 +216,13 @@ app.MapPost("/login", async (LoginModel login, UserManager<ApplicationUser> user
     {
         Token = token,
         RefreshToken = refreshToken,
-        Expiration = DateTime.Now.AddMinutes(Convert.ToDouble(builder.Configuration["Jwt:ExpireMinutes"])),
     });
 });
 
-app.MapPost("/refresh", async (HttpContext context, TokenService tokenService) =>
+app.MapPost("/refresh", async (HttpContext context, TokenService tokenService, AuthResponse model) =>
 {
-    var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", string.Empty);
-    var refreshToken = context.Request.Headers["X-Refresh-Token"];
+    var token = model.Token;
+    var refreshToken = model.RefreshToken;
 
     if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(refreshToken))
     {

@@ -18,9 +18,4 @@ public class AuthResponse
     /// Gets or sets Refresh Token.
     /// </summary>
     public string RefreshToken { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Gets or sets Expiration.
-    /// </summary>
-    public DateTime Expiration { get; set; }
 }
