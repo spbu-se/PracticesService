@@ -2,12 +2,12 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService;
+namespace CoreService.Api.Endpoints;
 
 using Contracts;
-using CoreService.Core;
-using CoreService.Core.Models;
-using CoreService.Core.Queries;
+using CoreService.Api.Core;
+using CoreService.Api.Core.Models;
+using CoreService.Api.Core.Queries;
 using MassTransit;
 
 /// <summary>
@@ -232,6 +232,9 @@ public static class EndpointGroups
         group.MapGet(
             "/{practiceId:int}",
             (int practiceId, CoreContext context) => new PracticesQueries(context).GetPractices(practiceId).Result);
+        group.MapGet(
+            "/query",
+            (string userId, CoreContext context) => new PracticesQueries(context).GetQueriedPractices(userId).Result);
         group.MapPost(
             "/",
             (Practice practice, CoreContext context) => new PracticesQueries(context).InsertPractice(practice).Result).RequireAuthorization();
@@ -259,6 +262,9 @@ public static class EndpointGroups
         group.MapGet(
             "/{studentId:int}",
             (int studentId, CoreContext context) => new StudentsQueries(context).GetStudents(studentId).Result);
+        group.MapGet(
+            "/byUserId",
+            (string userId, CoreContext context) => new StudentsQueries(context).GetStudentByUserId(userId).Result);
         group.MapPost(
             "/",
             async (Student student, CoreContext context, IPublishEndpoint publishEndpoint) =>

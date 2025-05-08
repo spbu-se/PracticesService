@@ -1,7 +1,7 @@
 import {useParams, useNavigate} from "react-router-dom";
 import {useEffect, useState} from "react";
-import {getThemes} from "../shared/services/axios.service.ts";
-import {Theme} from "../entities/Theme.ts";
+import {getTheme} from "@/shared/services/axios.service.ts";
+import {Theme} from "@/entities/Theme.ts";
 import {Layout} from "@shared/ui/layout/Layout.tsx";
 import {Button, Container, Typography, Paper, CircularProgress, Box} from "@mui/material";
 
@@ -11,7 +11,9 @@ export function ThemePage() {
     const [theme, setTheme] = useState<Theme | null>(null);
 
     useEffect(() => {
-        getThemes().then(response => {
+        if (!id) return;
+            
+        getTheme(parseInt(id)).then(response => {
             const selectedTheme = response.data.find((t: Theme) => t.id.toString() === id);
             setTheme(selectedTheme);
         });

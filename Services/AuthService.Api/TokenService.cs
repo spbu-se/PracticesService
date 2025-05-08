@@ -13,6 +13,7 @@ namespace AuthService.Api
     using System.Text;
     using System.Threading.Tasks;
     using AuthService.Api.Models;
+    using Microsoft.AspNetCore.Identity;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.IdentityModel.Tokens;
 
@@ -23,16 +24,19 @@ namespace AuthService.Api
     {
         private readonly IConfiguration config;
         private readonly AuthDbContext context;
+        private readonly UserManager<ApplicationUser> userManager;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TokenService"/> class.
         /// </summary>
         /// <param name="config">The application configuration.</param>
         /// <param name="context">The database context.</param>
-        public TokenService(IConfiguration config, AuthDbContext context)
+        /// <param name="userManager">User manager.</param>
+        public TokenService(IConfiguration config, AuthDbContext context, UserManager<ApplicationUser> userManager)
         {
             this.config = config;
             this.context = context;
+            this.userManager = userManager;
         }
 
         /// <summary>
@@ -40,14 +44,20 @@ namespace AuthService.Api
         /// </summary>
         /// <param name="user">The user to generate token for.</param>
         /// <returns>The generated JWT token.</returns>
-        public string GenerateJwtToken(ApplicationUser user)
+        public async Task<string> GenerateJwtToken(ApplicationUser user)
         {
+            var userRoles = await this.userManager.GetRolesAsync(user);
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
+                new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                new(ClaimTypes.GivenName, user.FirstName),
+                new(ClaimTypes.Surname, user.LastName),
+                new("middle_name", user.MiddleName ?? string.Empty),
             };
+
+            claims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.config["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -74,7 +84,7 @@ namespace AuthService.Api
             {
                 UserId = user.Id,
                 Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
-                Expires = DateTime.UtcNow.AddDays(7), // Refresh token lasts 7 days
+                Expires = DateTime.UtcNow.AddDays(7),
                 Revoked = null,
             };
 
@@ -110,11 +120,9 @@ namespace AuthService.Api
                 throw new SecurityTokenException("Invalid refresh token");
             }
 
-            // Generate new tokens
-            var newToken = this.GenerateJwtToken(user);
+            var newToken = await this.GenerateJwtToken(user);
             var newRefreshToken = await this.GenerateRefreshToken(user);
 
-            // Revoke old refresh token
             storedRefreshToken.Revoked = DateTime.UtcNow;
             await this.context.SaveChangesAsync();
 
@@ -139,7 +147,7 @@ namespace AuthService.Api
                 ValidateIssuer = false,
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.config["Jwt:Key"])),
-                ValidateLifetime = false, // We want to get claims from expired token
+                ValidateLifetime = false,
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();

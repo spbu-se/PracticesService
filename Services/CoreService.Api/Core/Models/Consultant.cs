@@ -2,10 +2,7 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService.Core.Models;
-
-using System;
-using System.Collections.Generic;
+namespace CoreService.Api.Core.Models;
 
 /// <summary>
 /// Consultant table model.
@@ -46,4 +43,9 @@ public partial class Consultant
     /// Gets or sets virtual Themes.
     /// </summary>
     public virtual ICollection<Theme> Themes { get; set; } = new List<Theme>();
+
+    /// <summary>
+    /// Gets or sets virtual Practices.
+    /// </summary>
+    public virtual ICollection<Practice> Practices { get; set; } = new List<Practice>();
 }

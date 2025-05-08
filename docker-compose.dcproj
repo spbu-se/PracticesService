@@ -13,4 +13,8 @@
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
   </ItemGroup>
+  <ItemGroup>
+    <TypeScriptCompile Include="frontend\src\entities\Group.ts" />
+    <TypeScriptCompile Include="frontend\src\entities\Student.ts" />
+  </ItemGroup>
 </Project>

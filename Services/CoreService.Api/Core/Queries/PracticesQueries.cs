@@ -2,9 +2,9 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService.Core.Queries;
+namespace CoreService.Api.Core.Queries;
 
-using CoreService.Core.Models;
+using CoreService.Api.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -25,6 +25,24 @@ public class PracticesQueries(CoreContext context)
         {
             result = result.Where(practice => practice.Id == id);
         }
+
+        return await result.ToListAsync();
+    }
+
+    /// <summary>
+    /// Gets queried Practices.
+    /// </summary>
+    /// <param name="userId">User id.</param>
+    /// <returns>List of practices.</returns>
+    public async Task<IEnumerable<Practice>> GetQueriedPractices(string userId)
+    {
+        var result = context.Practices.Include(p => p.Student).AsQueryable();
+        if (string.IsNullOrEmpty(userId))
+        {
+            return new List<Practice>();
+        }
+
+        result = result.Where(p => p.Student.Userid == userId);
 
         return await result.ToListAsync();
     }
@@ -56,6 +74,10 @@ public class PracticesQueries(CoreContext context)
                 return Results.BadRequest();
             }
 
+            prev.Themeid = practice.Themeid;
+            prev.Consultantid = practice.Consultantid;
+            prev.Supervisorid = practice.Supervisorid;
+            prev.Studentid = practice.Studentid;
             prev.Finalgrade = practice.Finalgrade;
             prev.Status = string.IsNullOrEmpty(practice.Status) ? prev.Status : practice.Status;
             prev.Updateddate = DateTime.UtcNow;

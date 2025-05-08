@@ -2,7 +2,7 @@ import { Layout } from "@shared/ui/layout/Layout.tsx";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { login } from "@shared/services/axios.service.ts";
 import { LoginResponse } from "@entities/LoginResponse.ts";
-import { setJWTToken } from "@shared/services/localStorage.service.ts";
+import { setJWTToken, setRefreshToken } from "@shared/services/localStorage.service.ts";
 import {
     Container,
     TextField,
@@ -31,6 +31,7 @@ export function LoginPage() {
             .then(response => {
                 const loginResponse: LoginResponse = response.data;
                 setJWTToken(loginResponse.token);
+                setRefreshToken(loginResponse.refreshToken);
                 window.location.assign("/");
             })
             .catch(e => {

@@ -5,9 +5,9 @@
 namespace CoreService.Api.Consumers
 {
     using Contracts;
-    using CoreService.Core;
-    using CoreService.Core.Models;
-    using CoreService.Core.Queries;
+    using CoreService.Api.Core;
+    using CoreService.Api.Core.Models;
+    using CoreService.Api.Core.Queries;
     using MassTransit;
 
     /// <summary>

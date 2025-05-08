@@ -138,23 +138,20 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// **User Registration**
 app.MapPost(
     "/register",
     async (
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole> roleManager,
         IPublishEndpoint publishEndpoint,
-        string email,
-        string password,
         ApplicationUserDTO userDto) =>
     {
         var user = new ApplicationUser
         {
-            UserName = email, Email = email, FirstName = userDto.FirstName, LastName = userDto.LastName,
+            UserName = userDto.Email, Email = userDto.Email, FirstName = userDto.FirstName, LastName = userDto.LastName,
             MiddleName = userDto.MiddleName,
         };
-        var result = await userManager.CreateAsync(user, password);
+        var result = await userManager.CreateAsync(user, userDto.Password);
 
         if (!result.Succeeded)
         {
@@ -194,7 +191,6 @@ app.MapPost(
             });
     });
 
-// **Login & Token Generation**
 app.MapPost("/login", async (LoginModel login, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, TokenService tokenService) =>
 {
     var user = await userManager.FindByEmailAsync(login.Email);
@@ -209,7 +205,7 @@ app.MapPost("/login", async (LoginModel login, UserManager<ApplicationUser> user
         return Results.BadRequest("Invalid credentials");
     }
 
-    var token = tokenService.GenerateJwtToken(user);
+    var token = await tokenService.GenerateJwtToken(user);
     var refreshToken = await tokenService.GenerateRefreshToken(user);
 
     return Results.Ok(new AuthResponse
@@ -268,6 +264,63 @@ app.MapPost(
         await userManager.AddToRoleAsync(user, role);
         return Results.Ok($"Role '{role}' added to {email}");
     }).RequireAuthorization();
+
+app.MapGet("/user", async (UserManager<ApplicationUser> userManager, string userId) =>
+{
+    var user = await userManager.FindByIdAsync(userId);
+    if (user == null)
+    {
+        return null;
+    }
+
+    var roles = await userManager.GetRolesAsync(user);
+    var model = new UserDTO()
+    {
+        UserId = user.Id,
+        Email = user.Email ?? string.Empty,
+        UserName = user.UserName ?? string.Empty,
+        FirstName = user.FirstName,
+        LastName = user.LastName,
+        MiddleName = user.MiddleName,
+        Roles = roles.ToArray(),
+    };
+    return model;
+});
+
+app.MapGet("/userId", async (UserManager<ApplicationUser> userManager, string userName) =>
+{
+    var user = await userManager.FindByNameAsync(userName);
+    if (user == null)
+    {
+        return null;
+    }
+
+    return user.Id;
+});
+
+app.MapGet("/users", async (UserManager<ApplicationUser> userManager) =>
+{
+    var users = await userManager.Users.ToListAsync();
+
+    var userDtos = new List<UserDTO>();
+
+    foreach (var user in users)
+    {
+        var roles = await userManager.GetRolesAsync(user);
+        userDtos.Add(new UserDTO
+        {
+            UserId = user.Id,
+            Email = user.Email ?? string.Empty,
+            UserName = user.UserName ?? string.Empty,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            MiddleName = user.MiddleName,
+            Roles = roles.ToArray(),
+        });
+    }
+
+    return Results.Ok(userDtos);
+}).RequireAuthorization("AdminOnly");
 
 // **Ensure Roles Exist in Database**
 using (var scope = app.Services.CreateScope())

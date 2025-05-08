@@ -12,6 +12,16 @@ using System.ComponentModel.DataAnnotations;
 public class ApplicationUserDTO
 {
     /// <summary>
+    /// Gets or sets user email.
+    /// </summary>
+    public required string Email { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets user password.
+    /// </summary>
+    public required string Password { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets FirstName column.
     /// </summary>
     [MaxLength(100)]

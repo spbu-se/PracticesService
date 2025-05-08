@@ -1,16 +1,21 @@
-﻿// <copyright file="ApplicationUserDTO.cs" company="Gleb Kargin">
+﻿// <copyright file="UserDTO.cs" company="Gleb Kargin">
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-using System.ComponentModel.DataAnnotations;
+namespace Contracts;
 
-namespace CoreService.Core.Models;
+using System.ComponentModel.DataAnnotations;
 
 /// <summary>
 /// Application User DTO.
 /// </summary>
-public class ApplicationUserDTO
+public class UserDTO
 {
+    /// <summary>
+    /// Gets or sets User Id column.
+    /// </summary>
+    public string UserId { get; set; } = null!;
+
     /// <summary>
     /// Gets or sets Email column.
     /// </summary>

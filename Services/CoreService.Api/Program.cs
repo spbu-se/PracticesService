@@ -5,10 +5,10 @@
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Contracts;
-using CoreService;
 using CoreService.Api.Consumers;
-using CoreService.Core;
-using CoreService.Core.Models;
+using CoreService.Api.Core;
+using CoreService.Api.Endpoints;
+using CoreService.Api.Services;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.Json;
@@ -47,6 +47,11 @@ builder.Services.AddSwaggerGen(c =>
             new List<string>()
         },
     });
+});
+
+builder.Services.AddHttpClient("AuthService", client =>
+{
+    client.BaseAddress = new Uri("http://auth.api:8080/");
 });
 
 builder.Services.AddAuthentication("GatewayAuth")
@@ -97,6 +102,8 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+builder.Services.AddScoped<UserResolverService>();
+
 var app = builder.Build();
 
 app.UseCors("CorsPolicy");
@@ -129,7 +136,7 @@ app.MapGroup("api/practices/").PracticesGroup().WithTags("Practices");
 // Students Endpoints
 app.MapGroup("api/students/").StudentsGroup().WithTags("Students");
 
-app.MapGet("api/me", (HttpContext context) =>
+app.MapGet("api/me", async (HttpContext context, UserResolverService userResolver) =>
 {
     var user = context.User;
 
@@ -141,8 +148,10 @@ app.MapGet("api/me", (HttpContext context) =>
 
     var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
 
-    return new ApplicationUserDTO()
+    var userId = await userResolver.GetUserIdAsync(username);
+    return new UserDTO()
     {
+        UserId = userId ?? string.Empty,
         UserName = username,
         FirstName = firstName,
         LastName = lastName,

@@ -2,9 +2,9 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService.Core.Queries;
+namespace CoreService.Api.Core.Queries;
 
-using CoreService.Core.Models;
+using CoreService.Api.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -27,6 +27,18 @@ public class StudentsQueries(CoreContext context)
         }
 
         return await result.ToListAsync();
+    }
+
+    /// <summary>
+    /// Gets Student by UserId.
+    /// </summary>
+    /// <param name="userId">User Id.</param>
+    /// <returns>Student with selected user id.</returns>
+    public async Task<Student?> GetStudentByUserId(string userId)
+    {
+        var result = await context.Students.FirstOrDefaultAsync(s => s.Userid == userId);
+
+        return result;
     }
 
     /// <summary>

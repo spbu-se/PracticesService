@@ -2,9 +2,9 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService.Core;
+namespace CoreService.Api.Core;
 
-using CoreService.Core.Models;
+using CoreService.Api.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -145,6 +145,8 @@ public partial class CoreContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.Studentid).HasColumnName("studentid");
+            entity.Property(e => e.Consultantid).HasColumnName("consultantid");
+            entity.Property(e => e.Supervisorid).HasColumnName("supervisorid");
             entity.Property(e => e.Themeid).HasColumnName("themeid");
             entity.Property(e => e.Type)
                 .HasMaxLength(255)
@@ -158,6 +160,16 @@ public partial class CoreContext : DbContext
                 .HasForeignKey(d => d.Studentid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("student_fk");
+
+            entity.HasOne(d => d.Consultant).WithMany(p => p.Practices)
+                .HasForeignKey(d => d.Consultantid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("consultant_fk");
+
+            entity.HasOne(d => d.Supervisor).WithMany(p => p.Practices)
+                .HasForeignKey(d => d.Supervisorid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("supervisor_fk");
 
             entity.HasOne(d => d.Theme).WithMany(p => p.Practices)
                 .HasForeignKey(d => d.Themeid)

@@ -39,7 +39,7 @@
       <ProjectReference Include="..\..\Helpers\GatewayAuthHandler\GatewayAuthHandler.csproj" />
       <ProjectReference Include="..\..\Services\AuthService.Api\AuthService.Api.csproj" />
       <ProjectReference Include="..\..\Services\CoreService.Api\CoreService.Api.csproj" />
-      <ProjectReference Include="..\..\Shared\Contracts\Contracts.csproj" />
+      <ProjectReference Include="..\..\Shared\Shared\Shared.csproj" />
     </ItemGroup>
 
 </Project>

@@ -16,11 +16,12 @@ import {
     Stack
 } from "@mui/material";
 import {useNavigate, useParams} from "react-router-dom";
-import {InputTheme, Theme} from "../entities/Theme.ts";
-import {getConsultants, getLecturers, getMe, getThemes, postTheme, putTheme} from "../shared/services/axios.service.ts";
+import {InputTheme, Theme} from "@/entities/Theme.ts";
+import {getConsultants, getLecturers, getMe, getThemes, postTheme, putTheme} from "@/shared/services/axios.service.ts";
 import MDEditor from '@uiw/react-md-editor';
-import {Lecturer} from "../entities/Lecturer.ts";
-import {Consultant} from "../entities/Consultant.ts";
+import {Lecturer} from "@/entities/Lecturer.ts";
+import {Consultant} from "@/entities/Consultant.ts";
+import { User } from "@/entities/User.ts";
 
 export function EditThemePage() {
     const {id} = useParams();
@@ -39,7 +40,7 @@ export function EditThemePage() {
     const [department, setDepartment] = useState<string>();
     const [sources, setSources] = useState<string[]>();
     const [source, setSource] = useState("")
-    const [me, setMe] = useState("")
+    const [me, setMe] = useState<User>()
     const navigate = useNavigate();
     const [lecturers, setLecturers] = useState<Lecturer[]>();
     const [consultants, setConsultants] = useState<Consultant[]>();
@@ -70,7 +71,8 @@ export function EditThemePage() {
         });
 
         getMe().then(response => {
-            setMe(response.data);
+            const data: User = response.data
+            setMe(data);
         })
     }, []);
 
@@ -121,7 +123,7 @@ export function EditThemePage() {
                 description: description,
                 level: transformLevelsToString(levels),
                 source: source,
-                suggestedby: me,
+                suggestedby: me.userId,
                 department: department,
                 supervisorid: lecturerId,
                 consultantid: consultantId

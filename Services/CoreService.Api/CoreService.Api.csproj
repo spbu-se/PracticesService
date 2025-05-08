@@ -16,7 +16,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\Helpers\GatewayAuthHandler\GatewayAuthHandler.csproj" />
-		<ProjectReference Include="..\..\Shared\Contracts\Contracts.csproj" />
+		<ProjectReference Include="..\..\Shared\Shared\Shared.csproj" />
 	</ItemGroup>
 		
   <ItemGroup>

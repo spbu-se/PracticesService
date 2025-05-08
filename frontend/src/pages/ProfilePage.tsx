@@ -25,7 +25,6 @@ export function ProfilePage() {
     useEffect(() => {
         getMe().then(response => {
             const data: User = response.data
-            console.log(data)
             setUser(data);
             setLoading(false);
         }).catch(() => {

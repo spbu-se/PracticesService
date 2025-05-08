@@ -142,8 +142,8 @@ public class AuthServiceTests : IAsyncDisposable
             })
             .Build();
 
-        var tokenService = new TokenService(configuration, this.dbContext);
-        var token = tokenService.GenerateJwtToken(user);
+        var tokenService = new TokenService(configuration, this.dbContext, this.userManager);
+        var token = await tokenService.GenerateJwtToken(user);
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 

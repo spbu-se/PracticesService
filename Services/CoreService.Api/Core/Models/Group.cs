@@ -2,10 +2,7 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService.Core.Models;
-
-using System;
-using System.Collections.Generic;
+namespace CoreService.Api.Core.Models;
 
 /// <summary>
 /// Group model.
