@@ -124,6 +124,15 @@ namespace AuthService.Api
             var newRefreshToken = await this.GenerateRefreshToken(user);
 
             storedRefreshToken.Revoked = DateTime.UtcNow;
+
+            // Periodically remove old revoked/expired tokens
+            var cutoff = DateTime.UtcNow.AddMonths(-1);
+            var oldTokens = await this.context.RefreshTokens
+                .Where(t => t.Revoked < cutoff || t.Expires < cutoff)
+                .ToListAsync();
+
+            this.context.RefreshTokens.RemoveRange(oldTokens);
+
             await this.context.SaveChangesAsync();
 
             return new AuthResponse

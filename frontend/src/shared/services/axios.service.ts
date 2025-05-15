@@ -29,7 +29,7 @@ axiosService.interceptors.response
         const loginUrl = "/login"
         try {
             if (error.response.status === 401) {
-                if (error.config.url === "api/refresh/") {
+                if (error.config.url === "/refresh") {
                     setJWTToken("");
                     setRefreshToken("");
                     window.location.assign(loginUrl);

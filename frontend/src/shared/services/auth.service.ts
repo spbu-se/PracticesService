@@ -23,8 +23,9 @@ export const refreshToken = async () => {
     const access = getJWTToken()
     const response = await axiosService
         .post("auth-api/refresh/", {refreshToken: refresh, token: access});
-    if (response.data.token) {
+    if (response.data.token && response.data.refreshToken) {
         setJWTToken(response.data.token)
+        setRefreshToken(response.data.refreshToken)
     }
 }
 
