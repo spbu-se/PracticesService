@@ -2,9 +2,9 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService.Core.Queries;
+namespace CoreService.Api.Core.Queries;
 
-using CoreService.Core.Models;
+using CoreService.Api.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -34,11 +34,17 @@ public class ConsultantsQueries(CoreContext context)
     /// </summary>
     /// <param name="consultant">Input consultant.</param>
     /// <returns>Response status.</returns>
-    public async Task<int> InsertConsultant(Consultant consultant)
+    public async Task<IResult> InsertOrUpdateConsultant(Consultant consultant)
     {
+        var prev = await context.Consultants.FindAsync(consultant.Id);
+        if (prev == null)
+        {
+            return await this.UpdateConsultant(consultant);
+        }
+
         context.Consultants.Add(consultant);
         await context.SaveChangesAsync();
-        return consultant.Id;
+        return Results.Ok(consultant.Id);
     }
 
     /// <summary>
@@ -56,8 +62,10 @@ public class ConsultantsQueries(CoreContext context)
                 return Results.BadRequest();
             }
 
-            prev.Name = consultant.Name;
-            prev.Contact = consultant.Contact;
+            prev.FirstName = string.IsNullOrEmpty(consultant.FirstName) ? prev.FirstName : consultant.FirstName;
+            prev.LastName = string.IsNullOrEmpty(consultant.LastName) ? prev.LastName : consultant.LastName;
+            prev.MiddleName = string.IsNullOrEmpty(consultant.MiddleName) ? prev.MiddleName : consultant.MiddleName;
+            prev.Contact = string.IsNullOrEmpty(consultant.Contact) ? prev.Contact : consultant.Contact;
             await context.SaveChangesAsync();
             return Results.Ok();
         }

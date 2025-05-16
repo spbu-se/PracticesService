@@ -2,11 +2,9 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService.Core;
+namespace CoreService.Api.Core;
 
-using System;
-using System.Collections.Generic;
-using CoreService.Core.Models;
+using CoreService.Api.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -72,14 +70,20 @@ public partial class CoreContext : DbContext
 
             entity.ToTable("consultants");
 
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(100)
+                .HasColumnName("firstname");
+            entity.Property(e => e.LastName)
+                .HasMaxLength(100)
+                .HasColumnName("lastname");
+            entity.Property(e => e.MiddleName)
+                .HasMaxLength(100)
+                .HasColumnName("middlename");
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Contact)
                 .HasMaxLength(500)
                 .HasColumnName("contact");
-            entity.Property(e => e.Name)
-                .HasMaxLength(255)
-                .HasColumnName("name");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+            entity.Property(e => e.Userid).HasMaxLength(255).HasColumnName("userid");
         });
 
         modelBuilder.Entity<Group>(entity =>
@@ -105,13 +109,22 @@ public partial class CoreContext : DbContext
             entity.ToTable("lecturers");
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(100)
+                .HasColumnName("firstname");
+            entity.Property(e => e.LastName)
+                .HasMaxLength(100)
+                .HasColumnName("lastname");
+            entity.Property(e => e.MiddleName)
+                .HasMaxLength(100)
+                .HasColumnName("middlename");
             entity.Property(e => e.Cansupervisevkr)
                 .HasDefaultValue(false)
                 .HasColumnName("cansupervisevkr");
             entity.Property(e => e.Department)
                 .HasMaxLength(500)
                 .HasColumnName("department");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+            entity.Property(e => e.Userid).HasMaxLength(255).HasColumnName("userid");
         });
 
         modelBuilder.Entity<Practice>(entity =>
@@ -132,6 +145,8 @@ public partial class CoreContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.Studentid).HasColumnName("studentid");
+            entity.Property(e => e.Consultantid).HasColumnName("consultantid");
+            entity.Property(e => e.Supervisorid).HasColumnName("supervisorid");
             entity.Property(e => e.Themeid).HasColumnName("themeid");
             entity.Property(e => e.Type)
                 .HasMaxLength(255)
@@ -146,6 +161,16 @@ public partial class CoreContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("student_fk");
 
+            entity.HasOne(d => d.Consultant).WithMany(p => p.Practices)
+                .HasForeignKey(d => d.Consultantid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("consultant_fk");
+
+            entity.HasOne(d => d.Supervisor).WithMany(p => p.Practices)
+                .HasForeignKey(d => d.Supervisorid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("supervisor_fk");
+
             entity.HasOne(d => d.Theme).WithMany(p => p.Practices)
                 .HasForeignKey(d => d.Themeid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -158,9 +183,18 @@ public partial class CoreContext : DbContext
 
             entity.ToTable("students");
 
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(100)
+                .HasColumnName("firstname");
+            entity.Property(e => e.LastName)
+                .HasMaxLength(100)
+                .HasColumnName("lastname");
+            entity.Property(e => e.MiddleName)
+                .HasMaxLength(100)
+                .HasColumnName("middlename");
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Groupid).HasColumnName("groupid");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+            entity.Property(e => e.Userid).HasMaxLength(255).HasColumnName("userid");
 
             entity.HasOne(d => d.Group).WithMany(p => p.Students)
                 .HasForeignKey(d => d.Groupid)
@@ -192,8 +226,11 @@ public partial class CoreContext : DbContext
             entity.Property(e => e.Level)
                 .HasMaxLength(255)
                 .HasColumnName("level");
-            entity.Property(e => e.Suggestedby)
+            entity.Property(e => e.Source)
                 .HasMaxLength(500)
+                .HasColumnName("source");
+            entity.Property(e => e.Suggestedby)
+                .HasMaxLength(100)
                 .HasColumnName("suggestedby");
             entity.Property(e => e.Supervisorid).HasColumnName("supervisorid");
             entity.Property(e => e.Tags)

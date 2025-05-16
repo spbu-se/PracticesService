@@ -2,9 +2,9 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService.Core.Queries;
+namespace CoreService.Api.Core.Queries;
 
-using CoreService.Core.Models;
+using CoreService.Api.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -56,8 +56,8 @@ public class GroupsQueries(CoreContext context)
                 return Results.BadRequest();
             }
 
-            prev.Name = group.Name;
-            prev.Program = group.Program;
+            prev.Name = string.IsNullOrEmpty(group.Name) ? prev.Name : group.Name;
+            prev.Program = string.IsNullOrEmpty(group.Program) ? prev.Program : group.Program;
             prev.Year = group.Year;
             await context.SaveChangesAsync();
             return Results.Ok();

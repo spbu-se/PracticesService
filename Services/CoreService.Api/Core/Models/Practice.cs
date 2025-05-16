@@ -2,10 +2,7 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService.Core.Models;
-
-using System;
-using System.Collections.Generic;
+namespace CoreService.Api.Core.Models;
 
 /// <summary>
 /// Practice model.
@@ -21,6 +18,16 @@ public partial class Practice
     /// Gets or sets StudentId column.
     /// </summary>
     public int Studentid { get; set; }
+
+    /// <summary>
+    /// Gets or sets ConsultantId column.
+    /// </summary>
+    public int? Consultantid { get; set; }
+
+    /// <summary>
+    /// Gets or sets SupervisorId column.
+    /// </summary>
+    public int Supervisorid { get; set; }
 
     /// <summary>
     /// Gets or sets ThemeId column.
@@ -56,6 +63,16 @@ public partial class Practice
     /// Gets or sets virtual Student.
     /// </summary>
     public virtual Student Student { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets virtual Consultant.
+    /// </summary>
+    public virtual Consultant Consultant { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets virtual Supervisor.
+    /// </summary>
+    public virtual Lecturer Supervisor { get; set; } = null!;
 
     /// <summary>
     /// Gets or sets virtual Theme.

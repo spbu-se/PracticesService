@@ -2,11 +2,13 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService;
+namespace CoreService.Api.Endpoints;
 
-using CoreService.Core;
-using CoreService.Core.Models;
-using CoreService.Core.Queries;
+using Contracts;
+using CoreService.Api.Core;
+using CoreService.Api.Core.Models;
+using CoreService.Api.Core.Queries;
+using MassTransit;
 
 /// <summary>
 /// Endpoints groups.
@@ -28,14 +30,14 @@ public static class EndpointGroups
             (int themeId, CoreContext context) => new ThemesQueries(context).GetThemes(themeId).Result);
         group.MapPost(
             "/",
-            (Theme theme, CoreContext context) => new ThemesQueries(context).InsertTheme(theme).Result);
+            (Theme theme, CoreContext context) => new ThemesQueries(context).InsertTheme(theme).Result).RequireAuthorization();
         group.MapPut(
             "/",
             (Theme theme, CoreContext context) =>
-                new ThemesQueries(context).UpdateTheme(theme).Result);
+                new ThemesQueries(context).UpdateTheme(theme).Result).RequireAuthorization();
         group.MapDelete(
             "/{themeId:int}",
-            (int themeId, CoreContext context) => new ThemesQueries(context).DeleteTheme(themeId).Result);
+            (int themeId, CoreContext context) => new ThemesQueries(context).DeleteTheme(themeId).Result).RequireAuthorization();
 
         return group;
     }
@@ -55,14 +57,59 @@ public static class EndpointGroups
             (int consultantId, CoreContext context) => new ConsultantsQueries(context).GetConsultants(consultantId).Result);
         group.MapPost(
             "/",
-            (Consultant consultant, CoreContext context) => new ConsultantsQueries(context).InsertConsultant(consultant).Result);
+            async (Consultant consultant, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var result = await new ConsultantsQueries(context).InsertOrUpdateConsultant(consultant);
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        consultant.Userid,
+                        consultant.FirstName,
+                        consultant.LastName,
+                        consultant.MiddleName,
+                        UserActionType.Update,
+                        RoleNames.GetName(UserRoleType.Consultant),
+                        DateTime.UtcNow));
+                return result;
+            }).RequireAuthorization();
         group.MapPut(
             "/",
-            (Consultant consultant, CoreContext context) =>
-                new ConsultantsQueries(context).UpdateConsultant(consultant).Result);
+            async (Consultant consultant, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var result = await new ConsultantsQueries(context).UpdateConsultant(consultant);
+                var prev = await context.Consultants.FindAsync(consultant.Id);
+                if (prev == null)
+                {
+                    return Results.BadRequest();
+                }
+
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        consultant.Userid,
+                        string.IsNullOrEmpty(consultant.FirstName) ? prev.FirstName : consultant.FirstName,
+                        string.IsNullOrEmpty(consultant.LastName) ? prev.LastName : consultant.LastName,
+                        string.IsNullOrEmpty(consultant.MiddleName) ? prev.MiddleName : consultant.MiddleName,
+                        UserActionType.Update,
+                        RoleNames.GetName(UserRoleType.Consultant),
+                        DateTime.UtcNow));
+                return result;
+            }).RequireAuthorization();
         group.MapDelete(
             "/{consultantId:int}",
-            (int consultantId, CoreContext context) => new ConsultantsQueries(context).DeleteConsultant(consultantId).Result);
+            async (int consultantId, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var consultant = await context.Consultants.FindAsync(consultantId);
+                var result = await new ConsultantsQueries(context).DeleteConsultant(consultantId);
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        consultant.Userid,
+                        consultant.FirstName,
+                        consultant.LastName,
+                        consultant.MiddleName,
+                        UserActionType.Update,
+                        RoleNames.GetName(UserRoleType.Consultant),
+                        DateTime.UtcNow));
+                return result;
+            }).RequireAuthorization();
 
         return group;
     }
@@ -82,14 +129,14 @@ public static class EndpointGroups
             (int groupId, CoreContext context) => new GroupsQueries(context).GetGroups(groupId).Result);
         group.MapPost(
             "/",
-            (Group group, CoreContext context) => new GroupsQueries(context).InsertGroup(group).Result);
+            (Group group, CoreContext context) => new GroupsQueries(context).InsertGroup(group).Result).RequireAuthorization();
         group.MapPut(
             "/",
             (Group group, CoreContext context) =>
-                new GroupsQueries(context).UpdateGroup(group).Result);
+                new GroupsQueries(context).UpdateGroup(group).Result).RequireAuthorization();
         group.MapDelete(
             "/{groupId:int}",
-            (int groupId, CoreContext context) => new GroupsQueries(context).DeleteGroup(groupId).Result);
+            (int groupId, CoreContext context) => new GroupsQueries(context).DeleteGroup(groupId).Result).RequireAuthorization();
 
         return group;
     }
@@ -109,14 +156,65 @@ public static class EndpointGroups
             (int lecturerId, CoreContext context) => new LecturersQueries(context).GetLecturers(lecturerId).Result);
         group.MapPost(
             "/",
-            (Lecturer lecturer, CoreContext context) => new LecturersQueries(context).InsertLecturer(lecturer).Result);
+            async (Lecturer lecturer, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var result = await new LecturersQueries(context).InsertOrUpdateLecturer(lecturer);
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        lecturer.Userid,
+                        lecturer.FirstName,
+                        lecturer.LastName,
+                        lecturer.MiddleName,
+                        UserActionType.Create,
+                        RoleNames.GetName(UserRoleType.Supervisor),
+                        DateTime.UtcNow));
+
+                return result;
+            }).RequireAuthorization("AdminOnly");
         group.MapPut(
             "/",
-            (Lecturer lecturer, CoreContext context) =>
-                new LecturersQueries(context).UpdateLecturer(lecturer).Result);
+            async (Lecturer lecturer, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var result = await new LecturersQueries(context).UpdateLecturer(lecturer);
+                var prev = await context.Lecturers.FindAsync(lecturer.Id);
+                if (prev == null)
+                {
+                    return Results.BadRequest();
+                }
+
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        lecturer.Userid,
+                        string.IsNullOrEmpty(lecturer.FirstName) ? prev.FirstName : lecturer.FirstName,
+                        string.IsNullOrEmpty(lecturer.LastName) ? prev.LastName : lecturer.LastName,
+                        string.IsNullOrEmpty(lecturer.MiddleName) ? prev.MiddleName : lecturer.MiddleName,
+                        UserActionType.Update,
+                        RoleNames.GetName(UserRoleType.Supervisor),
+                        DateTime.UtcNow));
+                return result;
+            }).RequireAuthorization("AdminOnly");
         group.MapDelete(
             "/{lecturerId:int}",
-            (int lecturerId, CoreContext context) => new LecturersQueries(context).DeleteLecturer(lecturerId).Result);
+            async (int lecturerId, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var lecturer = await context.Lecturers.FindAsync(lecturerId);
+                var result = await new LecturersQueries(context).DeleteLecturer(lecturerId);
+
+                if (lecturer != null)
+                {
+                    await publishEndpoint.Publish(
+                        new UserWithRoleActionEvent(
+                            lecturer.Userid,
+                            lecturer.FirstName,
+                            lecturer.LastName,
+                            lecturer.MiddleName,
+                            UserActionType.Delete,
+                            RoleNames.GetName(UserRoleType.Supervisor),
+                            DateTime.UtcNow));
+                }
+
+                return result;
+            }).RequireAuthorization("AdminOnly");
 
         return group;
     }
@@ -134,16 +232,19 @@ public static class EndpointGroups
         group.MapGet(
             "/{practiceId:int}",
             (int practiceId, CoreContext context) => new PracticesQueries(context).GetPractices(practiceId).Result);
+        group.MapGet(
+            "/query",
+            (string userId, CoreContext context) => new PracticesQueries(context).GetQueriedPractices(userId).Result);
         group.MapPost(
             "/",
-            (Practice practice, CoreContext context) => new PracticesQueries(context).InsertPractice(practice).Result);
+            (Practice practice, CoreContext context) => new PracticesQueries(context).InsertPractice(practice).Result).RequireAuthorization();
         group.MapPut(
             "/",
             (Practice practice, CoreContext context) =>
-                new PracticesQueries(context).UpdatePractice(practice).Result);
+                new PracticesQueries(context).UpdatePractice(practice).Result).RequireAuthorization();
         group.MapDelete(
             "/{practiceId:int}",
-            (int practiceId, CoreContext context) => new PracticesQueries(context).DeletePractice(practiceId).Result);
+            (int practiceId, CoreContext context) => new PracticesQueries(context).DeletePractice(practiceId).Result).RequireAuthorization();
 
         return group;
     }
@@ -161,16 +262,69 @@ public static class EndpointGroups
         group.MapGet(
             "/{studentId:int}",
             (int studentId, CoreContext context) => new StudentsQueries(context).GetStudents(studentId).Result);
+        group.MapGet(
+            "/byUserId",
+            (string userId, CoreContext context) => new StudentsQueries(context).GetStudentByUserId(userId).Result);
         group.MapPost(
             "/",
-            (Student student, CoreContext context) => new StudentsQueries(context).InsertStudent(student).Result);
+            async (Student student, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var result = await new StudentsQueries(context).InsertOrUpdateStudent(student);
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        student.Userid,
+                        student.FirstName,
+                        student.LastName,
+                        student.MiddleName,
+                        UserActionType.Update,
+                        RoleNames.GetName(UserRoleType.Student),
+                        DateTime.UtcNow));
+                return result;
+            }).RequireAuthorization();
         group.MapPut(
             "/",
-            (Student student, CoreContext context) =>
-                new StudentsQueries(context).UpdateStudent(student).Result);
+            async (Student student, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var result = await new StudentsQueries(context).UpdateStudent(student);
+                var prev = await context.Students.FindAsync(student.Id);
+                if (prev == null)
+                {
+                    return Results.BadRequest();
+                }
+
+                await publishEndpoint.Publish(
+                    new UserWithRoleActionEvent(
+                        student.Userid,
+                        string.IsNullOrEmpty(student.FirstName) ? prev.FirstName : student.FirstName,
+                        string.IsNullOrEmpty(student.LastName) ? prev.LastName : student.LastName,
+                        string.IsNullOrEmpty(student.MiddleName) ? prev.MiddleName : student.MiddleName,
+                        UserActionType.Update,
+                        RoleNames.GetName(UserRoleType.Student),
+                        DateTime.UtcNow));
+                return result;
+            }).RequireAuthorization();
         group.MapDelete(
             "/{studentId:int}",
-            (int studentId, CoreContext context) => new StudentsQueries(context).DeleteStudent(studentId).Result);
+            async (int studentId, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            {
+                var student = await context.Students.FindAsync(studentId);
+                var result = await new LecturersQueries(context).DeleteLecturer(studentId);
+
+                if (student != null)
+                {
+                    await publishEndpoint.Publish(
+                        new UserWithRoleActionEvent(
+                            student.Userid,
+                            student.FirstName,
+                            student.LastName,
+                            student.MiddleName,
+                            UserActionType.Update,
+                            RoleNames.GetName(UserRoleType.Student),
+                            DateTime.UtcNow));
+                }
+
+                return result;
+            }).RequireAuthorization();
 
         return group;
     }

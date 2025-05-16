@@ -2,9 +2,9 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService.Core.Queries;
+namespace CoreService.Api.Core.Queries;
 
-using CoreService.Core.Models;
+using CoreService.Api.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -34,11 +34,17 @@ public class LecturersQueries(CoreContext context)
     /// </summary>
     /// <param name="lecturer">Input lecturer.</param>
     /// <returns>Response status.</returns>
-    public async Task<int> InsertLecturer(Lecturer lecturer)
+    public async Task<IResult> InsertOrUpdateLecturer(Lecturer lecturer)
     {
+        var prev = await context.Lecturers.FindAsync(lecturer.Id);
+        if (prev != null)
+        {
+            return await this.UpdateLecturer(lecturer);
+        }
+
         context.Lecturers.Add(lecturer);
         await context.SaveChangesAsync();
-        return lecturer.Id;
+        return Results.Ok(lecturer.Id);
     }
 
     /// <summary>
@@ -56,7 +62,10 @@ public class LecturersQueries(CoreContext context)
                 return Results.BadRequest();
             }
 
-            prev.Department = lecturer.Department;
+            prev.FirstName = string.IsNullOrEmpty(lecturer.FirstName) ? prev.FirstName : lecturer.FirstName;
+            prev.LastName = string.IsNullOrEmpty(lecturer.LastName) ? prev.LastName : lecturer.LastName;
+            prev.MiddleName = string.IsNullOrEmpty(lecturer.MiddleName) ? prev.MiddleName : lecturer.MiddleName;
+            prev.Department = string.IsNullOrEmpty(lecturer.Department) ? prev.Department : lecturer.Department;
             prev.Cansupervisevkr = lecturer.Cansupervisevkr;
             await context.SaveChangesAsync();
             return Results.Ok();
@@ -74,8 +83,12 @@ public class LecturersQueries(CoreContext context)
     /// <returns>Response status.</returns>
     public async Task<IResult> DeleteLecturer(int id)
     {
-        var deletedLecturer = context.Lecturers.First(lecturer => lecturer.Id == id);
-        context.Lecturers.Remove(deletedLecturer);
+        var deletedLecturer = await context.Lecturers.FindAsync(id);
+        if (deletedLecturer != null)
+        {
+            context.Lecturers.Remove(deletedLecturer);
+        }
+
         await context.SaveChangesAsync();
         return Results.Ok();
     }

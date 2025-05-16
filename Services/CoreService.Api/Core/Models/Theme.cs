@@ -2,10 +2,7 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService.Core.Models;
-
-using System;
-using System.Collections.Generic;
+namespace CoreService.Api.Core.Models;
 
 /// <summary>
 /// Theme model.
@@ -48,6 +45,11 @@ public partial class Theme
     public bool Isarchived { get; set; }
 
     /// <summary>
+    /// Gets or sets Source column.
+    /// </summary>
+    public string Source { get; set; } = null!;
+
+    /// <summary>
     /// Gets or sets SuggestedBy column.
     /// </summary>
     public string Suggestedby { get; set; } = null!;
@@ -55,12 +57,12 @@ public partial class Theme
     /// <summary>
     /// Gets or sets ConsultantId column.
     /// </summary>
-    public int Consultantid { get; set; }
+    public int? Consultantid { get; set; }
 
     /// <summary>
     /// Gets or sets SupervisorId.
     /// </summary>
-    public int Supervisorid { get; set; }
+    public int? Supervisorid { get; set; }
 
     /// <summary>
     /// Gets or sets CreatedDate column.

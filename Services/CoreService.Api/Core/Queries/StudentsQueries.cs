@@ -2,9 +2,9 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService.Core.Queries;
+namespace CoreService.Api.Core.Queries;
 
-using CoreService.Core.Models;
+using CoreService.Api.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -26,7 +26,19 @@ public class StudentsQueries(CoreContext context)
             result = result.Where(student => student.Id == id);
         }
 
-        return await result.ToListAsync();
+        return await result.Include(s => s.Group).Include(s => s.Practices).ToListAsync();
+    }
+
+    /// <summary>
+    /// Gets Student by UserId.
+    /// </summary>
+    /// <param name="userId">User Id.</param>
+    /// <returns>Student with selected user id.</returns>
+    public async Task<Student?> GetStudentByUserId(string userId)
+    {
+        var result = await context.Students.FirstOrDefaultAsync(s => s.Userid == userId);
+
+        return result;
     }
 
     /// <summary>
@@ -34,11 +46,17 @@ public class StudentsQueries(CoreContext context)
     /// </summary>
     /// <param name="student">Input student.</param>
     /// <returns>Response status.</returns>
-    public async Task<int> InsertStudent(Student student)
+    public async Task<IResult> InsertOrUpdateStudent(Student student)
     {
+        var prev = await context.Students.FindAsync(student.Id);
+        if (prev != null)
+        {
+            return await this.UpdateStudent(student);
+        }
+
         context.Students.Add(student);
         await context.SaveChangesAsync();
-        return student.Id;
+        return Results.Ok(student.Id);
     }
 
     /// <summary>
@@ -56,6 +74,9 @@ public class StudentsQueries(CoreContext context)
                 return Results.BadRequest();
             }
 
+            prev.FirstName = string.IsNullOrEmpty(student.FirstName) ? prev.FirstName : student.FirstName;
+            prev.LastName = string.IsNullOrEmpty(student.LastName) ? prev.LastName : student.LastName;
+            prev.MiddleName = string.IsNullOrEmpty(student.MiddleName) ? prev.MiddleName : student.MiddleName;
             prev.Groupid = student.Groupid;
             await context.SaveChangesAsync();
             return Results.Ok();

@@ -2,10 +2,7 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-namespace CoreService.Core.Models;
-
-using System;
-using System.Collections.Generic;
+namespace CoreService.Api.Core.Models;
 
 /// <summary>
 /// Student model.
@@ -18,14 +15,29 @@ public partial class Student
     public int Id { get; set; }
 
     /// <summary>
+    /// Gets or sets FirstName column.
+    /// </summary>
+    public string FirstName { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets LastName column.
+    /// </summary>
+    public string LastName { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets MiddleName column.
+    /// </summary>
+    public string? MiddleName { get; set; }
+
+    /// <summary>
     /// Gets or sets UserId column.
     /// </summary>
-    public Guid Userid { get; set; }
+    public string Userid { get; set; } = null!;
 
     /// <summary>
     /// Gets or sets GroupId.
     /// </summary>
-    public int Groupid { get; set; }
+    public int? Groupid { get; set; }
 
     /// <summary>
     /// Gets or sets virtual Group.

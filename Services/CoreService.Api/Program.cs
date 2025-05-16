@@ -2,17 +2,65 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-using CoreService;
-using CoreService.Core;
+using System.Security.Claims;
+using System.Text.Json.Serialization;
+using Contracts;
+using CoreService.Api.Consumers;
+using CoreService.Api.Core;
+using CoreService.Api.Endpoints;
+using CoreService.Api.Services;
+using MassTransit;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<JsonOptions>(options =>
+{
+    options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Enter JWT token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
+            },
+            new List<string>()
+        },
+    });
+});
+
+builder.Services.AddHttpClient("AuthService", client =>
+{
+    client.BaseAddress = new Uri("http://auth.api:8080/");
+});
+
+builder.Services.AddAuthentication("GatewayAuth")
+    .AddScheme<AuthenticationSchemeOptions, GatewayAuthHandler.GatewayAuthHandler>("GatewayAuth", null);
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Администратор"));
+});
 
 // Current environment
 var currentEnvironment = Environment.GetEnvironmentVariable("ENVIRONMENT") ?? "Default";
@@ -21,7 +69,44 @@ var currentEnvironment = Environment.GetEnvironmentVariable("ENVIRONMENT") ?? "D
 builder.Services.AddDbContext<CoreContext>(
     opt => opt.UseNpgsql(builder.Configuration.GetConnectionString(currentEnvironment)));
 
+builder.Services.AddCors(
+    options =>
+    {
+        options.AddPolicy(
+            "CorsPolicy",
+            policyBuilder => policyBuilder
+                .AllowAnyMethod()
+                .AllowCredentials()
+                .SetIsOriginAllowed((_) => true)
+                .AllowAnyHeader());
+    });
+
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<UserCreatedConsumer>();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(builder.Configuration["RabbitMQ:Host"], "/", h =>
+        {
+            h.Username(builder.Configuration["RabbitMQ:Username"]);
+            h.Password(builder.Configuration["RabbitMQ:Password"]);
+        });
+
+        cfg.ReceiveEndpoint("user-events", e =>
+        {
+            e.ConfigureConsumer<UserCreatedConsumer>(context);
+        });
+
+        cfg.Message<UserWithRoleActionEvent>(x => x.SetEntityName("user-with-role-events"));
+    });
+});
+
+builder.Services.AddScoped<UserResolverService>();
+
 var app = builder.Build();
+
+app.UseCors("CorsPolicy");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -32,40 +117,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// Mock user database
-var mockUsers = new List<object>
-{
-    new { Id = 1, Name = "John Doe", Email = "student@example.com", Roles = new[] { "Student" } },
-    new { Id = 2, Name = "Jane Smith", Email = "lecturer@example.com", Roles = new[] { "Lecturer" } },
-    new { Id = 3, Name = "Admin User", Email = "admin@example.com", Roles = new[] { "Admin", "Lecturer" } },
-};
-
-// Endpoint to get all users
-app.MapGet("/api/authmock/users", () =>
-{
-    return Results.Ok(mockUsers);
-});
-
-// Endpoint to validate token and return user info
-app.MapGet("/api/authmock/validate", (string token) =>
-{
-    // Simulate token-to-user mapping (mocked)
-    var user = token switch
-    {
-        "token-student" => mockUsers[0],
-        "token-lecturer" => mockUsers[1],
-        "token-admin" => mockUsers[2],
-        _ => null,
-    };
-
-    if (user == null)
-    {
-        return Results.Unauthorized();
-    }
-
-    return Results.Ok(user);
-});
 
 // Themes Endpoints
 app.MapGroup("api/themes/").ThemesGroup().WithTags("Themes");
@@ -84,5 +135,33 @@ app.MapGroup("api/practices/").PracticesGroup().WithTags("Practices");
 
 // Students Endpoints
 app.MapGroup("api/students/").StudentsGroup().WithTags("Students");
+
+app.MapGet("api/me", async (HttpContext context, UserResolverService userResolver) =>
+{
+    var user = context.User;
+
+    var username = user.Identity?.Name ?? string.Empty;
+    var firstName = user.FindFirst(ClaimTypes.GivenName)?.Value ?? string.Empty;
+    var lastName = user.FindFirst(ClaimTypes.Surname)?.Value ?? string.Empty;
+    var middleName = user.FindFirst("middle_name")?.Value; // Custom claim
+    var email = user.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
+
+    var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+
+    var userId = await userResolver.GetUserIdAsync(username);
+    return new UserDTO()
+    {
+        UserId = userId ?? string.Empty,
+        UserName = username,
+        FirstName = firstName,
+        LastName = lastName,
+        MiddleName = middleName,
+        Email = email,
+        Roles = roles,
+    };
+}).RequireAuthorization();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Run();
