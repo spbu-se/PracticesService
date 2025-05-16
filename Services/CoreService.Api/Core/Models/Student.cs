@@ -37,7 +37,7 @@ public partial class Student
     /// <summary>
     /// Gets or sets GroupId.
     /// </summary>
-    public int Groupid { get; set; }
+    public int? Groupid { get; set; }
 
     /// <summary>
     /// Gets or sets virtual Group.

@@ -50,7 +50,7 @@ export default function Header() {
     };
 
     useEffect(() => {
-        if (window.location.pathname === "/login") return;
+        if (window.location.pathname === "/login" || window.location.pathname === "/register") return;
 
         getMe().then(res => {
             const user: User = res.data;
@@ -93,7 +93,7 @@ export default function Header() {
                         </Typography>
                     </Box>
                     
-                    {window.location.pathname !== "/login" && (
+                    {(window.location.pathname !== "/login" && window.location.pathname !== "/register") && (
                         <Box sx={{
                             display: 'flex',
                             alignItems: 'center',

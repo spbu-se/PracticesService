@@ -11,12 +11,14 @@ import {
     Paper,
     Box
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 // Page for login
 export function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
+    const navigate = useNavigate();
+    
     const onChangeLogin = (event: ChangeEvent<HTMLInputElement>) => {
         setEmail(event.target.value);
     };
@@ -42,7 +44,7 @@ export function LoginPage() {
 
     return (
         <Layout>
-            <Container maxWidth="xs" sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Container maxWidth="xs" sx={{ minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Paper elevation={3} sx={{ padding: 4, width: "100%", borderRadius: 2 }}>
                     <Typography variant="h5" align="center" gutterBottom>
                         Вход
@@ -79,6 +81,15 @@ export function LoginPage() {
                             sx={{ mt: 2 }}
                         >
                             Войти
+                        </Button>
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            color="secondary"
+                            onClick={() => navigate('/register')}
+                            sx={{ mt: 2 }}
+                        >
+                            Регистрация
                         </Button>
                     </Box>
                 </Paper>

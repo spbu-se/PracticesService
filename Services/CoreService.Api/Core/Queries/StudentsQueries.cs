@@ -26,7 +26,7 @@ public class StudentsQueries(CoreContext context)
             result = result.Where(student => student.Id == id);
         }
 
-        return await result.ToListAsync();
+        return await result.Include(s => s.Group).Include(s => s.Practices).ToListAsync();
     }
 
     /// <summary>

@@ -24,7 +24,7 @@ CREATE TABLE Students
     LastName VARCHAR(100) NOT NULL,
     MiddleName VARCHAR(100),
     UserId VARCHAR(255) NOT NULL,
-    GroupId INT NOT NULL,
+    GroupId INT,
     CONSTRAINT Group_FK FOREIGN KEY (GroupId) REFERENCES Groups (Id)
 );
 

@@ -144,7 +144,8 @@ app.MapPost(
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole> roleManager,
         IPublishEndpoint publishEndpoint,
-        ApplicationUserDTO userDto) =>
+        ApplicationUserDTO userDto,
+        TokenService tokenService) =>
     {
         var user = new ApplicationUser
         {
@@ -183,11 +184,16 @@ app.MapPost(
                 assignedRoles.ToArray(),
                 DateTime.UtcNow));
 
+        var token = await tokenService.GenerateJwtToken(user);
+        var refreshToken = await tokenService.GenerateRefreshToken(user);
+
         return Results.Ok(
             new
             {
                 UserId = user.Id,
                 AssignedRoles = assignedRoles,
+                Token = token,
+                RefreshToken = refreshToken,
             });
     });
 

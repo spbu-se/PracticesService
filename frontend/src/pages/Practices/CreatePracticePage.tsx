@@ -89,10 +89,8 @@ export function CreatePracticePage() {
                 <form onSubmit={handleSubmit}>
                     <Grid container direction="column" spacing={3}>
                         <Grid item>
-                            <FormControl fullWidth required>
-                                <InputLabel>Ваша группа</InputLabel>
-                                {currentStudent?.group.name}
-                            </FormControl>
+                            <InputLabel>Ваша группа</InputLabel>
+                            {currentStudent?.group.name}
                         </Grid>
                         
                         <Grid item>

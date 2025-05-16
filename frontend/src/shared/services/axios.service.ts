@@ -51,6 +51,15 @@ export const login = (email: string, password: string) => axiosService.post(`aut
     password: password
 })
 
+export const register = (data: RegisterData) => axiosService.post(`auth-api/register`, {
+    email: data.email,
+    password: data.password,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    middleName: data.middleName, 
+    roles: data.roles
+})
+
 export const getThemes = () => axiosService.get("core-api/themes")
 
 export const getTheme = (id: number) => axiosService.get(`core-api/themes?id=${id}`)

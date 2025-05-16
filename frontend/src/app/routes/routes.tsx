@@ -10,6 +10,7 @@ import {PracticesIndexPage} from "@pages/Practices/PracticesIndexPage.tsx";
 import {CreatePracticePage} from "@pages/Practices/CreatePracticePage.tsx";
 import {AdminBasePage} from "@pages/Admin/AdminBasePage";
 import {AdminUsersPage} from "@pages/Admin/AdminUsersPage";
+import { RegisterPage } from "@/pages/RegisterPage";
 
 export const routes = createBrowserRouter([
     {
@@ -31,6 +32,10 @@ export const routes = createBrowserRouter([
     {
         path: "/login",
         element: <LoginPage/>,
+    },
+    {
+        path: "/register",
+        element: <RegisterPage/>,
     },
     {
         path: "/theme/:id",
