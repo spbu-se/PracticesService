@@ -13,6 +13,7 @@ import {
 import { useEffect, useState } from "react";
 import { getMe } from "@/shared/services/axios.service";
 import { User } from "@/entities/User";
+import {UserRole} from "../../entities/UserRoles";
 
 const tabRoutes = [
     { label: "Панель", path: "/admin" },
@@ -32,7 +33,7 @@ export function AdminBasePage() {
     useEffect(() => {
         getMe().then(res => {
             const user: User = res.data;
-            if (!user.roles.includes("Администратор")) {
+            if (!user.roles.includes(UserRole.ADMIN)) {
                 navigate("/");
             }
         });

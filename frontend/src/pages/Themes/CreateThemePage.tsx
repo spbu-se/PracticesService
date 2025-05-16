@@ -22,6 +22,7 @@ import MDEditor from '@uiw/react-md-editor';
 import {Lecturer} from "@/entities/Lecturer.ts";
 import {Consultant} from "@/entities/Consultant.ts";
 import { User } from "@/entities/User.ts";
+import {UserRole} from "../../entities/UserRoles";
 
 export function CreateThemePage() {
     const [title, setTitle] = useState("");
@@ -215,13 +216,13 @@ export function CreateThemePage() {
 
                             <Grid item>
                                 <Typography variant="subtitle1" gutterBottom>
-                                    Консультант:
+                                    {UserRole.CONSULTANT}:
                                 </Typography>
                                 <FormControl fullWidth>
-                                    <InputLabel>Консультант</InputLabel>
+                                    <InputLabel>{UserRole.CONSULTANT}</InputLabel>
                                     <Select
                                         value={consultantId}
-                                        label="Консультант"
+                                        label={UserRole.CONSULTANT}
                                         onChange={(e) => setConsultantId(e.target.value)}
                                     >
                                         {consultants?.map((con, i) => (
@@ -233,13 +234,13 @@ export function CreateThemePage() {
 
                             <Grid item>
                                 <Typography variant="subtitle1" gutterBottom>
-                                    Руководитель:
+                                    {UserRole.SUPERVISOR}:
                                 </Typography>
                                 <FormControl fullWidth>
-                                    <InputLabel>Руководитель</InputLabel>
+                                    <InputLabel>{UserRole.SUPERVISOR}</InputLabel>
                                     <Select
                                         value={lecturerId}
-                                        label="Руководитель"
+                                        label={UserRole.SUPERVISOR}
                                         onChange={(e) => setLecturerId(e.target.value)}
                                     >
                                         {lecturers?.map((lecturer, i) => (

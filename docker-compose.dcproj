@@ -16,5 +16,6 @@
   <ItemGroup>
     <TypeScriptCompile Include="frontend\src\entities\Group.ts" />
     <TypeScriptCompile Include="frontend\src\entities\Student.ts" />
+    <TypeScriptCompile Include="frontend\src\entities\UserRoles.ts" />
   </ItemGroup>
 </Project>

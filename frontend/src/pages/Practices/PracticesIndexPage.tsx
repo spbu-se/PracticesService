@@ -16,17 +16,23 @@ import {
     Box,
     Paper,
     Chip,
-    Divider
+    Divider,
+    List,
+    ListItem,
+    ListItemText,
+    Link
 } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import { User } from "@/entities/User.ts";
 import { getMe } from "@/shared/services/axios.service.ts";
+import { HandbookTab } from "./HandbookTab";
+import { PracticeCard } from "./PracticeCard";
 
 export function PracticesIndexPage() {
     const tokenIsEmpty = getJWTToken() === "";
     const [practices, setPractices] = useState<Practice[]>([]);
     const [me, setMe] = useState<User>();
-    const [activeTab, setActiveTab] = useState(0);
+    const [activeTab, setActiveTab] = useState(2);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -68,6 +74,7 @@ export function PracticesIndexPage() {
                     <Tabs value={activeTab} onChange={handleTabChange} centered>
                         <Tab label="Активные практики"/>
                         <Tab label="Завершенные практики"/>
+                        <Tab label="Справочник"/>
                     </Tabs>
                 </Paper>
 
@@ -89,7 +96,7 @@ export function PracticesIndexPage() {
                                 </Typography>
                             </Grid>
                         )
-                    ) : (
+                    ) : activeTab === 1 ? (
                         completedPractices.length > 0 ? (
                             completedPractices.map((practice, index) => (
                                 <Grid item xs={12} key={index}>
@@ -106,59 +113,13 @@ export function PracticesIndexPage() {
                                 </Typography>
                             </Grid>
                         )
+                    ) : (
+                        <Grid item xs={12}>
+                            <HandbookTab/>
+                        </Grid>
                     )}
                 </Grid>
             </Container>
         </Layout>
-    );
-}
-
-interface PracticeCardProps {
-    practice: Practice;
-    onClick: () => void;
-}
-
-function PracticeCard({ practice, onClick }: PracticeCardProps) {
-    return (
-        <Card
-            sx={{
-                cursor: 'pointer',
-                '&:hover': {
-                    boxShadow: 4
-                }
-            }}
-            onClick={onClick}
-        >
-            <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="h6">
-                        {practice.theme?.title || "Без темы"}
-                    </Typography>
-                    <Chip
-                        label={practice.status}
-                        color={practice.status === "Завершено" ? "success" : "primary"}
-                    />
-                </Box>
-
-                <Divider sx={{ my: 2 }} />
-
-                <Typography variant="body2" color="text.secondary">
-                    Тип практики: {practice.type}
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary">
-                    Итоговая оценка: {practice.finalgrade || "Не указана"}
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary">
-                    Дата создания: {new Date(practice.createddate).toLocaleDateString()}
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary">
-                    Последнее обновление: {new Date(practice.updateddate).toLocaleDateString()}
-                </Typography>
-            </CardContent>
-
-        </Card>
     );
 }

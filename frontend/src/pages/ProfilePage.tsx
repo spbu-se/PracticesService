@@ -97,6 +97,17 @@ export function ProfilePage() {
                             </Typography>
                         </Grid>
                     </Grid>
+
+                    <Grid container spacing={3}>
+                        <Grid item xs={12} md={6}>
+                            <Typography variant="subtitle1" color="text.secondary">
+                                Роли
+                            </Typography>
+                            <Typography variant="body1" paragraph>
+                                {user.roles.join(", ") || "Не указан"}
+                            </Typography>
+                        </Grid>
+                    </Grid>
                 </Paper>
             </Container>
         </Layout>

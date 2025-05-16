@@ -1,0 +1,51 @@
+﻿import { Card, CardContent, Typography, Chip, Divider, Box } from "@mui/material";
+import { Practice } from "@/entities/Practice";
+
+interface PracticeCardProps {
+    practice: Practice;
+    onClick: () => void;
+}
+
+export function PracticeCard({ practice, onClick }: PracticeCardProps) {
+    return (
+        <Card
+            sx={{
+                cursor: 'pointer',
+                '&:hover': {
+                    boxShadow: 4
+                }
+            }}
+            onClick={onClick}
+        >
+            <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="h6">
+                        {practice.theme?.title || "Без темы"}
+                    </Typography>
+                    <Chip
+                        label={practice.status}
+                        color={practice.status === "Завершено" ? "success" : "primary"}
+                    />
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
+                <Typography variant="body2" color="text.secondary">
+                    Тип практики: {practice.type}
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
+                    Итоговая оценка: {practice.finalgrade || "Не указана"}
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
+                    Дата создания: {new Date(practice.createddate).toLocaleDateString()}
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
+                    Последнее обновление: {new Date(practice.updateddate).toLocaleDateString()}
+                </Typography>
+            </CardContent>
+        </Card>
+    );
+}

@@ -21,6 +21,7 @@ import {Layout} from "@shared/ui/layout/Layout.tsx";
 import MDEditor from "@uiw/react-md-editor";
 import { Consultant } from "@/entities/Consultant";
 import { Lecturer } from "@/entities/Lecturer";
+import {UserRole} from "../../entities/UserRoles";
 
 export function CreatePracticePage() {
     const [type, setType] = useState("");
@@ -89,6 +90,13 @@ export function CreatePracticePage() {
                     <Grid container direction="column" spacing={3}>
                         <Grid item>
                             <FormControl fullWidth required>
+                                <InputLabel>Ваша группа</InputLabel>
+                                {currentStudent?.group.name}
+                            </FormControl>
+                        </Grid>
+                        
+                        <Grid item>
+                            <FormControl fullWidth required>
                                 <InputLabel>Тип практики</InputLabel>
                                 <Select value={type} label="Тип практики" onChange={(e) => setType(e.target.value)}>
                                     <MenuItem value="Учебная">Учебная</MenuItem>
@@ -117,10 +125,10 @@ export function CreatePracticePage() {
 
                         <Grid item>
                             <FormControl fullWidth required>
-                                <InputLabel>Научный руководитель</InputLabel>
+                                <InputLabel>{UserRole.SUPERVISOR}</InputLabel>
                                 <Select
                                     value={supervisorId}
-                                    label="Научный руководитель"
+                                    label={UserRole.SUPERVISOR}
                                     onChange={(e) => setSupervisorId(Number(e.target.value))}
                                 >
                                     {lecturers.map((lecturer) => (
@@ -134,10 +142,10 @@ export function CreatePracticePage() {
 
                         <Grid item>
                             <FormControl fullWidth>
-                                <InputLabel>Консультант</InputLabel>
+                                <InputLabel>{UserRole.CONSULTANT}</InputLabel>
                                 <Select
                                     value={consultantId}
-                                    label="Консультант"
+                                    label={UserRole.CONSULTANT}
                                     onChange={(e) => setConsultantId(Number(e.target.value))}
                                 >
                                     {consultants.map((consultant) => (

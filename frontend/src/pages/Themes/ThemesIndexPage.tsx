@@ -17,6 +17,7 @@ import {
 import ArchiveIcon from '@mui/icons-material/Archive';
 import EditIcon from '@mui/icons-material/Edit';
 import { User } from "@/entities/User.ts";
+import {UserRole} from "../../entities/UserRoles";
 
 export function ThemesIndexPage() {
     const tokenIsEmpty = getJWTToken() === "";
@@ -33,7 +34,32 @@ export function ThemesIndexPage() {
     const [source, setSource] = useState<string>("");
     const [supervisor, setSupervisor] = useState<string>("");
     const [isArchived, setIsArchived] = useState(false);
+    const isPracticeSupervisor = me?.roles.includes(UserRole.PRACTICE_SUPERVISOR);
 
+    const handleArchiveAll = async () => {
+        if (window.confirm("Вы уверены, что хотите архивировать все отфильтрованные темы?")) {
+            try {
+                const archivePromises = filteredThemes.map(theme =>
+                    putTheme({ ...theme, isarchived: !isArchived })
+                );
+
+                await Promise.all(archivePromises);
+                
+                setThemes(themes.map(theme => {
+                    const isFiltered = filteredThemes.some(t => t.id === theme.id);
+                    return isFiltered ? { ...theme, isarchived: !isArchived } : theme;
+                }));
+
+                alert(`Темы успешно ${isArchived ? 'восстановлены из архива' : 'архивированы'}`);
+            } catch (error) {
+                console.error("Ошибка при архивировании:", error);
+                alert("Произошла ошибка при архивировании");
+            }
+
+        }
+    };
+
+    
     useEffect(() => {
         getThemes().then(response => {
             setThemes(response.data);
@@ -77,9 +103,22 @@ export function ThemesIndexPage() {
         <Layout>
             <Container maxWidth="lg" sx={{mt: 4, p: 4}}>
                 <Typography variant="h4" align="center" gutterBottom>Список тем</Typography>
-
+                
+                
                 <Stack direction={{xs: 'column', md: 'row'}} spacing={4}>
                     <Box sx={{width: {xs: '100%', md: '300px'}}}>
+                        {isPracticeSupervisor && (
+                            <Button
+                                variant="contained"
+                                color="secondary"
+                                onClick={handleArchiveAll}
+                                disabled={filteredThemes.length === 0}
+                                fullWidth
+                                sx={{ mb: 2 }}
+                            >
+                                Архивировать все
+                            </Button>
+                        )}
                         <Button
                             variant="contained"
                             fullWidth
@@ -111,7 +150,7 @@ export function ThemesIndexPage() {
                                 ))}
                             </TextField>
 
-                            <TextField select fullWidth label="Руководитель" value={supervisor} onChange={(e) => setSupervisor(e.target.value)} margin="dense">
+                            <TextField select fullWidth label={UserRole.SUPERVISOR} value={supervisor} onChange={(e) => setSupervisor(e.target.value)} margin="dense">
                                 <MenuItem value="">Все</MenuItem>
                                 {Array.from(new Set(themes.filter(t => t.supervisor).map(t => `${t.supervisor?.lastName} ${t.supervisor?.firstName} ${t.supervisor?.middleName}`))).map((sup, i) => (
                                     <MenuItem key={i} value={sup}>{sup}</MenuItem>

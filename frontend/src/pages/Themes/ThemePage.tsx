@@ -4,6 +4,7 @@ import {getTheme} from "@/shared/services/axios.service.ts";
 import {Theme} from "@/entities/Theme.ts";
 import {Layout} from "@shared/ui/layout/Layout.tsx";
 import {Button, Container, Typography, Paper, CircularProgress, Box} from "@mui/material";
+import {UserRole} from "../../entities/UserRoles";
 
 export function ThemePage() {
     const {id} = useParams();
@@ -43,8 +44,7 @@ export function ThemePage() {
                         <Typography variant="subtitle1"><strong>Уровень:</strong> {theme.level}</Typography>
                         <Typography variant="subtitle1"><strong>Кафедра:</strong> {theme.department}</Typography>
                         <Typography variant="subtitle1"><strong>Источник:</strong> {theme.source}</Typography>
-                        <Typography variant="subtitle1"><strong>Научный
-                            руководитель:</strong> {theme.supervisor ? `${theme.supervisor.lastName} ${theme.supervisor.firstName} ${theme.supervisor.middleName}` : "Не назначен"}
+                        <Typography variant="subtitle1"><strong>{UserRole.SUPERVISOR}:</strong> {theme.supervisor ? `${theme.supervisor.lastName} ${theme.supervisor.firstName} ${theme.supervisor.middleName}` : "Не назначен"}
                         </Typography>
                         <Typography
                             variant="subtitle1"><strong>Консультант:</strong> {theme.consultant ? `${theme.consultant.lastName} ${theme.consultant.firstName} ${theme.consultant.middleName}` : "Не назначен"}
