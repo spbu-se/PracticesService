@@ -83,3 +83,49 @@ export const getStudentByUserId = (userId: string) => axiosService.get(`core-api
 
 export const getAllUsers = () => axiosService.get(`auth-api/users`)
 export const getMe = () => axiosService.get("core-api/me")
+
+export const createUser = (data: User) => axiosService.post('auth-api/register',
+    {
+        email: data.email,
+        password: data.password,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        middleName: data.middleName,
+        roles: data.roles
+    });
+export const updateUser = (data: User) => axiosService.put(`auth-api/users/${user.userId}`,
+    {
+        email: data.email,
+        password: data.password,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        middleName: data.middleName,
+        roles: data.roles
+    });
+export const deleteUser = (userId: string) => axiosService.delete(`auth-api/users/${userId}`);
+
+export const getAllConsultants = () => axiosService.get<Consultant[]>('core-api/consultants');
+export const createConsultant = (consultant: Omit<Consultant, 'id'>) => axiosService.post<Consultant>('core-api/consultants', consultant);
+export const updateConsultant = (consultant: Consultant) => axiosService.put<Consultant>(`core-api/consultants/${consultant.id}`, consultant);
+export const deleteConsultant = (id: number) => axiosService.delete(`core-api/consultants/${id}`);
+
+export const getAllLecturers = () => axiosService.get("core-api/lecturers");
+export const createLecturer = (lecturer: Omit<Lecturer, 'id'>) => axiosService.post<Lecturer>('core-api/lecturers', lecturer);
+export const updateLecturer = (lecturer: Lecturer) => axiosService.put<Lecturer>(`core-api/lecturers/${lecturer.id}`, lecturer);
+export const deleteLecturer = (id: number) => axiosService.delete(`core-api/lecturers/${id}`);
+
+export const getAllStudents = () => axiosService.get<Student[]>('core-api/students');
+export const createStudent = (student: Omit<Student, 'id'>) =>
+    axiosService.post<Student>('core-api/students', student);
+export const updateStudent = (student: Student) =>
+    axiosService.put<Student>(`core-api/students/${student.id}`, student);
+export const deleteStudent = (id: number) =>
+    axiosService.delete(`core-api/students/${id}`);
+export const getAllGroups = () =>
+    axiosService.get<Group[]>('core-api/groups');
+export const createGroup = (group: Omit<Group, 'id'>) =>
+    axiosService.post<Group>('core-api/groups', group);
+export const updateGroup = (group: Group) =>
+    axiosService.put<Group>(`core-api/groups/${group.id}`, group);
+export const deleteGroup = (id: number) =>
+    axiosService.delete(`core-api/groups/${id}`);

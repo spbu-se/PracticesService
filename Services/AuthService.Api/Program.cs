@@ -14,6 +14,7 @@ using MassTransit;
 using MassTransit.Transports;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -197,6 +198,123 @@ app.MapPost(
             });
     });
 
+app.MapPut(
+    "/users/{userId}",
+    async (
+        string userId,
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager,
+        IPublishEndpoint publishEndpoint,
+        [FromBody] ApplicationUserDTO userDto) =>
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Results.NotFound("User not found");
+        }
+
+        user.FirstName = userDto.FirstName;
+        user.LastName = userDto.LastName;
+        user.MiddleName = userDto.MiddleName;
+        user.Email = userDto.Email;
+        user.UserName = userDto.Email;
+
+        var updateResult = await userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+        {
+            return Results.BadRequest(updateResult.Errors);
+        }
+
+        var currentRoles = await userManager.GetRolesAsync(user);
+        await userManager.RemoveFromRolesAsync(user, currentRoles);
+
+        var assignedRoles = await ProcessUserRoles(userManager, roleManager, user, userDto.Roles);
+
+        return Results.Ok(new
+        {
+            UserId = user.Id,
+            AssignedRoles = assignedRoles,
+        });
+    });
+
+app.MapDelete(
+    "/users/{userId}",
+    async (
+        string userId,
+        UserManager<ApplicationUser> userManager,
+        IPublishEndpoint publishEndpoint) =>
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Results.NotFound("User not found");
+        }
+
+        var result = await userManager.DeleteAsync(user);
+        if (!result.Succeeded)
+        {
+            return Results.BadRequest(result.Errors);
+        }
+
+        return Results.Ok(new
+        {
+            UserId = userId,
+        });
+    });
+
+app.MapGet(
+    "/users/{userId}",
+    async (
+        string userId,
+        UserManager<ApplicationUser> userManager) =>
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Results.NotFound("User not found");
+        }
+
+        var roles = await userManager.GetRolesAsync(user);
+
+        return Results.Ok(new
+        {
+            UserId = user.Id,
+            user.Email,
+            user.FirstName,
+            user.LastName,
+            user.MiddleName,
+            Roles = roles,
+        });
+    });
+
+async Task<List<string>> ProcessUserRoles(
+    UserManager<ApplicationUser> userManager,
+    RoleManager<IdentityRole> roleManager,
+    ApplicationUser user,
+    string[]? rolesToAssign)
+{
+    var assignedRoles = new List<string>();
+
+    if (rolesToAssign?.Length > 0)
+    {
+        foreach (var role in rolesToAssign)
+        {
+            if (RoleNames.IsCorrectRole(role))
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(role));
+                }
+
+                await userManager.AddToRoleAsync(user, role);
+                assignedRoles.Add(role);
+            }
+        }
+    }
+
+    return assignedRoles;
+}
+
 app.MapPost("/login", async (LoginModel login, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, TokenService tokenService) =>
 {
     var user = await userManager.FindByEmailAsync(login.Email);
@@ -270,28 +388,6 @@ app.MapPost(
         await userManager.AddToRoleAsync(user, role);
         return Results.Ok($"Role '{role}' added to {email}");
     }).RequireAuthorization();
-
-app.MapGet("/user", async (UserManager<ApplicationUser> userManager, string userId) =>
-{
-    var user = await userManager.FindByIdAsync(userId);
-    if (user == null)
-    {
-        return null;
-    }
-
-    var roles = await userManager.GetRolesAsync(user);
-    var model = new UserDTO()
-    {
-        UserId = user.Id,
-        Email = user.Email ?? string.Empty,
-        UserName = user.UserName ?? string.Empty,
-        FirstName = user.FirstName,
-        LastName = user.LastName,
-        MiddleName = user.MiddleName,
-        Roles = roles.ToArray(),
-    };
-    return model;
-});
 
 app.MapGet("/userId", async (UserManager<ApplicationUser> userManager, string userName) =>
 {

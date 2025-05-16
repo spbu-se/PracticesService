@@ -4,4 +4,5 @@ export interface Lecturer {
     lastName: string;
     middleName: string;
     department: string;
+    cansupervisevkr: boolean;
 }

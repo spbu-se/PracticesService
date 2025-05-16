@@ -18,11 +18,12 @@ import {UserRole} from "../../entities/UserRoles";
 const tabRoutes = [
     { label: "Панель", path: "/admin" },
     { label: "Пользователи", path: "/admin/users" },
-    { label: "Консультанты", path: "/admin/" },
-    { label: "Преподаватели", path: "/admin/teachers" },
+    { label: "Консультанты", path: "/admin/consultants" },
+    { label: "Преподаватели", path: "/admin/lecturers" },
     { label: "Студенты", path: "/admin/students" },
-    { label: "Темы", path: "/admin/themes" },
-    { label: "Практики", path: "/admin/practices" }
+    { label: "Группы", path: "/admin/groups" },
+    // { label: "Темы", path: "/admin/themes" },
+    // { label: "Практики", path: "/admin/practices" }
 ];
 
 export function AdminBasePage() {
@@ -40,8 +41,13 @@ export function AdminBasePage() {
     }, [navigate]);
 
     useEffect(() => {
-        const currentIndex = tabRoutes.findIndex(tab => location.pathname.startsWith(tab.path));
-        if (currentIndex !== -1) setSelectedTab(currentIndex);
+        const currentIndex = tabRoutes.findIndex(tab =>
+            location.pathname === tab.path ||
+            (tab.path !== "/admin" && location.pathname.startsWith(tab.path))
+        );
+        if (currentIndex !== -1) {
+            setSelectedTab(currentIndex);
+        }
     }, [location.pathname]);
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {

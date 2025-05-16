@@ -16,103 +16,112 @@ import {
     DialogContent,
     DialogActions,
     TextField,
-    MenuItem,
     IconButton,
     Snackbar,
     Alert,
-    Chip,
-    Box
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem
 } from "@mui/material";
 import {
-    getAllUsers,
-    createUser,
-    updateUser,
-    deleteUser
+    getAllStudents,
+    createStudent,
+    updateStudent,
+    deleteStudent,
+    getAllGroups
 } from "@/shared/services/axios.service";
-import { User } from "@/entities/User";
-import { UserRole } from "@/entities/UserRoles";
+import { Student } from "@/entities/Student";
+import { Group } from "@/entities/Group";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 
-export function AdminUsersPage() {
-    const [users, setUsers] = useState<User[]>([]);
+export function AdminStudentsPage() {
+    const [students, setStudents] = useState<Student[]>([]);
+    const [groups, setGroups] = useState<Group[]>([]);
     const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
         severity: 'success'
     });
 
-    // Получаем все возможные роли из enum
-    const allRoles = Object.values(UserRole);
-
     useEffect(() => {
-        loadUsers();
+        loadData();
     }, []);
 
-    const loadUsers = () => {
+    const loadData = () => {
         setLoading(true);
-        getAllUsers()
-            .then(res => {
-                setUsers(res.data);
+        Promise.all([getAllStudents(), getAllGroups()])
+            .then(([studentsRes, groupsRes]) => {
+                setStudents(Array.isArray(studentsRes?.data) ? studentsRes.data : []);
+                setGroups(Array.isArray(groupsRes?.data) ? groupsRes.data : []);
+            })
+            .catch(error => {
+                console.error("Error loading data:", error);
+                setSnackbar({
+                    open: true,
+                    message: 'Ошибка при загрузке данных',
+                    severity: 'error'
+                });
             })
             .finally(() => setLoading(false));
     };
 
     const handleOpenCreate = () => {
-        setCurrentUser({
-            userId: '',
+        setCurrentStudent({
+            id: 0,
             firstName: '',
             lastName: '',
             middleName: '',
-            userName: '',
-            email: '',
-            roles: [],
-            password: ''
+            groupId: 0,
+            group: {} as Group
         });
         setOpenDialog(true);
     };
 
-    const handleOpenEdit = (user: User) => {
-        setCurrentUser({...user});
+    const handleOpenEdit = (student: Student) => {
+        setCurrentStudent({...student});
         setOpenDialog(true);
     };
 
     const handleCloseDialog = () => {
         setOpenDialog(false);
-        setCurrentUser(null);
+        setCurrentStudent(null);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setCurrentUser(prev => ({
+        setCurrentStudent(prev => ({
             ...prev!,
             [name]: value
         }));
     };
 
-    const handleRolesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { value } = e.target;
-        setCurrentUser(prev => ({
+    const handleGroupChange = (e: any) => {
+        const groupId = e.target.value;
+        const selectedGroup = groups.find(g => g.id === groupId) || {} as Group;
+        setCurrentStudent(prev => ({
             ...prev!,
-            roles: typeof value === 'string' ? value.split(',') : value
+            groupId: groupId,
+            group: selectedGroup
         }));
     };
 
     const handleSubmit = () => {
-        if (!currentUser) return;
+        if (!currentStudent) return;
 
-        const operation = currentUser.userId ? updateUser : createUser;
+        const operation = currentStudent.id ? updateStudent : createStudent;
 
-        operation(currentUser)
+        operation(currentStudent)
             .then(() => {
-                loadUsers();
+                loadData();
                 setSnackbar({
                     open: true,
-                    message: currentUser.userId ? 'Пользователь обновлен' : 'Пользователь создан',
+                    message: currentStudent.id ? 'Студент обновлен' : 'Студент создан',
                     severity: 'success'
                 });
                 handleCloseDialog();
@@ -126,14 +135,14 @@ export function AdminUsersPage() {
             });
     };
 
-    const handleDelete = (userId: string) => {
-        if (window.confirm('Вы уверены, что хотите удалить этого пользователя?')) {
-            deleteUser(userId)
+    const handleDelete = (id: number) => {
+        if (window.confirm('Вы уверены, что хотите удалить этого студента?')) {
+            deleteStudent(id)
                 .then(() => {
-                    loadUsers();
+                    loadData();
                     setSnackbar({
                         open: true,
-                        message: 'Пользователь удален',
+                        message: 'Студент удален',
                         severity: 'success'
                     });
                 })
@@ -151,29 +160,14 @@ export function AdminUsersPage() {
         setSnackbar(prev => ({...prev, open: false}));
     };
 
-    // Функция для отображения ролей в виде чипов
-    const renderRoles = (roles: string[]) => (
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-            {roles.map(role => (
-                <Chip
-                    key={role}
-                    label={role}
-                    size="small"
-                    color={
-                        role === UserRole.ADMIN ? 'error' :
-                            role === UserRole.SUPERVISOR ? 'primary' :
-                                role === UserRole.PRACTICE_SUPERVISOR ? 'secondary' :
-                                    'default'
-                    }
-                />
-            ))}
-        </Box>
-    );
+    const getGroupName = (group: Group) => {
+        return group ? `${group.name} (${group.program}, ${group.year} год)` : 'Не указана';
+    };
 
     return (
         <Container>
             <Typography variant="h4" gutterBottom>
-                Управление пользователями
+                Управление студентами
             </Typography>
 
             <Button
@@ -182,7 +176,7 @@ export function AdminUsersPage() {
                 onClick={handleOpenCreate}
                 sx={{ mb: 2 }}
             >
-                Добавить пользователя
+                Добавить студента
             </Button>
 
             {loading ? (
@@ -196,31 +190,27 @@ export function AdminUsersPage() {
                                 <TableCell>Фамилия</TableCell>
                                 <TableCell>Имя</TableCell>
                                 <TableCell>Отчество</TableCell>
-                                <TableCell>Email</TableCell>
-                                <TableCell>Роли</TableCell>
+                                <TableCell>Группа</TableCell>
                                 <TableCell>Действия</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {users.map((user) => (
-                                <TableRow key={user.userId}>
-                                    <TableCell>{user.userId}</TableCell>
-                                    <TableCell>{user.lastName}</TableCell>
-                                    <TableCell>{user.firstName}</TableCell>
-                                    <TableCell>{user.middleName || '-'}</TableCell>
-                                    <TableCell>{user.email}</TableCell>
-                                    <TableCell>
-                                        {renderRoles(user.roles)}
-                                    </TableCell>
+                            {students?.map((student) => (
+                                <TableRow key={student.id}>
+                                    <TableCell>{student.id}</TableCell>
+                                    <TableCell>{student.lastName}</TableCell>
+                                    <TableCell>{student.firstName}</TableCell>
+                                    <TableCell>{student.middleName || '-'}</TableCell>
+                                    <TableCell>{getGroupName(student.group)}</TableCell>
                                     <TableCell>
                                         <IconButton
-                                            onClick={() => handleOpenEdit(user)}
+                                            onClick={() => handleOpenEdit(student)}
                                             color="primary"
                                         >
                                             <EditIcon />
                                         </IconButton>
                                         <IconButton
-                                            onClick={() => handleDelete(user.userId)}
+                                            onClick={() => handleDelete(student.id)}
                                             color="error"
                                         >
                                             <DeleteIcon />
@@ -235,7 +225,7 @@ export function AdminUsersPage() {
 
             <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
                 <DialogTitle>
-                    {currentUser?.userId ? 'Редактирование пользователя' : 'Создание пользователя'}
+                    {currentStudent?.id ? 'Редактирование студента' : 'Создание студента'}
                 </DialogTitle>
                 <DialogContent>
                     <TextField
@@ -243,7 +233,7 @@ export function AdminUsersPage() {
                         name="firstName"
                         label="Имя"
                         fullWidth
-                        value={currentUser?.firstName || ''}
+                        value={currentStudent?.firstName || ''}
                         onChange={handleInputChange}
                         required
                         sx={{ mt: 2 }}
@@ -253,7 +243,7 @@ export function AdminUsersPage() {
                         name="lastName"
                         label="Фамилия"
                         fullWidth
-                        value={currentUser?.lastName || ''}
+                        value={currentStudent?.lastName || ''}
                         onChange={handleInputChange}
                         required
                     />
@@ -262,56 +252,24 @@ export function AdminUsersPage() {
                         name="middleName"
                         label="Отчество"
                         fullWidth
-                        value={currentUser?.middleName || ''}
+                        value={currentStudent?.middleName || ''}
                         onChange={handleInputChange}
                     />
-                    <TextField
-                        margin="dense"
-                        name="userName"
-                        label="Логин"
-                        fullWidth
-                        value={currentUser?.userName || ''}
-                        onChange={handleInputChange}
-                        required
-                    />
-                    {!currentUser?.userId && (
-                        <TextField
-                            margin="dense"
-                            name="password"
-                            label="Пароль"
-                            type="password"
-                            fullWidth
-                            value={currentUser?.password || ''}
-                            onChange={handleInputChange}
+                    <FormControl fullWidth margin="dense">
+                        <InputLabel>Группа *</InputLabel>
+                        <Select
+                            value={currentStudent?.groupId || 0}
+                            onChange={handleGroupChange}
+                            label="Группа *"
                             required
-                        />
-                    )}
-                    <TextField
-                        select
-                        margin="dense"
-                        name="roles"
-                        label="Роли"
-                        fullWidth
-                        SelectProps={{
-                            multiple: true,
-                            value: currentUser?.roles || [],
-                            onChange: handleRolesChange,
-                            renderValue: (selected) => (
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {(selected as string[]).map((value) => (
-                                        <Chip key={value} label={value} size="small" />
-                                    ))}
-                                </Box>
-                            )
-                        }}
-                        sx={{ mt: 2 }}
-                    >
-                        {allRoles.map((role) => (
-                            <MenuItem key={role} value={role}>
-                                {role}
-                            </MenuItem>
-                        ))}
-                    </TextField>
+                        >
+                            {groups.map((group) => (
+                                <MenuItem key={group.id} value={group.id}>
+                                    {group.name} ({group.program}, {group.year} год)
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseDialog}>Отмена</Button>
@@ -319,11 +277,9 @@ export function AdminUsersPage() {
                         onClick={handleSubmit}
                         variant="contained"
                         disabled={
-                            !currentUser?.firstName ||
-                            !currentUser?.lastName ||
-                            !currentUser?.userName ||
-                            !currentUser?.email ||
-                            (!currentUser?.userId && !currentUser?.password)
+                            !currentStudent?.firstName ||
+                            !currentStudent?.lastName ||
+                            !currentStudent?.groupId
                         }
                     >
                         Сохранить

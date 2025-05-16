@@ -26,10 +26,18 @@ public static class RoleNames
     public static string[] GetAllRoleNames() => RoleNamesValue.Values.ToArray();
 
     /// <summary>
-    /// Get roel name.
+    /// Get role name.
     /// </summary>
     /// <param name="role">Role enum.</param>
     /// <returns>String name of role.</returns>
     public static string GetName(UserRoleType role)
         => RoleNamesValue.TryGetValue(role, out var name) ? name : role.ToString();
+
+    /// <summary>
+    /// Find if role exists.
+    /// </summary>
+    /// <param name="role">Role name.</param>
+    /// <returns>True of false.</returns>
+    public static bool IsCorrectRole(string role)
+        => RoleNamesValue.Values.Contains(role);
 }

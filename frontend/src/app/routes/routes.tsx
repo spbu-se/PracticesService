@@ -10,6 +10,10 @@ import {PracticesIndexPage} from "@pages/Practices/PracticesIndexPage.tsx";
 import {CreatePracticePage} from "@pages/Practices/CreatePracticePage.tsx";
 import {AdminBasePage} from "@pages/Admin/AdminBasePage";
 import {AdminUsersPage} from "@pages/Admin/AdminUsersPage";
+import {AdminConsultantsPage} from "@pages/Admin/AdminConsultantsPage";
+import {AdminLecturersPage} from "@pages/Admin/AdminLecturersPage";
+import {AdminStudentsPage} from "@pages/Admin/AdminStudentsPage";
+import {AdminGroupsPage} from "@pages/Admin/AdminGroupsPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 
 export const routes = createBrowserRouter([
@@ -60,6 +64,22 @@ export const routes = createBrowserRouter([
             {
                 path: "users",
                 element: <AdminUsersPage />,
+            },
+            {
+                path: "consultants",
+                element: <AdminConsultantsPage />,
+            },
+            {
+                path: "lecturers",
+                element: <AdminLecturersPage />,
+            },
+            {
+                path: "students",
+                element: <AdminStudentsPage />,
+            },
+            {
+                path: "groups",
+                element: <AdminGroupsPage />,
             },
         ]
     },
