@@ -81,6 +81,10 @@ export const putPractice = (practice: InputPractice) => axiosService.put("core-a
 
 export const getStudentByUserId = (userId: string) => axiosService.get(`core-api/students/byUserId?userId=${userId}`)
 
+export const getConsultantByUserId = (userId: string) => axiosService.get(`core-api/consultants/byUserId?userId=${userId}`)
+
+export const getLecturerByUserId = (userId: string) => axiosService.get(`core-api/lecturers/byUserId?userId=${userId}`)
+
 export const getAllUsers = () => axiosService.get(`auth-api/users`)
 export const getMe = () => axiosService.get("core-api/me")
 
@@ -118,7 +122,7 @@ export const getAllStudents = () => axiosService.get<Student[]>('core-api/studen
 export const createStudent = (student: Omit<Student, 'id'>) =>
     axiosService.post<Student>('core-api/students', student);
 export const updateStudent = (student: Student) =>
-    axiosService.put<Student>(`core-api/students/${student.id}`, student);
+    axiosService.put<Student>(`core-api/students`, student);
 export const deleteStudent = (id: number) =>
     axiosService.delete(`core-api/students/${id}`);
 export const getAllGroups = () =>

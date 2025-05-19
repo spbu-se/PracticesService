@@ -36,7 +36,7 @@ public class StudentsQueries(CoreContext context)
     /// <returns>Student with selected user id.</returns>
     public async Task<Student?> GetStudentByUserId(string userId)
     {
-        var result = await context.Students.FirstOrDefaultAsync(s => s.Userid == userId);
+        var result = await context.Students.Include(s => s.Group).FirstOrDefaultAsync(s => s.Userid == userId);
 
         return result;
     }

@@ -30,6 +30,18 @@ public class ConsultantsQueries(CoreContext context)
     }
 
     /// <summary>
+    /// Gets Consultant by UserId.
+    /// </summary>
+    /// <param name="userId">User Id.</param>
+    /// <returns>Consultant with selected user id.</returns>
+    public async Task<Consultant?> GetConsultantByUserId(string userId)
+    {
+        var result = await context.Consultants.FirstOrDefaultAsync(s => s.Userid == userId);
+
+        return result;
+    }
+
+    /// <summary>
     /// Inserts new consultant.
     /// </summary>
     /// <param name="consultant">Input consultant.</param>

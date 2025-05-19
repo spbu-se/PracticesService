@@ -55,6 +55,9 @@ public static class EndpointGroups
         group.MapGet(
             "/{consultantId:int}",
             (int consultantId, CoreContext context) => new ConsultantsQueries(context).GetConsultants(consultantId).Result);
+        group.MapGet(
+            "/byUserId",
+            (string userId, CoreContext context) => new ConsultantsQueries(context).GetConsultantByUserId(userId).Result);
         group.MapPost(
             "/",
             async (Consultant consultant, CoreContext context, IPublishEndpoint publishEndpoint) =>
@@ -154,6 +157,9 @@ public static class EndpointGroups
         group.MapGet(
             "/{lecturerId:int}",
             (int lecturerId, CoreContext context) => new LecturersQueries(context).GetLecturers(lecturerId).Result);
+        group.MapGet(
+            "/byUserId",
+            (string userId, CoreContext context) => new LecturersQueries(context).GetLecturerByUserId(userId).Result);
         group.MapPost(
             "/",
             async (Lecturer lecturer, CoreContext context, IPublishEndpoint publishEndpoint) =>

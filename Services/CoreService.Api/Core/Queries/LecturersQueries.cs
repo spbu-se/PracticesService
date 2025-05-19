@@ -30,6 +30,18 @@ public class LecturersQueries(CoreContext context)
     }
 
     /// <summary>
+    /// Gets Lecturer by UserId.
+    /// </summary>
+    /// <param name="userId">User Id.</param>
+    /// <returns>Lecturer with selected user id.</returns>
+    public async Task<Lecturer?> GetLecturerByUserId(string userId)
+    {
+        var result = await context.Lecturers.FirstOrDefaultAsync(s => s.Userid == userId);
+
+        return result;
+    }
+
+    /// <summary>
     /// Inserts new lecturer.
     /// </summary>
     /// <param name="lecturer">Input lecturer.</param>

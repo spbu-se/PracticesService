@@ -25,14 +25,20 @@ import {UserRole} from "../../entities/UserRoles";
 
 export function CreatePracticePage() {
     const [type, setType] = useState("");
-    const [themeId, setThemeId] = useState<number | "">("");
+    const [themeId, setThemeId] = useState<number | null>(null);
     const [themes, setThemes] = useState<Theme[]>([]);
-    const [consultantId, setConsultantId] = useState<number | "">("");
+    const [consultantId, setConsultantId] = useState<number | null>(null);
     const [consultants, setConsultants] = useState<Consultant[]>([]);
-    const [supervisorId, setSupervisorId] = useState<number | "">("");
+    const [supervisorId, setSupervisorId] = useState<number | null>(null);
     const [lecturers, setLecturers] = useState<Lecturer[]>([]);
     const [me, setMe] = useState<User | null>(null);
     const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
+    
+    const practiceTypes = [
+        "Практика осенняя, 2 курс", "Практика весенняя, 2 курс", "Практика осенняя, 3 курс",
+        "Практика весенняя, 3 курс", "Производственная практика", "Преддипломная практика"
+        , "Бакалаврская ВКР", "Магистерская ВКР"
+    ];
 
     const navigate = useNavigate();
 
@@ -74,6 +80,10 @@ export function CreatePracticePage() {
         }
     };
 
+    const getGroupName = (group: Group) => {
+        return group ? `${group.name} (${group.program}, ${group.year} год)` : 'Не указана';
+    };
+
     return (
     <Layout>
         <Container maxWidth="md" sx={{mt: 4}}>
@@ -90,16 +100,22 @@ export function CreatePracticePage() {
                     <Grid container direction="column" spacing={3}>
                         <Grid item>
                             <InputLabel>Ваша группа</InputLabel>
-                            {currentStudent?.group.name}
+                            {getGroupName(currentStudent?.group)}
                         </Grid>
                         
                         <Grid item>
                             <FormControl fullWidth required>
                                 <InputLabel>Тип практики</InputLabel>
-                                <Select value={type} label="Тип практики" onChange={(e) => setType(e.target.value)}>
-                                    <MenuItem value="Учебная">Учебная</MenuItem>
-                                    <MenuItem value="Производственная">Производственная</MenuItem>
-                                    <MenuItem value="Преддипломная">Преддипломная</MenuItem>
+                                <Select
+                                    value={type}
+                                    label="Тип практики"
+                                    onChange={(e) => setType(e.target.value)}
+                                >
+                                    {practiceTypes.map((type) => (
+                                        <MenuItem key={type} value={type}>
+                                            {type}
+                                        </MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
                         </Grid>
