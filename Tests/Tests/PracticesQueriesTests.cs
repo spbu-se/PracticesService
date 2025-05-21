@@ -45,6 +45,41 @@ namespace Tests
 
             this.dbContext.Students.Add(student);
 
+            var supervisor = new Lecturer()
+            {
+                Id = 1,
+                Userid = "user-1",
+                FirstName = "John",
+                LastName = "Doe",
+            };
+
+            this.dbContext.Lecturers.Add(supervisor);
+
+            var consultant = new Consultant()
+            {
+                Id = 1,
+                Userid = "user-1",
+                FirstName = "John",
+                LastName = "Doe",
+                Contact = "Contact",
+            };
+
+            this.dbContext.Consultants.Add(consultant);
+
+            var theme = new Theme
+            {
+                Id = 1,
+                Title = "Theme B",
+                Description = "New Desc",
+                Level = "Beginner",
+                Source = "External",
+                Suggestedby = "Bob",
+                Createddate = DateTime.UtcNow,
+                Updateddate = DateTime.UtcNow,
+            };
+
+            this.dbContext.Themes.Add(theme);
+
             var practice = new Practice
             {
                 Id = 1,
@@ -54,6 +89,9 @@ namespace Tests
                 Finalgrade = "B",
                 Updateddate = DateTime.UtcNow,
                 Type = "TypeA",
+                Consultantid = 1,
+                Supervisorid = 1,
+                Themeid = 1,
             };
 
             this.dbContext.Practices.Add(practice);

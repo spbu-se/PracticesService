@@ -20,7 +20,7 @@ public class PracticesQueries(CoreContext context)
     /// <returns>List of practices.</returns>
     public async Task<IEnumerable<Practice>> GetPractices(int? id = null)
     {
-        var result = context.Practices.Include(p => p.Supervisor).Include(p => p.Consultant).Include(p => p.Theme).AsQueryable();
+        var result = context.Practices.Include(p => p.Student).Include(p => p.Supervisor).Include(p => p.Consultant).AsQueryable();
         if (id != null)
         {
             result = result.Where(practice => practice.Id == id);
