@@ -88,6 +88,8 @@ export const getConsultants = () => axiosService.get("core-api/consultants")
 
 export const getPractices = () => axiosService.get("core-api/practices")
 
+export const getPractice = (id: number) => axiosService.get(`core-api/practices?id=${id}`)
+
 export const getUserPractices = (userId: string) => axiosService.get(`core-api/practices/query?userId=${userId}`)
 
 export const postPractice = (inputPractice: Practice) => axiosService.post("core-api/practices", inputPractice)

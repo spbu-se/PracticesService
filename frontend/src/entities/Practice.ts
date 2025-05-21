@@ -1,5 +1,7 @@
 ﻿import { Student } from "./Student.ts";
 import { Theme } from "./Theme.ts";
+import { Consultant } from "./Consultant.ts";
+import { Lecturer } from "./Lecturer.ts";
 
 export interface Practice {
     id: number;
@@ -12,6 +14,8 @@ export interface Practice {
     updateddate: Date;
     student: Student;
     theme: Theme;
+    supervisor: Lecturer;
+    consultant: Consultant;
 }
 
 export interface InputPractice {

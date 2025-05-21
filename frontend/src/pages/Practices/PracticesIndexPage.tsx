@@ -85,7 +85,7 @@ export function PracticesIndexPage() {
                                 <Grid item xs={12} key={index}>
                                     <PracticeCard
                                         practice={practice}
-                                        onClick={() => navigate(`/practices/${practice.id}`)}
+                                        onClick={() => navigate(`/practice/${practice.id}`)}
                                     />
                                 </Grid>
                             ))

@@ -15,6 +15,7 @@ import {AdminLecturersPage} from "@pages/Admin/AdminLecturersPage";
 import {AdminStudentsPage} from "@pages/Admin/AdminStudentsPage";
 import {AdminGroupsPage} from "@pages/Admin/AdminGroupsPage";
 import { RegisterPage } from "@/pages/RegisterPage";
+import { PracticePage } from "@/pages/Practices/PracticePage";
 
 export const routes = createBrowserRouter([
     {
@@ -28,6 +29,10 @@ export const routes = createBrowserRouter([
     {
         path: "/practices",
         element: <PracticesIndexPage/>,
+    },
+    {
+        path: "/practice/:id",
+        element: <PracticePage/>,
     },
     {
         path: "/create/practice",
