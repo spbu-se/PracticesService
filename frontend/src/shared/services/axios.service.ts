@@ -18,6 +18,14 @@ export const axiosPublic = axios.create({
     headers: undefined
 });
 
+axiosPublic.interceptors.request
+    .use(function (config) {
+        if (config.url?.includes("api/")) {
+            config.headers = {...authHeader()} as AxiosHeaders
+        }
+        return config;
+    });
+
 /// Config for axios requests
 axiosService.interceptors.request
     .use(function (config) {
