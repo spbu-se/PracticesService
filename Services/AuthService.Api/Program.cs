@@ -57,6 +57,8 @@ builder.Services.AddAuthentication(
             };
         });
 
+builder.Services.AddScoped<UserService>();
+
 builder.Services.AddAuthorization(
     options => { options.AddPolicy("AdminOnly", policy => policy.RequireRole("Администратор")); });
 
@@ -138,184 +140,114 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.MapPost(
-    "/register",
-    async (
-        UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole> roleManager,
-        IPublishEndpoint publishEndpoint,
-        ApplicationUserDTO userDto,
-        TokenService tokenService) =>
-    {
-        var user = new ApplicationUser
-        {
-            UserName = userDto.Email, Email = userDto.Email, FirstName = userDto.FirstName, LastName = userDto.LastName,
-            MiddleName = userDto.MiddleName,
-        };
-        var result = await userManager.CreateAsync(user, userDto.Password);
-
-        if (!result.Succeeded)
-        {
-            return Results.BadRequest(result.Errors);
-        }
-
-        var assignedRoles = new List<string>();
-        if (userDto.Roles?.Length > 0)
-        {
-            foreach (var role in userDto.Roles)
-            {
-                if (!await roleManager.RoleExistsAsync(role))
-                {
-                    await roleManager.CreateAsync(new IdentityRole(role));
-                }
-
-                await userManager.AddToRoleAsync(user, role);
-                assignedRoles.Add(role);
-            }
-        }
-
-        await publishEndpoint.Publish(
-            new UserCreatedEvent(
-                user.Id,
-                user.UserName,
-                userDto.FirstName,
-                userDto.LastName,
-                userDto.MiddleName,
-                assignedRoles.ToArray(),
-                DateTime.UtcNow));
-
-        var token = await tokenService.GenerateJwtToken(user);
-        var refreshToken = await tokenService.GenerateRefreshToken(user);
-
-        return Results.Ok(
-            new
-            {
-                UserId = user.Id,
-                AssignedRoles = assignedRoles,
-                Token = token,
-                RefreshToken = refreshToken,
-            });
-    });
-
-app.MapPut(
-    "/users/{userId}",
-    async (
-        string userId,
-        UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole> roleManager,
-        IPublishEndpoint publishEndpoint,
-        [FromBody] ApplicationUserDTO userDto) =>
-    {
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-        {
-            return Results.NotFound("User not found");
-        }
-
-        user.FirstName = userDto.FirstName;
-        user.LastName = userDto.LastName;
-        user.MiddleName = userDto.MiddleName;
-        user.Email = userDto.Email;
-        user.UserName = userDto.Email;
-
-        var updateResult = await userManager.UpdateAsync(user);
-        if (!updateResult.Succeeded)
-        {
-            return Results.BadRequest(updateResult.Errors);
-        }
-
-        var currentRoles = await userManager.GetRolesAsync(user);
-        await userManager.RemoveFromRolesAsync(user, currentRoles);
-
-        var assignedRoles = await ProcessUserRoles(userManager, roleManager, user, userDto.Roles);
-
-        return Results.Ok(new
-        {
-            UserId = user.Id,
-            AssignedRoles = assignedRoles,
-        });
-    });
-
-app.MapDelete(
-    "/users/{userId}",
-    async (
-        string userId,
-        UserManager<ApplicationUser> userManager,
-        IPublishEndpoint publishEndpoint) =>
-    {
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-        {
-            return Results.NotFound("User not found");
-        }
-
-        var result = await userManager.DeleteAsync(user);
-        if (!result.Succeeded)
-        {
-            return Results.BadRequest(result.Errors);
-        }
-
-        return Results.Ok(new
-        {
-            UserId = userId,
-        });
-    });
-
-app.MapGet(
-    "/users/{userId}",
-    async (
-        string userId,
-        UserManager<ApplicationUser> userManager) =>
-    {
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-        {
-            return Results.NotFound("User not found");
-        }
-
-        var roles = await userManager.GetRolesAsync(user);
-
-        return Results.Ok(new
-        {
-            UserId = user.Id,
-            user.Email,
-            user.FirstName,
-            user.LastName,
-            user.MiddleName,
-            Roles = roles,
-        });
-    });
-
-async Task<List<string>> ProcessUserRoles(
-    UserManager<ApplicationUser> userManager,
-    RoleManager<IdentityRole> roleManager,
-    ApplicationUser user,
-    string[]? rolesToAssign)
+app.MapPost("/register", async (
+    UserService userService,
+    IPublishEndpoint publishEndpoint,
+    ApplicationUserDTO userDto,
+    TokenService tokenService) =>
 {
-    var assignedRoles = new List<string>();
+    var (result, user) = await userService.RegisterUserAsync(userDto);
 
-    if (rolesToAssign?.Length > 0)
+    if (!result.Succeeded || user is null)
     {
-        foreach (var role in rolesToAssign)
-        {
-            if (RoleNames.IsCorrectRole(role))
-            {
-                if (!await roleManager.RoleExistsAsync(role))
-                {
-                    await roleManager.CreateAsync(new IdentityRole(role));
-                }
-
-                await userManager.AddToRoleAsync(user, role);
-                assignedRoles.Add(role);
-            }
-        }
+        return Results.BadRequest(result.Errors);
     }
 
-    return assignedRoles;
-}
+    var assignedRoles = await userService.AssignRolesAsync(user, userDto.Roles);
 
-app.MapPost("/login", async (LoginModel login, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, TokenService tokenService) =>
+    await publishEndpoint.Publish(new UserCreatedEvent(
+        user.Id,
+        user.UserName!,
+        user.FirstName,
+        user.LastName,
+        user.MiddleName,
+        assignedRoles.ToArray(),
+        DateTime.UtcNow));
+
+    var token = await tokenService.GenerateJwtToken(user);
+    var refreshToken = await tokenService.GenerateRefreshToken(user);
+
+    return Results.Ok(new
+    {
+        UserId = user.Id,
+        AssignedRoles = assignedRoles,
+        Token = token,
+        RefreshToken = refreshToken,
+    });
+});
+
+app.MapPut("/users/{userId}", async (
+    string userId,
+    UserService userService,
+    UserManager<ApplicationUser> userManager,
+    ApplicationUserDTO userDto) =>
+{
+    var user = await userManager.FindByIdAsync(userId);
+    if (user == null)
+    {
+        return Results.NotFound("User not found");
+    }
+
+    var result = await userService.UpdateUserAsync(userId, userDto);
+    if (!result.Succeeded)
+    {
+        return Results.BadRequest(result.Errors);
+    }
+
+    var currentRoles = await userManager.GetRolesAsync(user);
+    await userManager.RemoveFromRolesAsync(user, currentRoles);
+
+    var assignedRoles = await userService.AssignRolesAsync(user, userDto.Roles);
+
+    return Results.Ok(new
+    {
+        UserId = user.Id,
+        AssignedRoles = assignedRoles,
+    });
+});
+
+app.MapDelete("/users/{userId}", async (
+    string userId,
+    UserService userService) =>
+{
+    var result = await userService.DeleteUserAsync(userId);
+
+    if (!result.Succeeded)
+    {
+        return Results.BadRequest(result.Errors);
+    }
+
+    return Results.Ok(new { UserId = userId });
+});
+
+app.MapGet("/users/{userId}", async (
+    string userId,
+    UserManager<ApplicationUser> userManager) =>
+{
+    var user = await userManager.FindByIdAsync(userId);
+    if (user == null)
+    {
+        return Results.NotFound("User not found");
+    }
+
+    var roles = await userManager.GetRolesAsync(user);
+
+    return Results.Ok(new
+    {
+        UserId = user.Id,
+        user.Email,
+        user.FirstName,
+        user.LastName,
+        user.MiddleName,
+        Roles = roles,
+    });
+});
+
+app.MapPost("/login", async (
+    LoginModel login,
+    UserManager<ApplicationUser> userManager,
+    SignInManager<ApplicationUser> signInManager,
+    TokenService tokenService) =>
 {
     var user = await userManager.FindByEmailAsync(login.Email);
     if (user == null)
@@ -339,19 +271,18 @@ app.MapPost("/login", async (LoginModel login, UserManager<ApplicationUser> user
     });
 });
 
-app.MapPost("/refresh", async (HttpContext context, TokenService tokenService, AuthResponse model) =>
+app.MapPost("/refresh", async (
+    TokenService tokenService,
+    AuthResponse model) =>
 {
-    var token = model.Token;
-    var refreshToken = model.RefreshToken;
-
-    if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(refreshToken))
+    if (string.IsNullOrEmpty(model.Token) || string.IsNullOrEmpty(model.RefreshToken))
     {
         return Results.BadRequest("Invalid tokens");
     }
 
     try
     {
-        var response = await tokenService.RefreshTokenAsync(token, refreshToken);
+        var response = await tokenService.RefreshTokenAsync(model.Token, model.RefreshToken);
         return Results.Ok(response);
     }
     catch (SecurityTokenException ex)
@@ -360,50 +291,48 @@ app.MapPost("/refresh", async (HttpContext context, TokenService tokenService, A
     }
 });
 
-// **Add Role to User (Admin Only)**
-app.MapPost(
-    "/add-role",
-    async (
-        UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole> roleManager,
-        string email,
-        string role) =>
-    {
-        if (!predefinedRoles.Contains(role))
-        {
-            return Results.BadRequest("Invalid role");
-        }
-
-        var user = await userManager.FindByEmailAsync(email);
-        if (user == null)
-        {
-            return Results.NotFound("User not found");
-        }
-
-        if (!await roleManager.RoleExistsAsync(role))
-        {
-            await roleManager.CreateAsync(new IdentityRole(role));
-        }
-
-        await userManager.AddToRoleAsync(user, role);
-        return Results.Ok($"Role '{role}' added to {email}");
-    }).RequireAuthorization();
-
-app.MapGet("/userId", async (UserManager<ApplicationUser> userManager, string userName) =>
+app.MapPost("/add-role", async (
+    UserManager<ApplicationUser> userManager,
+    RoleManager<IdentityRole> roleManager,
+    string email,
+    string role) =>
 {
-    var user = await userManager.FindByNameAsync(userName);
-    if (user == null)
+    if (!predefinedRoles.Contains(role))
     {
-        return null;
+        return Results.BadRequest("Invalid role");
     }
 
-    return user.Id;
+    var user = await userManager.FindByEmailAsync(email);
+    if (user == null)
+    {
+        return Results.NotFound("User not found");
+    }
+
+    if (!await roleManager.RoleExistsAsync(role))
+    {
+        await roleManager.CreateAsync(new IdentityRole(role));
+    }
+
+    await userManager.AddToRoleAsync(user, role);
+    return Results.Ok($"Role '{role}' added to {email}");
+}).RequireAuthorization();
+
+app.MapGet(
+    "/userId",
+    async (
+    UserManager<ApplicationUser> userManager,
+    string userName) =>
+{
+    var user = await userManager.FindByNameAsync(userName);
+    return user?.Id;
 });
 
-app.MapGet("/users", async (UserManager<ApplicationUser> userManager) =>
+app.MapGet(
+    "/users",
+    async (
+    UserManager<ApplicationUser> userManager) =>
 {
     var users = await userManager.Users.ToListAsync();
-
     var userDtos = new List<UserDTO>();
 
     foreach (var user in users)

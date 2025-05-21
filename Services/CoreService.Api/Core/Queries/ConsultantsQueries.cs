@@ -48,13 +48,24 @@ public class ConsultantsQueries(CoreContext context)
     /// <returns>Response status.</returns>
     public async Task<IResult> InsertOrUpdateConsultant(Consultant consultant)
     {
-        var prev = await context.Consultants.FindAsync(consultant.Id);
-        if (prev == null)
+        var existingConsultant = await context.Consultants.FindAsync(consultant.Id);
+
+        if (existingConsultant == null)
         {
-            return await this.UpdateConsultant(consultant);
+            // Insert new consultant
+            context.Consultants.Add(consultant);
+        }
+        else
+        {
+            // Update properties on the tracked entity
+            existingConsultant.FirstName = string.IsNullOrEmpty(consultant.FirstName) ? existingConsultant.FirstName : consultant.FirstName;
+            existingConsultant.LastName = string.IsNullOrEmpty(consultant.LastName) ? existingConsultant.LastName : consultant.LastName;
+            existingConsultant.MiddleName = string.IsNullOrEmpty(consultant.MiddleName) ? existingConsultant.MiddleName : consultant.MiddleName;
+            existingConsultant.Contact = string.IsNullOrEmpty(consultant.Contact) ? existingConsultant.Contact : consultant.Contact;
+            existingConsultant.Userid = string.IsNullOrEmpty(consultant.Userid) ? existingConsultant.Userid : consultant.Userid;
+            // no need to call Update() here, since existingConsultant is tracked
         }
 
-        context.Consultants.Add(consultant);
         await context.SaveChangesAsync();
         return Results.Ok(consultant.Id);
     }
