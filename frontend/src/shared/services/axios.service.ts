@@ -12,6 +12,12 @@ export const axiosService = axios.create({
     data: undefined
 });
 
+export const axiosPublic = axios.create({
+    baseURL: "http://localhost:5000/",
+    data: undefined,
+    headers: undefined
+});
+
 /// Config for axios requests
 axiosService.interceptors.request
     .use(function (config) {
@@ -62,6 +68,7 @@ export const register = (data: RegisterData) => axiosService.post(`auth-api/regi
 
 export const getThemes = () => axiosService.get("core-api/themes")
 
+export const getThemesPublic = () => axiosPublic.get("core-api/themes")
 export const getTheme = (id: number) => axiosService.get(`core-api/themes?id=${id}`)
 
 export const postTheme = (inputTheme: InputTheme) => axiosService.post("core-api/themes", inputTheme)
@@ -87,6 +94,8 @@ export const getLecturerByUserId = (userId: string) => axiosService.get(`core-ap
 
 export const getAllUsers = () => axiosService.get(`auth-api/users`)
 export const getMe = () => axiosService.get("core-api/me")
+
+export const getMePublic = () => axiosPublic.get("core-api/me")
 
 export const createUser = (data: User) => axiosService.post('auth-api/register',
     {
