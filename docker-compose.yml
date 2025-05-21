@@ -71,7 +71,7 @@ services:
       context: .
       dockerfile: Services/CoreService.Api/Dockerfile
     volumes:
-      - ./Services/CoreService.Api:/app
+      - ./Services/CoreService.Api:/src
     ports:
       - "5001:8080"
     depends_on:
@@ -106,6 +106,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ENVIRONMENT=Docker
+      - RUN_MIGRATIONS=true
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Username=admin
       - RabbitMQ__Password=admin123
@@ -115,7 +116,7 @@ services:
       context: .
       dockerfile: Services/AuthService.Api/Dockerfile
     volumes:
-      - ./Services/AuthService.Api:/app
+      - ./Services/AuthService.Api:/src
     ports:
       - "5002:8080"
     depends_on:

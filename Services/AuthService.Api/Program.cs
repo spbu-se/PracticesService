@@ -132,6 +132,13 @@ builder.Services.AddScoped<TokenService>();
 
 var app = builder.Build();
 
+if (Environment.GetEnvironmentVariable("RUN_MIGRATIONS") == "true")
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+    dbContext.Database.Migrate();
+}
+
 app.UseCors("CorsPolicy");
 
 // Enable Swagger in Development Mode
@@ -353,7 +360,6 @@ app.MapGet(
     return Results.Ok(userDtos);
 }).RequireAuthorization("AdminOnly");
 
-// **Ensure Roles Exist in Database**
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
