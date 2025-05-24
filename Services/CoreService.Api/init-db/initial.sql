@@ -41,13 +41,13 @@ CREATE TABLE Consultants
 CREATE TABLE Themes
 (
     Id SERIAL PRIMARY KEY,
-    Title VARCHAR(50) NOT NULL,
+    Title VARCHAR(500) NOT NULL,
     Description VARCHAR NOT NULL,
     Tags JSONB,
     Level VARCHAR(255) NOT NULL, 
     Department VARCHAR(500),
     IsArchived BOOLEAN NOT NULL DEFAULT FALSE,
-    SuggestedBy VARCHAR(100), 
+    SuggestedBy VARCHAR(255), 
     Source VARCHAR(500) NOT NULL, 
     ConsultantId INT,
     SupervisorId INT,

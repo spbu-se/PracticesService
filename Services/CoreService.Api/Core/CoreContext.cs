@@ -230,14 +230,14 @@ public partial class CoreContext : DbContext
                 .HasMaxLength(500)
                 .HasColumnName("source");
             entity.Property(e => e.Suggestedby)
-                .HasMaxLength(100)
+                .HasMaxLength(255)
                 .HasColumnName("suggestedby");
             entity.Property(e => e.Supervisorid).HasColumnName("supervisorid");
             entity.Property(e => e.Tags)
                 .HasColumnType("jsonb")
                 .HasColumnName("tags");
             entity.Property(e => e.Title)
-                .HasMaxLength(50)
+                .HasMaxLength(500)
                 .HasColumnName("title");
             entity.Property(e => e.Updateddate)
                 .HasDefaultValueSql("now()")
