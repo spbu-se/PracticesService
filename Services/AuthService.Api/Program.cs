@@ -363,12 +363,44 @@ app.MapGet(
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
     foreach (var role in predefinedRoles)
     {
         if (!await roleManager.RoleExistsAsync(role))
         {
             await roleManager.CreateAsync(new IdentityRole(role));
+        }
+    }
+
+    var adminEmail = builder.Configuration["ADMIN_EMAIL"];
+    var adminPassword = builder.Configuration["ADMIN_PASSWORD"];
+
+    if (!string.IsNullOrWhiteSpace(adminEmail) && !string.IsNullOrWhiteSpace(adminPassword))
+    {
+        var adminUser = await userManager.FindByEmailAsync(adminEmail);
+        if (adminUser == null)
+        {
+            adminUser = new ApplicationUser
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                EmailConfirmed = true,
+                FirstName = "Admin",
+                LastName = "User",
+            };
+            var result = await userManager.CreateAsync(adminUser, adminPassword);
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(adminUser, "Администратор");
+            }
+        }
+        else
+        {
+            if (!await userManager.IsInRoleAsync(adminUser, "Администратор"))
+            {
+                await userManager.AddToRoleAsync(adminUser, "Администратор");
+            }
         }
     }
 }
