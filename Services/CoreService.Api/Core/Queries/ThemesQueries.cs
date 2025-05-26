@@ -57,7 +57,6 @@ public class ThemesQueries(CoreContext context)
             }
 
             prev.Updateddate = DateTime.Now;
-            prev.Description = string.IsNullOrEmpty(theme.Description) ? prev.Description : theme.Description;
             prev.Title = string.IsNullOrEmpty(theme.Title) ? prev.Title : theme.Title;
             prev.Description = string.IsNullOrEmpty(theme.Description) ? prev.Description : theme.Description;
             prev.Suggestedby = string.IsNullOrEmpty(theme.Suggestedby) ? prev.Suggestedby : theme.Suggestedby;

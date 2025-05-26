@@ -2,6 +2,8 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
+using Contracts;
+
 namespace AuthService.Api;
 
 using System.Collections.Generic;
@@ -88,7 +90,7 @@ public class UserService
     /// <param name="userId">The ID of the user to update.</param>
     /// <param name="dto">The DTO with updated user information.</param>
     /// <returns>The result of the update operation.</returns>
-    public async Task<IdentityResult> UpdateUserAsync(string userId, ApplicationUserDTO dto)
+    public async Task<IdentityResult> UpdateUserAsync(string userId, UserDTO dto)
     {
         var user = await this.userManager.FindByIdAsync(userId);
         if (user == null)

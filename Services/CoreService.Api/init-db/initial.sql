@@ -51,8 +51,8 @@ CREATE TABLE Themes
     Source VARCHAR(500) NOT NULL, 
     ConsultantId INT,
     SupervisorId INT,
-    CreatedDate TIMESTAMP NOT NULL DEFAULT NOW(),
-    UpdatedDate TIMESTAMP NOT NULL DEFAULT NOW(),
+    CreatedDate TIMESTAMP with time zone NOT NULL DEFAULT NOW(),
+    UpdatedDate TIMESTAMP with time zone NOT NULL DEFAULT NOW(),
     CONSTRAINT Lecturer_FK FOREIGN KEY (SupervisorId) REFERENCES Lecturers (Id),
     CONSTRAINT Consultant_FK FOREIGN KEY (ConsultantId) REFERENCES Consultants (Id)
 );
@@ -67,8 +67,8 @@ CREATE TABLE Practices
     Type VARCHAR(255) NOT NULL, 
     FinalGrade VARCHAR(5),
     Status VARCHAR(50) NOT NULL,
-    CreatedDate TIMESTAMP NOT NULL DEFAULT NOW(),
-    UpdatedDate TIMESTAMP NOT NULL DEFAULT NOW(),
+    CreatedDate TIMESTAMP with time zone NOT NULL DEFAULT NOW(),
+    UpdatedDate TIMESTAMP with time zone NOT NULL DEFAULT NOW(),
     CONSTRAINT Student_FK FOREIGN KEY (StudentId) REFERENCES Students (Id),
     CONSTRAINT Theme_FK FOREIGN KEY (ThemeId) REFERENCES Themes (Id)
 );

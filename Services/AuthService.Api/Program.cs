@@ -147,6 +147,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.MapPost("/register", async (
     UserService userService,
     IPublishEndpoint publishEndpoint,
@@ -187,7 +188,7 @@ app.MapPut("/users/{userId}", async (
     string userId,
     UserService userService,
     UserManager<ApplicationUser> userManager,
-    ApplicationUserDTO userDto) =>
+    UserDTO userDto) =>
 {
     var user = await userManager.FindByIdAsync(userId);
     if (user == null)

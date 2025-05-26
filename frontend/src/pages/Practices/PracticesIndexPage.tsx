@@ -32,7 +32,7 @@ export function PracticesIndexPage() {
     const tokenIsEmpty = getJWTToken() === "";
     const [practices, setPractices] = useState<Practice[]>([]);
     const [me, setMe] = useState<User>();
-    const [activeTab, setActiveTab] = useState(2);
+    const [activeTab, setActiveTab] = useState(1);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -72,14 +72,14 @@ export function PracticesIndexPage() {
 
                 <Paper sx={{mb: 3}}>
                     <Tabs value={activeTab} onChange={handleTabChange} centered>
+                        <Tab label="Справочник"/>
                         <Tab label="Активные практики"/>
                         <Tab label="Завершенные практики"/>
-                        <Tab label="Справочник"/>
                     </Tabs>
                 </Paper>
 
                 <Grid container spacing={3}>
-                    {activeTab === 0 ? (
+                    {activeTab === 1 ? (
                         activePractices.length > 0 ? (
                             activePractices.map((practice, index) => (
                                 <Grid item xs={12} key={index}>
@@ -96,7 +96,7 @@ export function PracticesIndexPage() {
                                 </Typography>
                             </Grid>
                         )
-                    ) : activeTab === 1 ? (
+                    ) : activeTab === 2 ? (
                         completedPractices.length > 0 ? (
                             completedPractices.map((practice, index) => (
                                 <Grid item xs={12} key={index}>

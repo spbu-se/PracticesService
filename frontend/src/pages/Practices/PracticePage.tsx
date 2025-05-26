@@ -12,10 +12,9 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import { Layout } from "@shared/ui/layout/Layout.tsx";
 import { ThemeSelection } from "./components/ThemeSelection";
-// import { GoalsAndTasks } from "./components/GoalsAndTasks";
-// import { Reporting } from "./components/Reporting";
-// import { DefensePreparation } from "./components/DefensePreparation";
-// import { PracticeSettings } from "./components/PracticeSettings";
+import { GoalsAndTasks } from "./components/GoalsAndTasks";
+import { Reporting } from "./components/Reporting";
+import { Attachments } from "./components/Attachments";
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -90,7 +89,6 @@ export function PracticePage() {
                             <Tab label="Цели и задачи" {...a11yProps(1)} />
                             <Tab label="Отчётность" {...a11yProps(2)} />
                             <Tab label="Подготовка к защите" {...a11yProps(3)} />
-                            <Tab label="Настройки" {...a11yProps(4)} />
                         </Tabs>
                     </Box>
 
@@ -98,21 +96,17 @@ export function PracticePage() {
                         <ThemeSelection practiceId={id} />
                     </TabPanel>
 
-                    {/*<TabPanel value={value} index={1}>*/}
-                    {/*    <GoalsAndTasks practiceId={id} />*/}
-                    {/*</TabPanel>*/}
+                    <TabPanel value={value} index={1}>
+                        <GoalsAndTasks practiceId={id} />
+                    </TabPanel>
                     
-                    {/*<TabPanel value={value} index={2}>*/}
-                    {/*    <Reporting practiceId={id} />*/}
-                    {/*</TabPanel>*/}
+                    <TabPanel value={value} index={2}>
+                        <Reporting practiceId={id} />
+                    </TabPanel>
                     
-                    {/*<TabPanel value={value} index={3}>*/}
-                    {/*    <DefensePreparation practiceId={id} />*/}
-                    {/*</TabPanel>*/}
-                    
-                    {/*<TabPanel value={value} index={4}>*/}
-                    {/*    <PracticeSettings practiceId={id} />*/}
-                    {/*</TabPanel>*/}
+                    <TabPanel value={value} index={3}>
+                        <Attachments practiceId={id} />
+                    </TabPanel>
                 </Paper>
             </Container>
         </Layout>

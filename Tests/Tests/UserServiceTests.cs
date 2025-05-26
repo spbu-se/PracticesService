@@ -1,13 +1,14 @@
-﻿// <copyright file="UserServiceTests.cs" company="Your Company">
-// Copyright (c) Your Company. All rights reserved.
+﻿// <copyright file="UserServiceTests.cs" company="Gleb Kargin">
+// Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
+
+namespace Tests;
 
 using AuthService.Api;
 using AuthService.Api.Models;
+using Contracts;
 using Microsoft.AspNetCore.Identity;
 using Moq;
-
-namespace Tests;
 
 /// <summary>
 /// Unit tests for <see cref="UserService"/>.
@@ -34,7 +35,7 @@ public class UserServiceTests
             roleStoreMock.Object, null, null, null, null);
 
         this.userService = new UserService(
-            this.userManagerMock.Object, 
+            this.userManagerMock.Object,
             this.roleManagerMock.Object);
     }
 
@@ -102,13 +103,12 @@ public class UserServiceTests
         var userId = "123";
         var existingUser = new ApplicationUser { Id = userId, Email = "old@example.com" };
 
-        var dto = new ApplicationUserDTO
+        var dto = new UserDTO
         {
             Email = "new@example.com",
             FirstName = "New",
             LastName = "Name",
             MiddleName = "M",
-            Password = "Password123!",
         };
 
         this.userManagerMock.Setup(m => m.FindByIdAsync(userId))
@@ -135,12 +135,11 @@ public class UserServiceTests
         this.userManagerMock.Setup(m => m.FindByIdAsync("not-found"))
             .ReturnsAsync((ApplicationUser)null);
 
-        var dto = new ApplicationUserDTO
+        var dto = new UserDTO()
         {
             Email = "test@example.com",
-            Password = "Password123!",
             FirstName = "John",
-            LastName = "Doe"
+            LastName = "Doe",
         };
 
         // Act
@@ -150,7 +149,6 @@ public class UserServiceTests
         Assert.That(result.Succeeded, Is.False);
         Assert.That(result.Errors.First().Description, Is.EqualTo("User not found"));
     }
-
 
     /// <summary>
     /// Tests that DeleteUserAsync returns success when user exists.

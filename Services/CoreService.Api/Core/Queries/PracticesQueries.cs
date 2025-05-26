@@ -20,7 +20,7 @@ public class PracticesQueries(CoreContext context)
     /// <returns>List of practices.</returns>
     public async Task<IEnumerable<Practice>> GetPractices(int? id = null)
     {
-        var result = context.Practices.Include(p => p.Student).Include(p => p.Supervisor).Include(p => p.Consultant).AsQueryable();
+        var result = context.Practices.Include(p => p.Theme).Include(p => p.Student).Include(p => p.Supervisor).Include(p => p.Consultant).AsQueryable();
         if (id != null)
         {
             result = result.Where(practice => practice.Id == id);
@@ -80,7 +80,7 @@ public class PracticesQueries(CoreContext context)
             prev.Studentid = practice.Studentid;
             prev.Finalgrade = practice.Finalgrade;
             prev.Status = string.IsNullOrEmpty(practice.Status) ? prev.Status : practice.Status;
-            prev.Updateddate = DateTime.UtcNow;
+            prev.Updateddate = DateTime.Now;
             prev.Type = string.IsNullOrEmpty(practice.Type) ? prev.Type : practice.Type;
             await context.SaveChangesAsync();
             return Results.Ok();

@@ -4,6 +4,7 @@ import {InputTheme, Theme} from "../../entities/Theme.ts";
 import {setRefreshToken, setJWTToken} from "@shared/services/localStorage.service.ts";
 import {refreshToken} from "@shared/services/auth.service.ts";
 import {InputPractice, Practice } from "@/entities/Practice.ts";
+import {InputUser, User } from "@/entities/User.ts";
 
 // Axios service for API requesting
 export const axiosService = axios.create({
@@ -116,10 +117,9 @@ export const createUser = (data: User) => axiosService.post('auth-api/register',
         middleName: data.middleName,
         roles: data.roles
     });
-export const updateUser = (data: User) => axiosService.put(`auth-api/users/${user.userId}`,
+export const updateUser = (data: InputUser) => axiosService.put(`auth-api/users/${data.userId}`,
     {
         email: data.email,
-        password: data.password,
         firstName: data.firstName,
         lastName: data.lastName,
         middleName: data.middleName,
@@ -129,7 +129,7 @@ export const deleteUser = (userId: string) => axiosService.delete(`auth-api/user
 
 export const getAllConsultants = () => axiosService.get<Consultant[]>('core-api/consultants');
 export const createConsultant = (consultant: Omit<Consultant, 'id'>) => axiosService.post<Consultant>('core-api/consultants', consultant);
-export const updateConsultant = (consultant: Consultant) => axiosService.put<Consultant>(`core-api/consultants/${consultant.id}`, consultant);
+export const updateConsultant = (consultant: Consultant) => axiosService.put<Consultant>(`core-api/consultants`, consultant);
 export const deleteConsultant = (id: number) => axiosService.delete(`core-api/consultants/${id}`);
 
 export const getAllLecturers = () => axiosService.get("core-api/lecturers");

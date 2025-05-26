@@ -6,7 +6,9 @@ import { Lecturer } from "./Lecturer.ts";
 export interface Practice {
     id: number;
     studentid: number;
-    themeid: 0;
+    themeid: number;
+    supervisorid: number;
+    consultantid: number;
     type: string;
     finalgrade: string;
     status: string;
