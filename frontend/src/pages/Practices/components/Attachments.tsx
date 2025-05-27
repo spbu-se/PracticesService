@@ -1,6 +1,10 @@
-﻿import { useState } from "react";
+﻿import {useEffect, useState } from "react";
 import { Grid, Typography, Paper, Button, TextField, Box, InputLabel } from "@mui/material";
 import UploadFileIcon from '@mui/icons-material/UploadFile';
+import { postRepository, getRepositoryByPracticeId } from "@/shared/services/axios.service"; 
+import { Repository } from "@/entities/Repository"; 
+import { Snackbar, Alert } from "@mui/material";
+
 
 export function Attachments({ practiceId }: { practiceId?: number }) {
     const [textFile, setTextFile] = useState<File | null>(null);
@@ -11,6 +15,9 @@ export function Attachments({ practiceId }: { practiceId?: number }) {
     const [presentationLink, setPresentationLink] = useState("");
     const [codeLink, setCodeLink] = useState("");
     const [accountName, setAccountName] = useState("");
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
 
     const handleFileChange = (setter: (file: File | null) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -20,9 +27,45 @@ export function Attachments({ practiceId }: { practiceId?: number }) {
         }
     };
 
-    const handleSubmit = (section: string) => {
-        console.log(`Submitting ${section}`);
+    const handleSnackbarClose = () => setSnackbarOpen(false);
+
+    const handleSubmit = async (section: string) => {
+        switch (section) {
+            case "implementation":
+                if (!practiceId || !codeLink.trim()) {
+                    setSnackbarMessage("Пожалуйста, укажите ссылку на репозиторий или пометьте, что код закрыт.");
+                    setSnackbarSeverity("error");
+                    setSnackbarOpen(true);
+                    return;
+                }
+                const newRepository: Omit<Repository, "id" | "uploadedAt"> = {
+                    practiceId,
+                    repositoryLink: codeLink.trim(),
+                    accountName: accountName.trim(),
+                };
+                try {
+                    await postRepository(newRepository);
+                    setSnackbarMessage("Реализация успешно сохранена!");
+                    setSnackbarSeverity("success");
+                    setSnackbarOpen(true);
+                } catch (error) {
+                    console.error("Error saving repository:", error);
+                    setSnackbarMessage("Ошибка сохранения реализации.");
+                    setSnackbarSeverity("error");
+                    setSnackbarOpen(true);
+                }
+                break;
+        }
     };
+
+    useEffect(() => {
+        getRepositoryByPracticeId(practiceId).then(res => {
+            const repo: Repository = res.data;
+            
+            setAccountName(repo.accountName);
+            setCodeLink(repo.repositoryLink);
+        })
+    }, []);
 
     return (
         <Grid container spacing={4} direction="column">
@@ -109,6 +152,18 @@ export function Attachments({ practiceId }: { practiceId?: number }) {
                     </Button>
                 </Paper>
             </Grid>
+            
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={4000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
+
         </Grid>
     );
 }

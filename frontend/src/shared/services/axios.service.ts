@@ -5,6 +5,10 @@ import {setRefreshToken, setJWTToken} from "@shared/services/localStorage.servic
 import {refreshToken} from "@shared/services/auth.service.ts";
 import {InputPractice, Practice } from "@/entities/Practice.ts";
 import {InputUser, User } from "@/entities/User.ts";
+import {GoalsAndTasks} from "../../entities/GoalsAndTasks";
+import { Repository } from "@/entities/Repository.ts";
+import {Report} from "../../entities/Report";
+import {Comment} from "../../entities/Comment";
 
 // Axios service for API requesting
 export const axiosService = axios.create({
@@ -152,3 +156,25 @@ export const updateGroup = (group: Group) =>
     axiosService.put<Group>(`core-api/groups/${group.id}`, group);
 export const deleteGroup = (id: number) =>
     axiosService.delete(`core-api/groups/${id}`);
+
+
+export const postRepository = (inputRepository: Repository) =>
+    axiosService.post("practice-entities-api/repositories", inputRepository);
+
+export const getRepositoryByPracticeId = (practiceId: number) =>
+    axiosService.get(`practice-entities-api/repositories/${practiceId}`);
+
+export const postReport = (inputReport: Report) =>
+    axiosService.post("practice-entities-api/reports", inputReport);
+
+export const getReportsByPracticeId = (practiceId: number) =>
+    axiosService.get(`practice-entities-api/reports/${practiceId}`);
+
+export const postCommentToReport = (id: string, inputComment: Comment) =>
+    axiosService.post(`practice-entities-api/reports/${id}/comments`, inputComment);
+
+export const postGoalsTasks = (inputGoalsTasks: GoalsAndTasks) =>
+    axiosService.post("practice-entities-api/goals-tasks", inputGoalsTasks);
+
+export const getGoalsTasksByPracticeId = (practiceId: number) =>
+    axiosService.get(`practice-entities-api/goals-tasks/${practiceId}`);

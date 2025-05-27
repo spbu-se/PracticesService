@@ -126,6 +126,46 @@ services:
         condition: service_healthy
     networks:
       - proxybackend
+      
+  practice-entities.api:
+    container_name: practice-entities.api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ENVIRONMENT=Docker
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    build:
+      context: .
+      dockerfile: Services/PracticeEntitiesService.Api/Dockerfile
+    volumes:
+      - ./Services/PracticeEntitiesService.Api:/src
+    ports:
+      - "5003:8080"
+    depends_on:
+      auth.db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - proxybackend
+        
+  practice-entities.db:
+    image: mongo:6.0
+    container_name: practice-entities.db
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo-data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin123
+    networks:
+      - proxybackend
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   frontend:
     container_name: frontend
