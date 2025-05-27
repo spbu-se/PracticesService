@@ -18,7 +18,7 @@ export default defineConfig({
     'process.env': `"${process.env}"`
   },
   server: {
-    allowedHosts: ['practices-service-spbu.ru'],
+    allowedHosts: ['practices-service-spbu.ru', 'projects.se.math.spbu.ru'],
     host: true,
     port: 8000,
     watch: {

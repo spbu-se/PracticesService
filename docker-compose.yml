@@ -169,8 +169,10 @@ services:
 
   frontend:
     container_name: frontend
+    environment:
+      - VITE_API_BASE_URL=https://projects.se.math.spbu.ru/practices-service/api
     build:
-      context: ./frontend  # Fixed context path
+      context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "8000:8000"

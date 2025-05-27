@@ -10,15 +10,16 @@ import { Repository } from "@/entities/Repository.ts";
 import {Report} from "../../entities/Report";
 import {Comment} from "../../entities/Comment";
 
-// Axios service for API requesting
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const axiosService = axios.create({
-    baseURL: "http://localhost:5000/",
+    baseURL: API_BASE_URL,
     headers: undefined,
     data: undefined
 });
 
 export const axiosPublic = axios.create({
-    baseURL: "http://localhost:5000/",
+    baseURL: API_BASE_URL,
     data: undefined,
     headers: undefined
 });
