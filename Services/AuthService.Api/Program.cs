@@ -196,6 +196,10 @@ app.MapPut("/users/{userId}", async (
         return Results.NotFound("User not found");
     }
 
+    user.LastName = string.IsNullOrEmpty(userDto.LastName) ? userDto.LastName : user.LastName;
+    user.FirstName = string.IsNullOrEmpty(userDto.FirstName) ? userDto.FirstName : user.FirstName;
+    user.MiddleName = string.IsNullOrEmpty(userDto.MiddleName) ? userDto.MiddleName : user.MiddleName;
+
     var result = await userService.UpdateUserAsync(userId, userDto);
     if (!result.Succeeded)
     {

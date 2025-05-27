@@ -57,7 +57,7 @@ export function ProfilePage() {
     const [editedStudent, setEditedStudent] = useState<Partial<Student>>({});
     const [editedLecturer, setEditedLecturer] = useState<Partial<Lecturer>>({});
     const [editedConsultant, setEditedConsultant] = useState<Partial<Consultant>>({});
-    const [groups, setGroups] = useState([]);
+    const [groups, setGroups] = useState<Group[]>([]);
 
     useEffect(() => {
         fetchUserData();
@@ -113,18 +113,18 @@ export function ProfilePage() {
         try {
             // Update user basic info
             if (editedUser) {
-                await updateUser(user?.userId || '', editedUser);
+                await updateUser(editedUser);
             }
 
             // Update role-specific info
             if (user?.roles.includes(UserRole.STUDENT)) {
-                await updateStudent(studentInfo?.studentId || '', editedStudent);
+                await updateStudent(editedStudent);
             }
             if (user?.roles.includes(UserRole.SUPERVISOR)) {
-                await updateLecturer(lecturerInfo?.lecturerId || '', editedLecturer);
+                await updateLecturer(editedLecturer);
             }
             if (user?.roles.includes(UserRole.CONSULTANT)) {
-                await updateConsultant(consultantInfo?.consultantId || '', editedConsultant);
+                await updateConsultant(editedConsultant);
             }
 
             // Refresh data

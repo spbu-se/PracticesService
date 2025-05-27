@@ -11,13 +11,17 @@ export function PracticeCard({ practice, onClick }: PracticeCardProps) {
         <Card
             sx={{
                 cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                height: '100%', 
                 '&:hover': {
-                    boxShadow: 4
-                }
+                    boxShadow: 4,
+                },
             }}
             onClick={onClick}
         >
-            <CardContent>
+            <CardContent sx={{ flexGrow: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="h6">
                         {practice.theme?.title || "Без темы"}
