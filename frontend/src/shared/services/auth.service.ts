@@ -5,6 +5,7 @@ import {
     setRefreshToken
 } from "@shared/services/localStorage.service.ts";
 import {axiosService} from "@shared/services/axios.service.ts";
+import { BASENAME } from "@/app/routes/routes";
 
 /// Header with access token for axios requests
 export const authHeader = () => {
@@ -32,5 +33,5 @@ export const refreshToken = async () => {
 export const logout = () => {
     setJWTToken("")
     setRefreshToken("")
-    window.location.assign("/login");
+    window.location.assign(`${BASENAME}login`);
 }

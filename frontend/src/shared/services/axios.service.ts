@@ -9,7 +9,7 @@ import {GoalsAndTasks} from "../../entities/GoalsAndTasks";
 import { Repository } from "@/entities/Repository.ts";
 import {Report} from "../../entities/Report";
 import {Comment} from "../../entities/Comment";
-import { useNavigate } from "react-router-dom";
+import { BASENAME } from "@/app/routes/routes.tsx";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -43,30 +43,29 @@ axiosService.interceptors.request
     });
 
 /// Expired token and unauthorized handler
-axiosService.interceptors.response
-    .use(function (response) {
-        return response;
-    }, async function (error) {
-        const navigate = useNavigate();
-        const loginUrl = "/login"
+axiosService.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const loginUrl = `${BASENAME}login`;
         try {
             if (error.response.status === 401) {
                 if (error.config.url === "/refresh") {
                     setJWTToken("");
                     setRefreshToken("");
-                    navigate(loginUrl);
+                    window.location.href = loginUrl;
                     return Promise.reject(error);
                 }
 
-                await refreshToken()
+                await refreshToken();
                 return axiosService(error.config);
             }
             return Promise.reject(error);
         } catch {
-            navigate(loginUrl);
-            return;
+            window.location.href = loginUrl;
+            return Promise.reject(error);
         }
-    });
+    }
+);
 
 export const login = (email: string, password: string) => axiosService.post(`auth-api/login`, {
     email: email,
