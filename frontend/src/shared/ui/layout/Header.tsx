@@ -73,11 +73,11 @@ export default function Header() {
                             "&:hover": { opacity: 0.9 }
                         }}
                     >
-                        <img
-                            src="../../../../public/icon.svg"
-                            alt="Logo"
-                            style={{ width: '32px', height: '32px' }}
-                        />
+                        {/*<img*/}
+                        {/*    src="/public/icon.svg"*/}
+                        {/*    alt="Logo"*/}
+                        {/*    style={{ width: '32px', height: '32px' }}*/}
+                        {/*/>*/}
                         <Typography
                             variant="h6"
                             sx={{

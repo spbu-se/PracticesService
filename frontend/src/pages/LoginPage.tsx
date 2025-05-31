@@ -34,7 +34,7 @@ export function LoginPage() {
                 const loginResponse: LoginResponse = response.data;
                 setJWTToken(loginResponse.token);
                 setRefreshToken(loginResponse.refreshToken);
-                window.location.assign("/");
+                navigate("/");
             })
             .catch(e => {
                 console.log(e);

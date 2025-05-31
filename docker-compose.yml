@@ -3,7 +3,7 @@ version: "3.9"
 services:
   rabbitmq:
     image: rabbitmq:3.12-management-alpine
-    container_name: rabbitmq
+    container_name: rabbitmq-practices-service
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -73,7 +73,7 @@ services:
     volumes:
       - ./Services/CoreService.Api:/src
     ports:
-      - "5001:8080"
+      - "5007:8080"
     depends_on:
       rabbitmq:
         condition: service_healthy

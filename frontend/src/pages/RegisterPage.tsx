@@ -46,7 +46,7 @@ export function RegisterPage() {
             .then(response => {
                 setJWTToken(response.data.token);
                 setRefreshToken(response.data.refreshToken);
-                window.location.assign("/");
+                navigate("/");
             })
             .catch(e => {
                 console.error("Registration error:", e);

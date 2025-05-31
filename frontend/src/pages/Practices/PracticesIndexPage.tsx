@@ -51,7 +51,7 @@ export function PracticesIndexPage() {
     const completedPractices = practices.filter((p) => p.status === "Завершено");
 
     return tokenIsEmpty ? (
-        <Navigate to="/login" replace />
+        navigate("/login")
     ) : (
         <Layout>
             <Container maxWidth="md" sx={{ mt: 2, p: isMobile ? 1 : 4 }}>

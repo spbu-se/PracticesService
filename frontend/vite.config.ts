@@ -17,10 +17,16 @@ export default defineConfig({
   define: {
     'process.env': `"${process.env}"`
   },
+  base: "/practices-service/",
   server: {
     allowedHosts: ['practices-service-spbu.ru', 'projects.se.math.spbu.ru'],
     host: true,
     port: 8000,
+    hmr: {
+        clientPort: 443,
+        protocol: 'wss',
+        host: 'projects.se.math.spbu.ru'
+    },
     watch: {
       usePolling: true
     }

@@ -9,8 +9,10 @@ import {GoalsAndTasks} from "../../entities/GoalsAndTasks";
 import { Repository } from "@/entities/Repository.ts";
 import {Report} from "../../entities/Report";
 import {Comment} from "../../entities/Comment";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const navigate = useNavigate();
 
 export const axiosService = axios.create({
     baseURL: API_BASE_URL,
@@ -52,7 +54,7 @@ axiosService.interceptors.response
                 if (error.config.url === "/refresh") {
                     setJWTToken("");
                     setRefreshToken("");
-                    window.location.assign(loginUrl);
+                    navigate(loginUrl);
                     return Promise.reject(error);
                 }
 
@@ -61,7 +63,7 @@ axiosService.interceptors.response
             }
             return Promise.reject(error);
         } catch {
-            window.location.assign(loginUrl);
+            navigate(loginUrl);
             return;
         }
     });

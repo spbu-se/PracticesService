@@ -17,6 +17,8 @@ import {AdminGroupsPage} from "@pages/Admin/AdminGroupsPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { PracticePage } from "@/pages/Practices/PracticePage";
 
+export const BASENAME = "/practices-service/";
+
 export const routes = createBrowserRouter([
     {
         path: "/",
@@ -86,6 +88,6 @@ export const routes = createBrowserRouter([
                 path: "groups",
                 element: <AdminGroupsPage />,
             },
-        ]
+        ],
     },
-]);
+], {basename: BASENAME});
