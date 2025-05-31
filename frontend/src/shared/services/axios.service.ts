@@ -12,7 +12,6 @@ import {Comment} from "../../entities/Comment";
 import { useNavigate } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const navigate = useNavigate();
 
 export const axiosService = axios.create({
     baseURL: API_BASE_URL,
@@ -48,6 +47,7 @@ axiosService.interceptors.response
     .use(function (response) {
         return response;
     }, async function (error) {
+        const navigate = useNavigate();
         const loginUrl = "/login"
         try {
             if (error.response.status === 401) {

@@ -195,7 +195,7 @@ export function AdminStudentsPage() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {students?.map((student) => (
+                            {(students || []).map((student) => (
                                 <TableRow key={student.id}>
                                     <TableCell>{student.id}</TableCell>
                                     <TableCell>{student.lastName}</TableCell>

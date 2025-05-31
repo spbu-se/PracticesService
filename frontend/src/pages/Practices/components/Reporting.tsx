@@ -175,8 +175,8 @@ export function Reporting({ practiceId }: { practiceId?: number }) {
                                                         <Typography variant="body2"><b>Планируется:</b> {report.planned}</Typography>
                                                         <Box sx={{ mt: 1 }}>
                                                             <Typography variant="subtitle2">Комментарии:</Typography>
-                                                            {report.comments?.length > 0 ? (
-                                                                report.comments.map((comment, idx) => (
+                                                            {report?.comments?.length > 0 ? (
+                                                                report?.comments.map((comment, idx) => (
                                                                     <Box key={idx} sx={{ ml: 2, mt: 0.5 }}>
                                                                         <Typography variant="body2">
                                                                             <b>{comment.author}</b> ({new Date(comment.createdAt ?? '').toLocaleString()}): {comment.text}

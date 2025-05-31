@@ -180,14 +180,14 @@ export function AdminLecturersPage() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {lecturers?.map((lecturer) => (
+                            {(lecturers || []).map((lecturer) => (
                                 <TableRow key={lecturer.id}>
                                     <TableCell>{lecturer.id}</TableCell>
                                     <TableCell>{lecturer.lastName}</TableCell>
                                     <TableCell>{lecturer.firstName}</TableCell>
                                     <TableCell>{lecturer.middleName || '-'}</TableCell>
                                     <TableCell>{lecturer.department}</TableCell>
-                                    <TableCell>{lecturer.canSuperviseVkr ? 'Да' : 'Нет'}</TableCell>
+                                    <TableCell>{lecturer.cansupervisevkr ? 'Да' : 'Нет'}</TableCell>
                                     <TableCell>
                                         <IconButton
                                             onClick={() => handleOpenEdit(lecturer)}
@@ -252,7 +252,7 @@ export function AdminLecturersPage() {
                             onChange={handleInputChange}
                             required
                         >
-                            {departments?.map((department, i) => (
+                            {(departments || []).map((department, i) => (
                                 <MenuItem key={i} value={department}>{department}</MenuItem>
                             ))}
                         </Select>
@@ -261,7 +261,7 @@ export function AdminLecturersPage() {
                         control={
                             <Checkbox
                                 name="canSuperviseVkr"
-                                checked={currentLecturer?.canSuperviseVkr || false}
+                                checked={currentLecturer?.cansupervisevkr || false}
                                 onChange={handleInputChange}
                             />
                         }

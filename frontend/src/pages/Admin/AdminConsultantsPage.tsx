@@ -165,7 +165,7 @@ export function AdminConsultantsPage() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {consultants?.map((consultant) => (
+                            {(consultants || []).map((consultant) => (
                                 <TableRow key={consultant.id}>
                                     <TableCell>{consultant.id}</TableCell>
                                     <TableCell>{consultant.lastName}</TableCell>

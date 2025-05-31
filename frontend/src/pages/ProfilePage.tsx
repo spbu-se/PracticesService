@@ -117,13 +117,13 @@ export function ProfilePage() {
             }
 
             // Update role-specific info
-            if (user?.roles.includes(UserRole.STUDENT)) {
+            if (user?.roles?.includes(UserRole.STUDENT)) {
                 await updateStudent(editedStudent);
             }
-            if (user?.roles.includes(UserRole.SUPERVISOR)) {
+            if (user?.roles?.includes(UserRole.SUPERVISOR)) {
                 await updateLecturer(editedLecturer);
             }
-            if (user?.roles.includes(UserRole.CONSULTANT)) {
+            if (user?.roles?.includes(UserRole.CONSULTANT)) {
                 await updateConsultant(editedConsultant);
             }
 
@@ -265,7 +265,7 @@ export function ProfilePage() {
                                     Может руководить ВКР
                                 </Typography>
                                 <Typography variant="body1" paragraph>
-                                    {lecturerInfo.canSuperviseVkr ? 'Да' : 'Нет'}
+                                    {lecturerInfo.cansupervisevkr ? 'Да' : 'Нет'}
                                 </Typography>
                             </Grid>
                         )}
@@ -363,7 +363,7 @@ export function ProfilePage() {
                                 <FormControlLabel
                                     control={
                                         <Switch
-                                            checked={editedLecturer.canSuperviseVkr || false}
+                                            checked={editedLecturer.cansupervisevkr || false}
                                             onChange={(e) => handleLecturerFieldChange('canSuperviseVkr', e.target.checked)}
                                         />
                                     }

@@ -171,7 +171,7 @@ export function AdminGroupsPage() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {groups?.map((group) => (
+                            {(groups || []).map((group) => (
                                 <TableRow key={group.id}>
                                     <TableCell>{group.id}</TableCell>
                                     <TableCell>{group.name}</TableCell>

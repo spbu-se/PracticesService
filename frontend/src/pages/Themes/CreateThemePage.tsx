@@ -194,7 +194,7 @@ export function CreateThemePage() {
                                         label="Кафедра"
                                         onChange={(e) => setDepartment(e.target.value)}
                                     >
-                                        {departments?.map((department, i) => (
+                                        {(departments || []).map((department, i) => (
                                             <MenuItem key={i} value={department}>{department}</MenuItem>
                                         ))}
                                     </Select>
@@ -225,7 +225,7 @@ export function CreateThemePage() {
                                         label={UserRole.CONSULTANT}
                                         onChange={(e) => setConsultantId(e.target.value)}
                                     >
-                                        {consultants?.map((con, i) => (
+                                        {(consultants || []).map((con, i) => (
                                             <MenuItem key={i} value={con.id}>{con.lastName} {con.firstName} {con.middleName}</MenuItem>
                                         ))}
                                     </Select>
@@ -243,7 +243,7 @@ export function CreateThemePage() {
                                         label={UserRole.SUPERVISOR}
                                         onChange={(e) => setLecturerId(e.target.value)}
                                     >
-                                        {lecturers?.map((lecturer, i) => (
+                                        {(lecturers || []).map((lecturer, i) => (
                                             <MenuItem key={i} value={lecturer.id}>{lecturer.lastName} {lecturer.firstName} {lecturer.middleName}</MenuItem>
                                         ))}
                                     </Select>
