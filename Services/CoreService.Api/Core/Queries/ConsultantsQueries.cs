@@ -63,7 +63,6 @@ public class ConsultantsQueries(CoreContext context)
             existingConsultant.MiddleName = string.IsNullOrEmpty(consultant.MiddleName) ? existingConsultant.MiddleName : consultant.MiddleName;
             existingConsultant.Contact = string.IsNullOrEmpty(consultant.Contact) ? existingConsultant.Contact : consultant.Contact;
             existingConsultant.Userid = string.IsNullOrEmpty(consultant.Userid) ? existingConsultant.Userid : consultant.Userid;
-            // no need to call Update() here, since existingConsultant is tracked
         }
 
         await context.SaveChangesAsync();

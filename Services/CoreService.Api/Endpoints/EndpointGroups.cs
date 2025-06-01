@@ -282,7 +282,7 @@ public static class EndpointGroups
                         student.FirstName,
                         student.LastName,
                         student.MiddleName,
-                        UserActionType.Update,
+                        UserActionType.Create,
                         RoleNames.GetName(UserRoleType.Student),
                         DateTime.UtcNow));
                 return result;

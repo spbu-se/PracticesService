@@ -36,7 +36,7 @@ public class PracticesQueries(CoreContext context)
     /// <returns>List of practices.</returns>
     public async Task<IEnumerable<Practice>> GetQueriedPractices(string userId)
     {
-        var result = context.Practices.Include(p => p.Theme).Include(p => p.Student).AsQueryable();
+        var result = context.Practices.Include(p => p.Theme).Include(p => p.Student).Include(p => p.Supervisor).Include(p => p.Consultant).AsQueryable();
         if (string.IsNullOrEmpty(userId))
         {
             return new List<Practice>();

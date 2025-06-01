@@ -54,6 +54,14 @@ public class StudentsQueries(CoreContext context)
             return await this.UpdateStudent(student);
         }
 
+        student = new Student
+        {
+            FirstName = student.FirstName,
+            LastName = student.LastName,
+            MiddleName = student.MiddleName,
+            Userid = student.Userid,
+            Groupid = student.Groupid,
+        };
         context.Students.Add(student);
         await context.SaveChangesAsync();
         return Results.Ok(student.Id);

@@ -267,10 +267,10 @@ export function AdminUsersPage() {
                     />
                     <TextField
                         margin="dense"
-                        name="userName"
-                        label="Логин"
+                        name="email"
+                        label="Почта"
                         fullWidth
-                        value={currentUser?.userName || ''}
+                        value={currentUser?.email || ''}
                         onChange={handleInputChange}
                         required
                     />
@@ -321,7 +321,6 @@ export function AdminUsersPage() {
                         disabled={
                             !currentUser?.firstName ||
                             !currentUser?.lastName ||
-                            !currentUser?.userName ||
                             !currentUser?.email ||
                             (!currentUser?.userId && !currentUser?.password)
                         }

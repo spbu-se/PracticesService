@@ -18,15 +18,21 @@ import {
     TextField,
     IconButton,
     Snackbar,
-    Alert
+    Alert,
+    Select,
+    MenuItem,
+    InputLabel,
+    FormControl
 } from "@mui/material";
 import {
     getAllConsultants,
     createConsultant,
     updateConsultant,
-    deleteConsultant
+    deleteConsultant,
+    getAllUsers
 } from "@/shared/services/axios.service";
 import { Consultant } from "@/entities/Consultant";
+import { User } from "@/entities/User";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -41,9 +47,11 @@ export function AdminConsultantsPage() {
         message: '',
         severity: 'success'
     });
+    const [users, setUsers] = useState<User[]>([]);
 
     useEffect(() => {
         loadConsultants();
+        loadUsers();
     }, []);
 
     const loadConsultants = () => {
@@ -56,19 +64,27 @@ export function AdminConsultantsPage() {
             .finally(() => setLoading(false));
     };
 
+    const loadUsers = () => {
+        getAllUsers()
+            .then(res => {
+                setUsers(res.data || []);
+            });
+    };
+
     const handleOpenCreate = () => {
         setCurrentConsultant({
             id: 0,
             firstName: '',
             lastName: '',
             middleName: '',
-            contact: ''
+            contact: '',
+            userid: null  // Добавляем поле userid
         });
         setOpenDialog(true);
     };
 
     const handleOpenEdit = (consultant: Consultant) => {
-        setCurrentConsultant({...consultant});
+        setCurrentConsultant({ ...consultant });
         setOpenDialog(true);
     };
 
@@ -83,6 +99,25 @@ export function AdminConsultantsPage() {
             ...prev!,
             [name]: value
         }));
+    };
+
+    const handleUserSelect = (e: React.ChangeEvent<{ value: unknown }>) => {
+        const selectedUserId = e.target.value as number;
+        const selectedUser = users.find(user => user.userId === selectedUserId);
+        if (selectedUser) {
+            setCurrentConsultant(prev => ({
+                ...prev!,
+                userid: selectedUser.userId,
+                firstName: selectedUser.firstName,
+                lastName: selectedUser.lastName,
+                middleName: selectedUser.middleName || ''
+            }));
+        } else {
+            setCurrentConsultant(prev => ({
+                ...prev!,
+                userid: null
+            }));
+        }
     };
 
     const handleSubmit = () => {
@@ -131,7 +166,7 @@ export function AdminConsultantsPage() {
     };
 
     const handleCloseSnackbar = () => {
-        setSnackbar(prev => ({...prev, open: false}));
+        setSnackbar(prev => ({ ...prev, open: false }));
     };
 
     return (
@@ -165,7 +200,7 @@ export function AdminConsultantsPage() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {(consultants || []).map((consultant) => (
+                            {consultants.map((consultant) => (
                                 <TableRow key={consultant.id}>
                                     <TableCell>{consultant.id}</TableCell>
                                     <TableCell>{consultant.lastName}</TableCell>
@@ -198,22 +233,36 @@ export function AdminConsultantsPage() {
                     {currentConsultant?.id ? 'Редактирование консультанта' : 'Создание консультанта'}
                 </DialogTitle>
                 <DialogContent>
-                    <TextField
-                        margin="dense"
-                        name="firstName"
-                        label="Имя"
-                        fullWidth
-                        value={currentConsultant?.firstName || ''}
-                        onChange={handleInputChange}
-                        required
-                        sx={{ mt: 2 }}
-                    />
+                    <FormControl fullWidth sx={{ mt: 2 }}>
+                        <InputLabel>Пользователь (необязательно)</InputLabel>
+                        <Select
+                            value={currentConsultant?.userid ?? ''}
+                            onChange={handleUserSelect}
+                            displayEmpty
+                        >
+                            <MenuItem value="">Не выбран</MenuItem>
+                            {users.map(user => (
+                                <MenuItem key={user.userId} value={user.userId}>
+                                    {user.lastName} {user.firstName} {user.middleName} ({user.email})
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                     <TextField
                         margin="dense"
                         name="lastName"
                         label="Фамилия"
                         fullWidth
                         value={currentConsultant?.lastName || ''}
+                        onChange={handleInputChange}
+                        required
+                    />
+                    <TextField
+                        margin="dense"
+                        name="firstName"
+                        label="Имя"
+                        fullWidth
+                        value={currentConsultant?.firstName || ''}
                         onChange={handleInputChange}
                         required
                     />
@@ -258,7 +307,7 @@ export function AdminConsultantsPage() {
             >
                 <Alert
                     onClose={handleCloseSnackbar}
-                    severity={snackbar.severity}
+                    severity={snackbar.severity as any}
                     sx={{ width: '100%' }}
                 >
                     {snackbar.message}

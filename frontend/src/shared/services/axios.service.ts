@@ -84,7 +84,7 @@ export const register = (data: RegisterData) => axiosService.post(`auth-api/regi
 export const getThemes = () => axiosService.get("core-api/themes")
 
 export const getThemesPublic = () => axiosPublic.get("core-api/themes")
-export const getTheme = (id: number) => axiosService.get(`core-api/themes?id=${id}`)
+export const getTheme = (id: number) => axiosService.get(`core-api/themes/${id}`)
 
 export const postTheme = (inputTheme: InputTheme) => axiosService.post("core-api/themes", inputTheme)
 
@@ -95,7 +95,10 @@ export const getConsultants = () => axiosService.get("core-api/consultants")
 
 export const getPractices = () => axiosService.get("core-api/practices")
 
-export const getPractice = (id: number) => axiosService.get(`core-api/practices?id=${id}`)
+export const getPractice = (id: number) => axiosService.get(`core-api/practices/${id}`)
+
+export const deletePractice = (id: number) => axiosService.delete(`core-api/practices/${id}`)
+
 
 export const getUserPractices = (userId: string) => axiosService.get(`core-api/practices/query?userId=${userId}`)
 
@@ -140,7 +143,7 @@ export const deleteConsultant = (id: number) => axiosService.delete(`core-api/co
 
 export const getAllLecturers = () => axiosService.get("core-api/lecturers");
 export const createLecturer = (lecturer: Omit<Lecturer, 'id'>) => axiosService.post<Lecturer>('core-api/lecturers', lecturer);
-export const updateLecturer = (lecturer: Lecturer) => axiosService.put<Lecturer>(`core-api/lecturers/${lecturer.id}`, lecturer);
+export const updateLecturer = (lecturer: Lecturer) => axiosService.put<Lecturer>(`core-api/lecturers`, lecturer);
 export const deleteLecturer = (id: number) => axiosService.delete(`core-api/lecturers/${id}`);
 
 export const getAllStudents = () => axiosService.get<Student[]>('core-api/students');
@@ -155,7 +158,7 @@ export const getAllGroups = () =>
 export const createGroup = (group: Omit<Group, 'id'>) =>
     axiosService.post<Group>('core-api/groups', group);
 export const updateGroup = (group: Group) =>
-    axiosService.put<Group>(`core-api/groups/${group.id}`, group);
+    axiosService.put<Group>(`core-api/groups`, group);
 export const deleteGroup = (id: number) =>
     axiosService.delete(`core-api/groups/${id}`);
 

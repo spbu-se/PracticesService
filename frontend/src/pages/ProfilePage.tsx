@@ -327,6 +327,7 @@ export function ProfilePage() {
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
+                                disabled
                                 label="Email"
                                 type="email"
                                 value={editedUser.email || ''}
@@ -355,20 +356,6 @@ export function ProfilePage() {
                                         ))}
                                     </Select>
                                 </FormControl>
-                            </Grid>
-                        )}
-
-                        {user.roles.includes(UserRole.SUPERVISOR) && (
-                            <Grid item xs={12}>
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={editedLecturer.cansupervisevkr || false}
-                                            onChange={(e) => handleLecturerFieldChange('canSuperviseVkr', e.target.checked)}
-                                        />
-                                    }
-                                    label="Может руководить ВКР"
-                                />
                             </Grid>
                         )}
 

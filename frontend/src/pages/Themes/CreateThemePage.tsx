@@ -101,7 +101,7 @@ export function CreateThemePage() {
             };
 
             await postTheme(theme);
-            navigate("/");
+            navigate("/themes");
 
         } catch (error) {
             console.error("Ошибка при создании темы:", error);

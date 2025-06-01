@@ -1,4 +1,4 @@
-﻿import React, {useEffect, useMemo, useState} from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import {
     Container,
     Typography,
@@ -20,21 +20,28 @@ import {
     Snackbar,
     Alert,
     Checkbox,
-    FormControlLabel, InputLabel, Select, MenuItem, FormControl
+    FormControlLabel,
+    InputLabel,
+    Select,
+    MenuItem,
+    FormControl
 } from "@mui/material";
 import {
     getAllLecturers,
     createLecturer,
     updateLecturer,
-    deleteLecturer
+    deleteLecturer,
+    getAllUsers
 } from "@/shared/services/axios.service";
 import { Lecturer } from "@/entities/Lecturer";
+import { User } from "@/entities/User";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 
 export function AdminLecturersPage() {
     const [lecturers, setLecturers] = useState<Lecturer[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     const [currentLecturer, setCurrentLecturer] = useState<Lecturer | null>(null);
@@ -43,12 +50,16 @@ export function AdminLecturersPage() {
         message: '',
         severity: 'success'
     });
-    const departments = useMemo(() => ["Кафедра системного программирования", "Кафедра параллельных алгоритмов",
-        "Кафедра информатики", "Кафедра информационно-аналитических систем"], [])
-
+    const departments = useMemo(() => [
+        "Кафедра системного программирования",
+        "Кафедра параллельных алгоритмов",
+        "Кафедра информатики",
+        "Кафедра информационно-аналитических систем"
+    ], []);
 
     useEffect(() => {
         loadLecturers();
+        loadUsers();
     }, []);
 
     const loadLecturers = () => {
@@ -69,6 +80,22 @@ export function AdminLecturersPage() {
             .finally(() => setLoading(false));
     };
 
+    const loadUsers = () => {
+        getAllUsers()
+            .then(res => {
+                const response = res?.data;
+                setUsers(Array.isArray(response) ? response : []);
+            })
+            .catch(error => {
+                console.error("Error loading users:", error);
+                setSnackbar({
+                    open: true,
+                    message: 'Ошибка при загрузке пользователей',
+                    severity: 'error'
+                });
+            });
+    };
+
     const handleOpenCreate = () => {
         setCurrentLecturer({
             id: 0,
@@ -76,13 +103,14 @@ export function AdminLecturersPage() {
             lastName: '',
             middleName: '',
             department: '',
-            canSuperviseVkr: false
+            cansupervisevkr: false,
+            userid: ''
         });
         setOpenDialog(true);
     };
 
     const handleOpenEdit = (lecturer: Lecturer) => {
-        setCurrentLecturer({...lecturer});
+        setCurrentLecturer({ ...lecturer });
         setOpenDialog(true);
     };
 
@@ -91,12 +119,33 @@ export function AdminLecturersPage() {
         setCurrentLecturer(null);
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value, type, checked } = e.target;
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+        const { name, value, type } = e.target as HTMLInputElement;
         setCurrentLecturer(prev => ({
             ...prev!,
-            [name]: type === 'checkbox' ? checked : value
+            [name!]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
         }));
+    };
+
+    const handleUserSelectChange = (e: React.ChangeEvent<{ value: unknown }>) => {
+        const selectedUserId = e.target.value as string | '';
+        if (selectedUserId === '') {
+            setCurrentLecturer(prev => ({
+                ...prev!,
+                userId: null
+            }));
+        } else {
+            const selectedUser = users.find(u => u.userId === selectedUserId);
+            if (selectedUser) {
+                setCurrentLecturer(prev => ({
+                    ...prev!,
+                    userId: selectedUserId,
+                    firstName: selectedUser.firstName,
+                    lastName: selectedUser.lastName,
+                    middleName: selectedUser.middleName || ''
+                }));
+            }
+        }
     };
 
     const handleSubmit = () => {
@@ -145,7 +194,7 @@ export function AdminLecturersPage() {
     };
 
     const handleCloseSnackbar = () => {
-        setSnackbar(prev => ({...prev, open: false}));
+        setSnackbar(prev => ({ ...prev, open: false }));
     };
 
     return (
@@ -214,6 +263,21 @@ export function AdminLecturersPage() {
                     {currentLecturer?.id ? 'Редактирование преподавателя' : 'Создание преподавателя'}
                 </DialogTitle>
                 <DialogContent>
+                    <FormControl fullWidth margin="dense">
+                        <InputLabel>Пользователь</InputLabel>
+                        <Select
+                            value={currentLecturer?.userid ?? ''}
+                            onChange={handleUserSelectChange}
+                            displayEmpty
+                        >
+                            <MenuItem value=""><em>Без пользователя</em></MenuItem>
+                            {users.map(user => (
+                                <MenuItem key={user.userId} value={user.userId}>
+                                    {user.lastName} {user.firstName} {user.middleName} ({user.email})
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                     <TextField
                         margin="dense"
                         name="firstName"
@@ -241,26 +305,23 @@ export function AdminLecturersPage() {
                         value={currentLecturer?.middleName || ''}
                         onChange={handleInputChange}
                     />
-                    <FormControl fullWidth>
+                    <FormControl fullWidth margin="dense">
                         <InputLabel>Кафедра</InputLabel>
                         <Select
-                            margin="dense"
                             name="department"
-                            label="Кафедра"
-                            fullWidth
                             value={currentLecturer?.department || ''}
                             onChange={handleInputChange}
                             required
                         >
-                            {(departments || []).map((department, i) => (
-                                <MenuItem key={i} value={department}>{department}</MenuItem>
+                            {departments.map((dept, i) => (
+                                <MenuItem key={i} value={dept}>{dept}</MenuItem>
                             ))}
                         </Select>
                     </FormControl>
                     <FormControlLabel
                         control={
                             <Checkbox
-                                name="canSuperviseVkr"
+                                name="cansupervisevkr"
                                 checked={currentLecturer?.cansupervisevkr || false}
                                 onChange={handleInputChange}
                             />

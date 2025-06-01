@@ -1,14 +1,15 @@
 ﻿import { useState, useEffect } from "react";
 import {
     FormControl, InputLabel, Select, MenuItem, Grid, Button, Typography, Card, CardContent,
-    Modal, Box, TextField, Divider
+    Modal, Box
 } from "@mui/material";
 import { Theme } from "@/entities/Theme";
-import { getPractice, getConsultants, getThemes, getLecturers, putPractice } from "@/shared/services/axios.service.ts";
+import { getPractice, getConsultants, getThemes, getLecturers, putPractice, deletePractice } from "@/shared/services/axios.service.ts";
 import { UserRole } from "@/entities/UserRoles";
 import { Practice } from "@/entities/Practice";
 import { Consultant } from "@/entities/Consultant";
 import { Supervisor } from "@/entities/Supervisor";
+import { useNavigate } from "react-router-dom";
 
 const modalStyle = {
     position: 'absolute',
@@ -31,8 +32,11 @@ export function ThemeSelection({ practiceId }: { practiceId?: number }) {
     const [showConsultantInput, setShowConsultantInput] = useState(false);
     const [consultantId, setConsultantId] = useState<number | null>(null);
     const [editModalOpen, setEditModalOpen] = useState(false);
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false);  // Новое состояние для модального окна
     const [selectedTheme, setSelectedTheme] = useState<number | null>(null);
     const [selectedSupervisor, setSelectedSupervisor] = useState<number | null>(null);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         getConsultants().then(res => setConsultants(res.data));
@@ -51,13 +55,27 @@ export function ThemeSelection({ practiceId }: { practiceId?: number }) {
             const updatedPractice = {
                 ...practice,
                 themeid: selectedTheme,
-                supervisorid: selectedSupervisor
+                supervisorid: selectedSupervisor,
+                consultantId: consultantId
             };
             await putPractice(updatedPractice);
             const response = await getPractice(practiceId);
             const refreshedPractice = response.data.find((t: Practice) => t.id == practiceId);
             setPractice(refreshedPractice);
             setEditModalOpen(false);
+            setShowConsultantInput(false);
+        }
+    };
+
+    const handleRefuseTheme = () => {
+        setConfirmModalOpen(true);  // Открыть модальное окно подтверждения
+    };
+
+    const confirmRefuse = async () => {
+        if (practice) {
+            await deletePractice(practice.id);
+            setConfirmModalOpen(false);
+            navigate("/practices");
         }
     };
 
@@ -101,7 +119,7 @@ export function ThemeSelection({ practiceId }: { practiceId?: number }) {
                                     </Select>
                                 </FormControl>
                                 <Box display="flex" justifyContent="space-between" sx={{ mt: 1 }}>
-                                    <Button variant="contained" size="small" onClick={() => { practice!.consultantid = consultantId; putPractice(practice); setShowConsultantInput(false); }}>Сохранить</Button>
+                                    <Button variant="contained" size="small" onClick={handleEditSave}>Сохранить</Button>
                                     <Button variant="outlined" color="error" size="small" onClick={() => setShowConsultantInput(false)}>Отмена</Button>
                                 </Box>
                             </Box>
@@ -109,12 +127,13 @@ export function ThemeSelection({ practiceId }: { practiceId?: number }) {
 
                         <Box display="flex" justifyContent="space-between" sx={{ mt: 3 }}>
                             <Button variant="contained" size="small" onClick={() => setEditModalOpen(true)}>Редактировать</Button>
-                            <Button variant="outlined" color="error" size="small">Отказаться от темы</Button>
+                            <Button variant="outlined" color="error" size="small" onClick={handleRefuseTheme}>Отказаться от практики</Button>
                         </Box>
                     </CardContent>
                 </Card>
             </Grid>
-            
+
+            {/* Модальное окно для редактирования */}
             <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)}>
                 <Box sx={modalStyle}>
                     <Typography variant="h6" gutterBottom>Редактировать тему и руководителя</Typography>
@@ -145,6 +164,18 @@ export function ThemeSelection({ practiceId }: { practiceId?: number }) {
                     <Box display="flex" justifyContent="flex-end" sx={{ mt: 3 }}>
                         <Button variant="contained" onClick={handleEditSave} sx={{ mr: 2 }}>Сохранить</Button>
                         <Button variant="outlined" onClick={() => setEditModalOpen(false)}>Отмена</Button>
+                    </Box>
+                </Box>
+            </Modal>
+
+            {/* Модальное окно подтверждения отказа */}
+            <Modal open={confirmModalOpen} onClose={() => setConfirmModalOpen(false)}>
+                <Box sx={modalStyle}>
+                    <Typography variant="h6" gutterBottom>Подтверждение отказа</Typography>
+                    <Typography>Вы уверены, что хотите отказаться от этой практики?</Typography>
+                    <Box display="flex" justifyContent="flex-end" sx={{ mt: 3 }}>
+                        <Button variant="outlined" onClick={() => setConfirmModalOpen(false)} sx={{ mr: 2 }}>Отмена</Button>
+                        <Button variant="contained" color="error" onClick={confirmRefuse}>Подтвердить</Button>
                     </Box>
                 </Box>
             </Modal>

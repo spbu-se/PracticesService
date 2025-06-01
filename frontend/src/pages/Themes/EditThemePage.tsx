@@ -131,7 +131,7 @@ export function EditThemePage() {
             };
 
             await putTheme(theme);
-            navigate("/");
+            navigate("/themes");
 
         } catch (error) {
             console.error("Ошибка при обновлении темы:", error);

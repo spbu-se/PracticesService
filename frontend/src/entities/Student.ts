@@ -2,6 +2,7 @@
 
 export interface Student {
     id: number;
+    userid: string;
     firstName: string;
     lastName: string;
     middleName: string;

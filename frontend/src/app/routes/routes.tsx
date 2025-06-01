@@ -90,4 +90,4 @@ export const routes = createBrowserRouter([
             },
         ],
     },
-]);
+], {basename: BASENAME});

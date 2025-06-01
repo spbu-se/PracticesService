@@ -116,6 +116,17 @@ export function RegisterPage() {
                                 />
                             </Grid>
                             <Grid item xs={12}>
+                                <Typography variant="body2" color="textSecondary">
+                                    Пароль должен содержать:
+                                </Typography>
+                                <ul style={{ marginTop: 0, fontSize: '0.875rem' }}>
+                                    <li>Минимум 8 символов</li>
+                                    <li>Хотя бы одну цифру (0-9)</li>
+                                    <li>Хотя бы одну заглавную (A-Z) и строчную (a-z) букву</li>
+                                    <li>Хотя бы один спецсимвол (!@#$%^&*)</li>
+                                </ul>
+                            </Grid>
+                            <Grid item xs={12}>
                                 <TextField
                                     fullWidth
                                     label="Пароль"

@@ -5,6 +5,7 @@ import {Theme} from "@/entities/Theme.ts";
 import {Layout} from "@shared/ui/layout/Layout.tsx";
 import {Button, Container, Typography, Paper, CircularProgress, Box} from "@mui/material";
 import {UserRole} from "../../entities/UserRoles";
+import MDEditor from "@uiw/react-md-editor";
 
 export function ThemePage() {
     const {id} = useParams();
@@ -51,8 +52,20 @@ export function ThemePage() {
                         </Typography>
                         <Typography variant="subtitle1"><strong>Контакты
                             консультанта:</strong> {theme.consultant?.contact ?? ""}</Typography>
-                        <Typography variant="body1" sx={{mt: 2}}><strong>Описание:</strong> {theme.description}
+                        <Typography variant="body1" sx={{ mt: 2 }}>
+                            <strong>Описание:</strong>
                         </Typography>
+                        <div style={{ marginTop: 8 }}>
+                            <MDEditor.Markdown
+                                source={theme.description || 'Нет описания'}
+                                style={{
+                                    backgroundColor: 'transparent',
+                                    padding: 0,
+                                    color: 'inherit', // Inherits text color from parent
+                                    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif' // Match MUI typography
+                                }}
+                            />
+                        </div>
                     </Box>
                 </Paper>
             </Container>

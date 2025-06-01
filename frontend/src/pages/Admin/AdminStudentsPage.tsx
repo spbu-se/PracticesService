@@ -29,10 +29,12 @@ import {
     createStudent,
     updateStudent,
     deleteStudent,
-    getAllGroups
+    getAllGroups,
+    getAllUsers
 } from "@/shared/services/axios.service";
 import { Student } from "@/entities/Student";
 import { Group } from "@/entities/Group";
+import { User } from "@/entities/User";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -40,6 +42,7 @@ import AddIcon from '@mui/icons-material/Add';
 export function AdminStudentsPage() {
     const [students, setStudents] = useState<Student[]>([]);
     const [groups, setGroups] = useState<Group[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
@@ -55,10 +58,11 @@ export function AdminStudentsPage() {
 
     const loadData = () => {
         setLoading(true);
-        Promise.all([getAllStudents(), getAllGroups()])
-            .then(([studentsRes, groupsRes]) => {
+        Promise.all([getAllStudents(), getAllGroups(), getAllUsers()])
+            .then(([studentsRes, groupsRes, usersRes]) => {
                 setStudents(Array.isArray(studentsRes?.data) ? studentsRes.data : []);
                 setGroups(Array.isArray(groupsRes?.data) ? groupsRes.data : []);
+                setUsers(Array.isArray(usersRes?.data) ? usersRes.data : []);
             })
             .catch(error => {
                 console.error("Error loading data:", error);
@@ -78,13 +82,14 @@ export function AdminStudentsPage() {
             lastName: '',
             middleName: '',
             groupId: 0,
-            group: {} as Group
+            group: {} as Group,
+            userid: '' 
         });
         setOpenDialog(true);
     };
 
     const handleOpenEdit = (student: Student) => {
-        setCurrentStudent({...student});
+        setCurrentStudent({ ...student });
         setOpenDialog(true);
     };
 
@@ -93,11 +98,11 @@ export function AdminStudentsPage() {
         setCurrentStudent(null);
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+        const { name, value } = e.target as HTMLInputElement;
         setCurrentStudent(prev => ({
             ...prev!,
-            [name]: value
+            [name!]: value
         }));
     };
 
@@ -107,8 +112,28 @@ export function AdminStudentsPage() {
         setCurrentStudent(prev => ({
             ...prev!,
             groupId: groupId,
-            group: selectedGroup
         }));
+    };
+
+    const handleUserSelectChange = (e: any) => {
+        const selectedUserId = e.target.value as string;
+        if (selectedUserId === '') {
+            setCurrentStudent(prev => ({
+                ...prev!,
+                userid: ''
+            }));
+        } else {
+            const selectedUser = users.find(u => u.userId === selectedUserId);
+            if (selectedUser) {
+                setCurrentStudent(prev => ({
+                    ...prev!,
+                    userid: selectedUserId,
+                    firstName: selectedUser.firstName,
+                    lastName: selectedUser.lastName,
+                    middleName: selectedUser.middleName || ''
+                }));
+            }
+        }
     };
 
     const handleSubmit = () => {
@@ -157,7 +182,7 @@ export function AdminStudentsPage() {
     };
 
     const handleCloseSnackbar = () => {
-        setSnackbar(prev => ({...prev, open: false}));
+        setSnackbar(prev => ({ ...prev, open: false }));
     };
 
     const getGroupName = (group: Group) => {
@@ -203,16 +228,10 @@ export function AdminStudentsPage() {
                                     <TableCell>{student.middleName || '-'}</TableCell>
                                     <TableCell>{getGroupName(student.group)}</TableCell>
                                     <TableCell>
-                                        <IconButton
-                                            onClick={() => handleOpenEdit(student)}
-                                            color="primary"
-                                        >
+                                        <IconButton onClick={() => handleOpenEdit(student)} color="primary">
                                             <EditIcon />
                                         </IconButton>
-                                        <IconButton
-                                            onClick={() => handleDelete(student.id)}
-                                            color="error"
-                                        >
+                                        <IconButton onClick={() => handleDelete(student.id)} color="error">
                                             <DeleteIcon />
                                         </IconButton>
                                     </TableCell>
@@ -228,6 +247,21 @@ export function AdminStudentsPage() {
                     {currentStudent?.id ? 'Редактирование студента' : 'Создание студента'}
                 </DialogTitle>
                 <DialogContent>
+                    <FormControl fullWidth margin="dense">
+                        <InputLabel>Пользователь</InputLabel>
+                        <Select
+                            value={currentStudent?.userid ?? ''}
+                            onChange={handleUserSelectChange}
+                            displayEmpty
+                        >
+                            <MenuItem value=""><em>Без пользователя</em></MenuItem>
+                            {users.map(user => (
+                                <MenuItem key={user.userId} value={user.userId}>
+                                    {user.lastName} {user.firstName} {user.middleName} ({user.email})
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                     <TextField
                         margin="dense"
                         name="firstName"
@@ -260,7 +294,6 @@ export function AdminStudentsPage() {
                         <Select
                             value={currentStudent?.groupId || 0}
                             onChange={handleGroupChange}
-                            label="Группа *"
                             required
                         >
                             {groups.map((group) => (
@@ -287,16 +320,8 @@ export function AdminStudentsPage() {
                 </DialogActions>
             </Dialog>
 
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={6000}
-                onClose={handleCloseSnackbar}
-            >
-                <Alert
-                    onClose={handleCloseSnackbar}
-                    severity={snackbar.severity}
-                    sx={{ width: '100%' }}
-                >
+            <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+                <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
                     {snackbar.message}
                 </Alert>
             </Snackbar>

@@ -43,6 +43,14 @@ export function PracticeCard({ practice, onClick }: PracticeCardProps) {
                 </Typography>
 
                 <Typography variant="body2" color="text.secondary">
+                    Научный руководитель: {practice?.supervisor?.lastName} {practice?.supervisor?.firstName} {practice?.supervisor?.middleName}
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
+                    Консультант: {practice?.consultant ? `${practice?.consultant?.lastName} ${practice?.consultant?.firstName} ${practice?.consultant?.middleName}` : "Не назначен"}
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
                     Дата создания: {new Date(practice.createddate).toLocaleDateString()}
                 </Typography>
 

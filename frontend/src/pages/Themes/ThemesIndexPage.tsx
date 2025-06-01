@@ -165,7 +165,7 @@ export function ThemesIndexPage() {
 
                         <FormControlLabel
                             control={<Checkbox checked={isArchived} onChange={(e) => setIsArchived(e.target.checked)} />}
-                            label="Показать архивные"
+                            label="Показать только архивные"
                             sx={{ mt: 1, mb: 1 }}
                         />
 
