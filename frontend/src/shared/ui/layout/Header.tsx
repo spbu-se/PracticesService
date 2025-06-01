@@ -120,6 +120,9 @@ export default function Header() {
                                     <MenuItem onClick={() => handleNavigate("/admin")}>Админ панель</MenuItem>
                                 )}
                                 <MenuItem onClick={() => handleNavigate("/themes")}>Темы</MenuItem>
+                                {me?.roles?.includes(UserRole.SUPERVISOR) && (
+                                    <MenuItem onClick={() => handleNavigate("/practices-staff")}>Практики (Преподаватель)</MenuItem>
+                                )}
                                 <MenuItem onClick={() => handleNavigate("/practices")}>Практики</MenuItem>
                                 <Divider sx={{ my: 1, bgcolor: "primary.light" }} />
                                 <MenuItem onClick={() => handleNavigate("/profile")}>Профиль</MenuItem>
@@ -144,6 +147,11 @@ export default function Header() {
                             <Button color="inherit" onClick={() => navigate("/themes")}>
                                 Темы
                             </Button>
+                            {me?.roles?.includes(UserRole.SUPERVISOR) && (
+                                <Button color="inherit" onClick={() => navigate("/practices-staff")}>
+                                    Практики (Преподаватель)
+                                </Button>
+                            )}
                             <Button color="inherit" onClick={() => navigate("/practices")}>
                                 Практики
                             </Button>

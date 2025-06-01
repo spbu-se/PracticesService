@@ -35,6 +35,10 @@ export function PracticeCard({ practice, onClick }: PracticeCardProps) {
                 <Divider sx={{ my: 2 }} />
 
                 <Typography variant="body2" color="text.secondary">
+                    Студент: <b>{practice.student.lastName} {practice.student.firstName} {practice.student.middleName}</b>
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
                     Тип практики: {practice.type}
                 </Typography>
 

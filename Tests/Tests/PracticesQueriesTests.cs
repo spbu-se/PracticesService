@@ -149,7 +149,7 @@ namespace Tests
         [Test]
         public async Task GetQueriedPractices_WithValidUserId_ReturnsPractices()
         {
-            var result = await this.practicesQueries.GetQueriedPractices("user-1");
+            var result = await this.practicesQueries.GetPracticesByStudent("user-1");
 
             Assert.Multiple(
                 () =>
@@ -167,7 +167,7 @@ namespace Tests
         [TestCase("")]
         public async Task GetQueriedPractices_WithEmptyUserId_ReturnsEmptyList(string userId)
         {
-            var result = await this.practicesQueries.GetQueriedPractices(userId);
+            var result = await this.practicesQueries.GetPracticesByStudent(userId);
 
             Assert.That(result, Is.Empty);
         }

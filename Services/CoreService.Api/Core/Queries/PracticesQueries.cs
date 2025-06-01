@@ -32,9 +32,9 @@ public class PracticesQueries(CoreContext context)
     /// <summary>
     /// Gets queried Practices.
     /// </summary>
-    /// <param name="userId">User id.</param>
+    /// <param name="userId">Student user id.</param>
     /// <returns>List of practices.</returns>
-    public async Task<IEnumerable<Practice>> GetQueriedPractices(string userId)
+    public async Task<IEnumerable<Practice>> GetPracticesByStudent(string userId)
     {
         var result = context.Practices.Include(p => p.Theme).Include(p => p.Student).Include(p => p.Supervisor).Include(p => p.Consultant).AsQueryable();
         if (string.IsNullOrEmpty(userId))
@@ -43,6 +43,30 @@ public class PracticesQueries(CoreContext context)
         }
 
         result = result.Where(p => p.Student.Userid == userId);
+
+        return await result.ToListAsync();
+    }
+
+    /// <summary>
+    /// Gets practices supervised by a given supervisor user id.
+    /// </summary>
+    /// <param name="supervisorUserId">Supervisor user id.</param>
+    /// <returns>List of practices supervised by this supervisor.</returns>
+    public async Task<IEnumerable<Practice>> GetPracticesBySupervisor(string supervisorUserId)
+    {
+        var result = context.Practices
+            .Include(p => p.Theme)
+            .Include(p => p.Student)
+            .Include(p => p.Supervisor)
+            .Include(p => p.Consultant)
+            .AsQueryable();
+
+        if (string.IsNullOrEmpty(supervisorUserId))
+        {
+            return new List<Practice>();
+        }
+
+        result = result.Where(p => p.Supervisor != null && p.Supervisor.Userid == supervisorUserId);
 
         return await result.ToListAsync();
     }

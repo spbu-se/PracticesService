@@ -239,8 +239,11 @@ public static class EndpointGroups
             "/{practiceId:int}",
             (int practiceId, CoreContext context) => new PracticesQueries(context).GetPractices(practiceId).Result);
         group.MapGet(
-            "/query",
-            (string userId, CoreContext context) => new PracticesQueries(context).GetQueriedPractices(userId).Result);
+            "/student",
+            (string userId, CoreContext context) => new PracticesQueries(context).GetPracticesByStudent(userId).Result);
+        group.MapGet(
+            "/supervisor",
+            (string userId, CoreContext context) => new PracticesQueries(context).GetPracticesBySupervisor(userId).Result);
         group.MapPost(
             "/",
             (Practice practice, CoreContext context) => new PracticesQueries(context).InsertPractice(practice).Result).RequireAuthorization();

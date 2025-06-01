@@ -100,7 +100,9 @@ export const getPractice = (id: number) => axiosService.get(`core-api/practices/
 export const deletePractice = (id: number) => axiosService.delete(`core-api/practices/${id}`)
 
 
-export const getUserPractices = (userId: string) => axiosService.get(`core-api/practices/query?userId=${userId}`)
+export const getUserPractices = (userId: string) => axiosService.get(`core-api/practices/student?userId=${userId}`)
+
+export const getSupervisorPractices = (userId: string) => axiosService.get(`core-api/practices/supervisor?userId=${userId}`)
 
 export const postPractice = (inputPractice: Practice) => axiosService.post("core-api/practices", inputPractice)
 
