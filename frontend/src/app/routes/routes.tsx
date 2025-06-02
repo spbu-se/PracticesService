@@ -16,7 +16,8 @@ import {AdminStudentsPage} from "@pages/Admin/AdminStudentsPage";
 import {AdminGroupsPage} from "@pages/Admin/AdminGroupsPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { PracticePage } from "@/pages/Practices/PracticePage";
-import { SupervisorPracticesPage } from "@/pages/Practices/SupervisorPracticePage";
+import { SupervisorPracticesPage } from "@/pages/Practices/SupervisorPracticesPage";
+import { ManagerPracticesPage } from "@/pages/Practices/ManagerPracticesPage";
 import { PracticeStaffPage } from "@/pages/Practices/PracticeStaffPage";
 
 export const BASENAME = "/practices-service/";
@@ -37,6 +38,10 @@ export const routes = createBrowserRouter([
     {
         path: "/practices-staff",
         element: <SupervisorPracticesPage/>,
+    },
+    {
+        path: "/practices-manager",
+        element: <ManagerPracticesPage/>,
     },
     {
         path: "/practice/:id",

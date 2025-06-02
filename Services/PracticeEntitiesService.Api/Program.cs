@@ -4,7 +4,7 @@ using PracticeEntities.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 var mongoConnectionString = builder.Configuration.GetValue<string>("MongoSettings:ConnectionString")
-    ?? "mongodb://admin:admin123@practice-entities.db:27017";
+    ?? "mongodb://admin:admin123@practice-entities.db:27017/admin";
 
 var mongoDatabaseName = builder.Configuration.GetValue<string>("MongoSettings:DatabaseName") ?? "practice_entities";
 

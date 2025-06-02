@@ -73,7 +73,7 @@ export function PracticeStaffPage() {
 
                 <Paper elevation={3}>
                     <Typography variant="h4" sx={{ p: 3 }}>
-                        {isNewPractice ? "Создание практики" : "Редактирование практики"}
+                        {isNewPractice ? "Создание практики" : "Просмотр работы"}
                     </Typography>
 
                     <Divider />

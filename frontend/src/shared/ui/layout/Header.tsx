@@ -123,7 +123,12 @@ export default function Header() {
                                 {me?.roles?.includes(UserRole.SUPERVISOR) && (
                                     <MenuItem onClick={() => handleNavigate("/practices-staff")}>Практики (Преподаватель)</MenuItem>
                                 )}
-                                <MenuItem onClick={() => handleNavigate("/practices")}>Практики</MenuItem>
+                                {me?.roles?.includes(UserRole.PRACTICE_SUPERVISOR) && (
+                                    <MenuItem onClick={() => handleNavigate("/practices-manager")}>Практики (Руководитель практики)</MenuItem>
+                                )}
+                                {(me?.roles?.includes(UserRole.STUDENT) || !me) && (
+                                    <MenuItem onClick={() => handleNavigate("/practices")}>Практики</MenuItem>
+                                )}
                                 <Divider sx={{ my: 1, bgcolor: "primary.light" }} />
                                 <MenuItem onClick={() => handleNavigate("/profile")}>Профиль</MenuItem>
                                 {me && <MenuItem
@@ -152,9 +157,16 @@ export default function Header() {
                                     Практики (Преподаватель)
                                 </Button>
                             )}
-                            <Button color="inherit" onClick={() => navigate("/practices")}>
-                                Практики
-                            </Button>
+                            {me?.roles?.includes(UserRole.PRACTICE_SUPERVISOR) && (
+                                <Button color="inherit" onClick={() => navigate("/practices-manager")}>
+                                    Практики (Руководитель практики)
+                                </Button>
+                            )}
+                            {(me?.roles?.includes(UserRole.STUDENT) || !me) && (
+                                <Button color="inherit" onClick={() => navigate("/practices")}>
+                                    Практики
+                                </Button>
+                            )}
                             <Button color="inherit" onClick={handleMenuOpen}>
                                 <AccountCircleIcon />
                             </Button>
