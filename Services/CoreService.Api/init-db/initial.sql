@@ -61,8 +61,8 @@ CREATE TABLE Practices
 (
     Id SERIAL PRIMARY KEY,
     StudentId INT NOT NULL,
-    ConsultantId INT NOT NULL,
-    SupervisorId INT,
+    ConsultantId INT,
+    SupervisorId INT NOT NULL,
     ThemeId INT NOT NULL,
     Type VARCHAR(255) NOT NULL, 
     FinalGrade VARCHAR(5),
