@@ -15,6 +15,7 @@ import { ThemeSelection } from "./components/ThemeSelection";
 import { GoalsAndTasks } from "./components/GoalsAndTasks";
 import { Reporting } from "./components/Reporting";
 import { Attachments } from "./components/Attachments";
+import { Messages } from "./components/Messages";
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -89,6 +90,7 @@ export function PracticePage() {
                             <Tab label="Цели и задачи" {...a11yProps(1)} />
                             <Tab label="Отчётность" {...a11yProps(2)} />
                             <Tab label="Подготовка к защите" {...a11yProps(3)} />
+                            <Tab label="Чат" {...a11yProps(4)} />
                         </Tabs>
                     </Box>
 
@@ -106,6 +108,10 @@ export function PracticePage() {
                     
                     <TabPanel value={value} index={3}>
                         <Attachments practiceId={id} />
+                    </TabPanel>
+
+                    <TabPanel value={value} index={4}>
+                        <Messages practiceId={id} />
                     </TabPanel>
                 </Paper>
             </Container>

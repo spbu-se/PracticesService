@@ -116,4 +116,30 @@ app.MapGet("/api/repositories/{practiceId:int}", async (IMongoDatabase db, int p
     return repo != null ? Results.Ok(repo) : Results.NotFound();
 });
 
+app.MapPost("/api/messages", async (IMongoDatabase db, Message input) =>
+{
+    var collection = db.GetCollection<Message>("messages");
+
+    if (input.CreatedAt == default)
+    {
+        input.CreatedAt = DateTime.UtcNow;
+    }
+
+    await collection.InsertOneAsync(input);
+
+    return Results.Created($"/api/messages/{input.PracticeId}", input);
+});
+
+app.MapGet("/api/messages/{practiceId:int}", async (IMongoDatabase db, int practiceId) =>
+{
+    var collection = db.GetCollection<Message>("messages");
+
+    var messages = await collection
+        .Find(x => x.PracticeId == practiceId)
+        .SortBy(x => x.CreatedAt)
+        .ToListAsync();
+
+    return messages.Count > 0 ? Results.Ok(messages) : Results.NotFound();
+});
+
 app.Run();

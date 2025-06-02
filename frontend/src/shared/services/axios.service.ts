@@ -10,6 +10,7 @@ import { Repository } from "@/entities/Repository.ts";
 import {Report} from "../../entities/Report";
 import {Comment} from "../../entities/Comment";
 import { BASENAME } from "@/app/routes/routes.tsx";
+import {Message} from "../../entities/Message";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -185,3 +186,9 @@ export const postGoalsTasks = (inputGoalsTasks: GoalsAndTasks) =>
 
 export const getGoalsTasksByPracticeId = (practiceId: number) =>
     axiosService.get(`practice-entities-api/goals-tasks/${practiceId}`);
+
+export const postMessage = (input: Message) =>
+    axiosService.post("practice-entities-api/messages", input);
+
+export const getMessagesByPracticeId = (practiceId: number) =>
+    axiosService.get(`practice-entities-api/messages/${practiceId}`);
