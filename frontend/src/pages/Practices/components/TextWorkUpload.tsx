@@ -22,7 +22,7 @@ export function TextWorkUpload({ practiceId, setSnackbarMessage, setSnackbarSeve
             await postTextWork({
                 practiceId: practiceId,
                 link: textLink.trim(),
-                version: textVersion + 1,
+                version: textVersion,
                 file: textFile,
             });
 
