@@ -7,7 +7,8 @@ import {getLatestTextWorkVersion, postTextWork } from "@/shared/services/axios.s
 export function TextWorkUpload({ practiceId, setSnackbarMessage, setSnackbarSeverity, setSnackbarOpen }: any) {
     const [textFile, setTextFile] = useState<File | null>(null);
     const [textLink, setTextLink] = useState("");
-    
+
+    const [textVersion, setTextVersion] = useState(1);
     const [latestTextWork, setLatestTextWorks] = useState<TextWork>();
     
     const handleSubmit = async () => {
@@ -21,7 +22,7 @@ export function TextWorkUpload({ practiceId, setSnackbarMessage, setSnackbarSeve
             await postTextWork({
                 practiceId: practiceId,
                 link: textLink.trim(),
-                version: latestTextWork?.version ?? 0 + 1,
+                version: textVersion + 1,
                 file: textFile,
             });
 
@@ -29,8 +30,7 @@ export function TextWorkUpload({ practiceId, setSnackbarMessage, setSnackbarSeve
             setSnackbarSeverity("success");
             setSnackbarOpen(true);
             setTextFile(null);
-            latestTextWork.version = latestTextWork?.version ?? 0 + 1;
-            setLatestTextWorks(latestTextWork);
+            setTextVersion((prev) => prev + 1);
         } catch (error) {
             console.error("Ошибка загрузки текста:", error);
             setSnackbarMessage("Не удалось загрузить текст работы.");
@@ -44,6 +44,7 @@ export function TextWorkUpload({ practiceId, setSnackbarMessage, setSnackbarSeve
             .then(res => {
                 const text: TextWork = res.data;
                 setLatestTextWorks(text);
+                setTextVersion(text.version + 1);
             });
     }, [practiceId]);
 
