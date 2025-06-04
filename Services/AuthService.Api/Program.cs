@@ -188,6 +188,7 @@ app.MapPut("/users/{userId}", async (
     string userId,
     UserService userService,
     UserManager<ApplicationUser> userManager,
+    IPublishEndpoint publishEndpoint,
     UserDTO userDto) =>
 {
     var user = await userManager.FindByIdAsync(userId);
@@ -210,6 +211,15 @@ app.MapPut("/users/{userId}", async (
     await userManager.RemoveFromRolesAsync(user, currentRoles);
 
     var assignedRoles = await userService.AssignRolesAsync(user, userDto.Roles);
+
+    await publishEndpoint.Publish(new UserCreatedEvent(
+        user.Id,
+        user.UserName!,
+        user.FirstName,
+        user.LastName,
+        user.MiddleName,
+        assignedRoles.ToArray(),
+        DateTime.UtcNow));
 
     return Results.Ok(new
     {
@@ -306,6 +316,7 @@ app.MapPost("/refresh", async (
 app.MapPost("/add-role", async (
     UserManager<ApplicationUser> userManager,
     RoleManager<IdentityRole> roleManager,
+    IPublishEndpoint publishEndpoint,
     string email,
     string role) =>
 {
@@ -326,6 +337,15 @@ app.MapPost("/add-role", async (
     }
 
     await userManager.AddToRoleAsync(user, role);
+
+    await publishEndpoint.Publish(new UserCreatedEvent(
+        user.Id,
+        user.UserName!,
+        user.FirstName,
+        user.LastName,
+        user.MiddleName,
+        new[] { role },
+        DateTime.UtcNow));
     return Results.Ok($"Role '{role}' added to {email}");
 }).RequireAuthorization();
 

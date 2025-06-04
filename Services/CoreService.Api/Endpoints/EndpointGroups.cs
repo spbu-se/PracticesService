@@ -108,7 +108,7 @@ public static class EndpointGroups
                         consultant.FirstName,
                         consultant.LastName,
                         consultant.MiddleName,
-                        UserActionType.Update,
+                        UserActionType.Delete,
                         RoleNames.GetName(UserRoleType.Consultant),
                         DateTime.UtcNow));
                 return result;
@@ -327,7 +327,7 @@ public static class EndpointGroups
                             student.FirstName,
                             student.LastName,
                             student.MiddleName,
-                            UserActionType.Update,
+                            UserActionType.Delete,
                             RoleNames.GetName(UserRoleType.Student),
                             DateTime.UtcNow));
                 }
