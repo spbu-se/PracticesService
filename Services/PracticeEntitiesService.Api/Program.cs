@@ -1,7 +1,25 @@
+using Amazon.S3;
+using Amazon.S3.Model;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using PracticeEntities.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSingleton<IAmazonS3>(sp =>
+{
+    var config = new AmazonS3Config
+    {
+        ServiceURL = builder.Configuration["S3Storage:ServiceURL"],
+        ForcePathStyle = true,
+        AuthenticationRegion = builder.Configuration["S3Storage:Region"],
+    };
+
+    return new AmazonS3Client(
+        builder.Configuration["S3Storage:AccessKey"],
+        builder.Configuration["S3Storage:SecretKey"],
+        config);
+});
 
 var mongoConnectionString = builder.Configuration.GetValue<string>("MongoSettings:ConnectionString")
     ?? "mongodb://admin:admin123@practice-entities.db:27017/admin";
@@ -24,6 +42,235 @@ if (app.Environment.IsDevelopment())
 
     app.UseSwaggerUI();
 }
+
+app.MapPost("/api/feedbacks", async (
+    [FromForm] Feedback feedback,
+    IAmazonS3 s3Client,
+    IMongoDatabase db,
+    IConfiguration config) =>
+{
+    var bucketName = config["S3Storage:BucketName"];
+    string? fileUrl = null;
+
+    if (feedback.File != null)
+    {
+        var key = $"feedbacks/{feedback.PracticeId}/{feedback.FeedbackType}/{feedback.File.FileName}";
+        using var stream = feedback.File.OpenReadStream();
+
+        var putRequest = new PutObjectRequest
+        {
+            BucketName = bucketName,
+            Key = key,
+            InputStream = stream,
+            ContentType = feedback.File.ContentType,
+        };
+
+        await s3Client.PutObjectAsync(putRequest);
+        fileUrl = $"{config["S3Storage:ServiceURL"]}/{bucketName}/{key}";
+
+        feedback.FileName = feedback.File.FileName;
+        feedback.Link = fileUrl;
+    }
+    else
+    {
+        feedback.FileName = "(no file)";
+    }
+
+    feedback.UploadedAt = DateTime.UtcNow;
+
+    var collection = db.GetCollection<Feedback>("feedbacks");
+    await collection.InsertOneAsync(feedback);
+
+    return Results.Ok(feedback);
+}).DisableAntiforgery();
+
+app.MapGet("/api/feedbacks/{practiceId:int}", async (
+    int practiceId,
+    [FromQuery] string? type,
+    IMongoDatabase db) =>
+{
+    var collection = db.GetCollection<Feedback>("feedbacks");
+
+    var filterBuilder = Builders<Feedback>.Filter;
+    var filter = filterBuilder.Eq(f => f.PracticeId, practiceId);
+
+    if (!string.IsNullOrEmpty(type))
+    {
+        filter &= filterBuilder.Eq(f => f.FeedbackType, type);
+    }
+
+    var feedbacks = await collection.Find(filter)
+        .SortByDescending(f => f.UploadedAt)
+        .ToListAsync();
+
+    return Results.Ok(feedbacks);
+});
+
+app.MapPost("/api/text-works", async (
+    [FromForm] TextWork model,
+    IAmazonS3 s3Client,
+    IMongoDatabase db,
+    IConfiguration config) =>
+{
+    var bucketName = config["S3Storage:BucketName"];
+    string? fileUrl = null;
+
+    if (model.File != null)
+    {
+        var key = $"textworks/{model.PracticeId}/v{model.Version}/{model.File.FileName}";
+        using var stream = model.File.OpenReadStream();
+
+        var putRequest = new PutObjectRequest
+        {
+            BucketName = bucketName,
+            Key = key,
+            InputStream = stream,
+            ContentType = model.File.ContentType,
+        };
+
+        await s3Client.PutObjectAsync(putRequest);
+        fileUrl = $"{config["S3Storage:ServiceURL"]}/{bucketName}/{key}";
+    }
+
+    var textWork = new TextWork
+    {
+        PracticeId = model.PracticeId,
+        FileName = model.File?.FileName ?? model.Link.Split('/').LastOrDefault() ?? string.Empty,
+        Link = fileUrl ?? model.Link ?? string.Empty,
+        Version = model.Version,
+        UploadedAt = DateTime.UtcNow,
+    };
+
+    var collection = db.GetCollection<TextWork>("textworks");
+    await collection.InsertOneAsync(textWork);
+
+    return Results.Ok(textWork);
+}).DisableAntiforgery();
+
+app.MapGet("/api/text-works/{practiceId:int}", async (
+    int practiceId,
+    IMongoDatabase db) =>
+{
+    var collection = db.GetCollection<TextWork>("textworks");
+
+    var filter = Builders<TextWork>.Filter.Eq(t => t.PracticeId, practiceId);
+    var textWorks = await collection.Find(filter)
+        .SortByDescending(t => t.Version)
+        .ToListAsync();
+
+    return Results.Ok(textWorks);
+});
+
+app.MapGet("/api/text-works/latest/{practiceId:int}", async (
+    int practiceId,
+    IMongoDatabase db) =>
+{
+    var collection = db.GetCollection<TextWork>("textworks");
+
+    var filter = Builders<TextWork>.Filter.Eq(t => t.PracticeId, practiceId);
+    var latest = await collection.Find(filter)
+        .SortByDescending(t => t.Version)
+        .FirstOrDefaultAsync();
+
+    return latest is not null ? Results.Ok(latest) : Results.NotFound();
+});
+
+app.MapPost("/api/text-works/{id}/comments", async (
+    IMongoDatabase db,
+    string id,
+    Comment input) =>
+{
+    var collection = db.GetCollection<TextWork>("textworks");
+    var filter = Builders<TextWork>.Filter.Eq(t => t.Id, id);
+    var update = Builders<TextWork>.Update.Push(t => t.Comments, input);
+
+    var result = await collection.UpdateOneAsync(filter, update);
+
+    return result.MatchedCount > 0 ? Results.Ok() : Results.NotFound();
+});
+
+app.MapPost("/api/presentations", async (
+    [FromForm] Presentation model,
+    IAmazonS3 s3Client,
+    IMongoDatabase db,
+    IConfiguration config) =>
+{
+    var bucketName = config["S3Storage:BucketName"];
+    string? fileUrl = null;
+
+    if (model.File != null)
+    {
+        var key = $"presentations/{model.PracticeId}/v{model.Version}/{model.File.FileName}";
+        using var stream = model.File.OpenReadStream();
+
+        var putRequest = new PutObjectRequest
+        {
+            BucketName = bucketName,
+            Key = key,
+            InputStream = stream,
+            ContentType = model.File.ContentType,
+        };
+
+        await s3Client.PutObjectAsync(putRequest);
+        fileUrl = $"{config["S3Storage:ServiceURL"]}/{bucketName}/{key}";
+    }
+
+    var presentation = new Presentation
+    {
+        PracticeId = model.PracticeId,
+        FileName = model.File?.FileName ?? model.Link.Split('/').LastOrDefault() ?? string.Empty,
+        Link = fileUrl ?? model.Link ?? string.Empty,
+        Version = model.Version,
+        UploadedAt = DateTime.UtcNow,
+    };
+
+    var collection = db.GetCollection<Presentation>("presentations");
+    await collection.InsertOneAsync(presentation);
+
+    return Results.Ok(presentation);
+}).DisableAntiforgery();
+
+app.MapGet("/api/presentations/{practiceId:int}", async (
+    int practiceId,
+    IMongoDatabase db) =>
+{
+    var collection = db.GetCollection<Presentation>("presentations");
+
+    var filter = Builders<Presentation>.Filter.Eq(p => p.PracticeId, practiceId);
+    var presentations = await collection.Find(filter)
+        .SortByDescending(p => p.Version)
+        .ToListAsync();
+
+    return Results.Ok(presentations);
+});
+
+app.MapGet("/api/presentations/latest/{practiceId:int}", async (
+    int practiceId,
+    IMongoDatabase db) =>
+{
+    var collection = db.GetCollection<Presentation>("presentations");
+
+    var filter = Builders<Presentation>.Filter.Eq(t => t.PracticeId, practiceId);
+    var latest = await collection.Find(filter)
+        .SortByDescending(t => t.Version)
+        .FirstOrDefaultAsync();
+
+    return latest is not null ? Results.Ok(latest) : Results.NotFound();
+});
+
+app.MapPost("/api/presentations/{id}/comments", async (
+    IMongoDatabase db,
+    string id,
+    Comment input) =>
+{
+    var collection = db.GetCollection<Presentation>("presentations");
+    var filter = Builders<Presentation>.Filter.Eq(t => t.Id, id);
+    var update = Builders<Presentation>.Update.Push(t => t.Comments, input);
+
+    var result = await collection.UpdateOneAsync(filter, update);
+
+    return result.MatchedCount > 0 ? Results.Ok() : Results.NotFound();
+});
 
 app.MapPost("/api/goals-tasks", async (IMongoDatabase db, GoalsAndTasks input) =>
 {

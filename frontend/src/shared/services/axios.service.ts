@@ -11,6 +11,9 @@ import {Report} from "../../entities/Report";
 import {Comment} from "../../entities/Comment";
 import { BASENAME } from "@/app/routes/routes.tsx";
 import {Message} from "../../entities/Message";
+import {Feedback, FeedbackUploadInput } from "@/entities/Feedback.ts";
+import { TextWork, TextWorkUploadInput } from "@/entities/TextWork.ts";
+import {Presentation, PresentationUploadInput } from "@/entities/Presentation.ts";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -38,7 +41,11 @@ axiosPublic.interceptors.request
 axiosService.interceptors.request
     .use(function (config) {
         if (config.url?.includes("api/")) {
-            config.headers = {...authHeader()} as AxiosHeaders
+            config.headers = {
+                ...(config.headers || {}),
+                ...authHeader(),
+            } as AxiosHeaders;
+
         }
         return config;
     });
@@ -192,3 +199,59 @@ export const postMessage = (input: Message) =>
 
 export const getMessagesByPracticeId = (practiceId: number) =>
     axiosService.get(`practice-entities-api/messages/${practiceId}`);
+
+export const postFeedback = (input: FeedbackUploadInput) => {
+    const formData = new FormData();
+    formData.append("PracticeId", input.practiceId.toString());
+    formData.append("FeedbackType", input.feedbackType);
+    if (input.file) {
+        formData.append("File", input.file);
+    }
+    
+    return axiosService.post("practice-entities-api/feedbacks", formData);
+};
+
+export const getFeedbacksByPracticeId = (practiceId: number) =>
+    axiosService.get<Feedback[]>(`practice-entities-api/feedbacks/${practiceId}`);
+
+export const postTextWork = (input: TextWorkUploadInput) => {
+    const formData = new FormData();
+    formData.append("PracticeId", input.practiceId.toString());
+    formData.append("Link", input.link);
+    formData.append("Version", input.version.toString());
+    if (input.file) {
+        formData.append("File", input.file);
+    }
+
+    return axiosService.post("practice-entities-api/text-works", formData);
+};
+
+export const getTextWorksByPracticeId = (practiceId: number) =>
+    axiosService.get<TextWork[]>(`practice-entities-api/text-works/${practiceId}`);
+
+export const postTextWorkComment = (textWorkId: string, input: Comment) =>
+    axiosService.post(`/practice-entities-api/text-works/${textWorkId}/comments`, input);
+
+export const getLatestTextWorkVersion = (practiceId: number) =>
+    axiosService.get<TextWork>(`practice-entities-api/text-works/latest/${practiceId}`);
+
+export const postPresentation = (input: PresentationUploadInput) => {
+    const formData = new FormData();
+    formData.append("PracticeId", input.practiceId.toString());
+    formData.append("Link", input.link);
+    formData.append("Version", input.version.toString());
+    if (input.file) {
+        formData.append("File", input.file);
+    }
+
+    return axiosService.post("practice-entities-api/presentations", formData);
+};
+
+export const getPresentationsByPracticeId = (practiceId: number) =>
+    axiosService.get<Presentation[]>(`practice-entities-api/presentations/${practiceId}`);
+
+export const getLatestPresentationVersion = (practiceId: number) =>
+    axiosService.get<number>(`practice-entities-api/presentations/latest/${practiceId}`);
+
+export const postPresentationComment = (presentationId: string, input: Presentation) =>
+    axiosService.post(`/practice-entities-api/presentations/${presentationId}/comments`, input);

@@ -50,4 +50,10 @@ public class TextWork
     /// Gets or sets the date and time when the text work was uploaded.
     /// </summary>
     public DateTime UploadedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets File.
+    /// </summary>
+    [BsonIgnore]
+    public IFormFile? File { get; set; }
 }

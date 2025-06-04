@@ -16,9 +16,9 @@ import {
     TextField,
     Paper,
     Box,
-    Checkbox,
-    FormControlLabel,
-    Stack
+    Stack,
+    Tabs,
+    Tab
 } from "@mui/material";
 import ArchiveIcon from "@mui/icons-material/Archive";
 import EditIcon from "@mui/icons-material/Edit";
@@ -56,7 +56,7 @@ export function ThemesIndexPage() {
                     return isFiltered ? { ...theme, isarchived: !isArchived } : theme;
                 }));
 
-                alert(`Темы успешно ${isArchived ? 'восстановлены из архива' : 'архивированы'}`);
+                alert(`Темы успешно ${isArchived ? 'восстановлены' : 'архивированы'}`);
             } catch (error) {
                 console.error("Ошибка при архивировании:", error);
                 alert("Произошла ошибка при архивировании");
@@ -83,7 +83,9 @@ export function ThemesIndexPage() {
         if (level) filtered = filtered.filter(theme => theme.level?.includes(level));
         if (department) filtered = filtered.filter(theme => theme.department === department);
         if (source) filtered = filtered.filter(theme => theme.source === source);
-        if (supervisor) filtered = filtered.filter(theme => theme.supervisorid?.toString() === supervisor);
+        if (supervisor) filtered = filtered.filter(theme =>
+            `${theme.supervisor?.lastName} ${theme.supervisor?.firstName} ${theme.supervisor?.middleName}` === supervisor
+        );
         filtered = filtered.filter(theme => theme.isarchived === isArchived);
 
         setFilteredThemes(filtered);
@@ -119,7 +121,7 @@ export function ThemesIndexPage() {
                             fullWidth
                             sx={{ mb: 2 }}
                         >
-                            Архивировать все
+                            {isArchived ? "Восстановить все" : "Архивировать все"}
                         </Button>
                     )}
                     <Button
@@ -133,6 +135,18 @@ export function ThemesIndexPage() {
 
                     <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
                         <Typography variant="h6" gutterBottom>Фильтры</Typography>
+                        
+                        <Tabs
+                            orientation="vertical"
+                            value={isArchived ? 1 : 0}
+                            onChange={(_, newValue) => setIsArchived(newValue === 1)}
+                            indicatorColor="primary"
+                            textColor="primary"
+                            sx={{ mb: 2 }}
+                        >
+                            <Tab label="Активные темы" />
+                            <Tab label="Архивированные темы" />
+                        </Tabs>
 
                         <TextField select fullWidth label="Уровень" value={level} onChange={(e) => setLevel(e.target.value)} margin="dense">
                             <MenuItem value="">Все</MenuItem>
@@ -141,33 +155,27 @@ export function ThemesIndexPage() {
 
                         <TextField select fullWidth label="Кафедра" value={department} onChange={(e) => setDepartment(e.target.value)} margin="dense">
                             <MenuItem value="">Все</MenuItem>
-                            {Array.from(new Set((Array.isArray(themes) ? themes : []).map(t => t.department))).map((dep, i) => (
+                            {Array.from(new Set((themes || []).map(t => t.department))).map((dep, i) => (
                                 <MenuItem key={i} value={dep}>{dep}</MenuItem>
                             ))}
                         </TextField>
 
                         <TextField select fullWidth label="Источник" value={source} onChange={(e) => setSource(e.target.value)} margin="dense">
                             <MenuItem value="">Все</MenuItem>
-                            {Array.from(new Set((Array.isArray(themes) ? themes : []).filter(t => t.source).map(t => t.source))).map((src, i) => (
+                            {Array.from(new Set((themes || []).filter(t => t.source).map(t => t.source))).map((src, i) => (
                                 <MenuItem key={i} value={src}>{src}</MenuItem>
                             ))}
                         </TextField>
 
                         <TextField select fullWidth label={UserRole.SUPERVISOR} value={supervisor} onChange={(e) => setSupervisor(e.target.value)} margin="dense">
                             <MenuItem value="">Все</MenuItem>
-                            {Array.from(new Set((Array.isArray(themes) ? themes : [])
+                            {Array.from(new Set((themes || [])
                                 .filter(t => t.supervisor)
                                 .map(t => `${t.supervisor?.lastName} ${t.supervisor?.firstName} ${t.supervisor?.middleName}`)))
                                 .map((sup, i) => (
                                     <MenuItem key={i} value={sup}>{sup}</MenuItem>
                                 ))}
                         </TextField>
-
-                        <FormControlLabel
-                            control={<Checkbox checked={isArchived} onChange={(e) => setIsArchived(e.target.checked)} />}
-                            label="Показать только архивные"
-                            sx={{ mt: 1, mb: 1 }}
-                        />
 
                         <Button
                             variant="contained"

@@ -12,7 +12,7 @@ export const authHeader = () => {
     const token = getJWTToken();
 
     if (token) {
-        return {Authorization: 'Bearer ' + token, "Content-Type": "application/json"};
+        return {Authorization: 'Bearer ' + token};
     } else {
         return {};
     }

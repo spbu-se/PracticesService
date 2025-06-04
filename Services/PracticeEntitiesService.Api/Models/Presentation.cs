@@ -50,4 +50,10 @@ public class Presentation
     /// Gets or sets the date and time when the presentation was uploaded.
     /// </summary>
     public DateTime UploadedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets File.
+    /// </summary>
+    [BsonIgnore]
+    public IFormFile? File { get; set; }
 }

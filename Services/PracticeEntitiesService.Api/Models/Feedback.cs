@@ -43,4 +43,10 @@ public class Feedback
     /// Gets or sets the type of feedback, e.g., "Supervisor" or "Consultant".
     /// </summary>
     public string FeedbackType { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets File.
+    /// </summary>
+    [BsonIgnore]
+    public IFormFile? File { get; set; }
 }
