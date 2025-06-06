@@ -26,5 +26,6 @@
     <TypeScriptCompile Include="frontend\src\entities\Student.ts" />
     <TypeScriptCompile Include="frontend\src\entities\TextWork.ts" />
     <TypeScriptCompile Include="frontend\src\entities\UserRoles.ts" />
+    <TypeScriptCompile Include="frontend\tests\e2e.spec.ts" />
   </ItemGroup>
 </Project>
