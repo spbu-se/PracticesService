@@ -168,13 +168,14 @@ services:
 
   frontend:
     container_name: frontend
-    environment:
-      - VITE_API_BASE_URL=https://projects.se.math.spbu.ru/practices-service/api
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "127.0.0.1:8000:8000"
+    environment:
+      # DEFAULT: Localhost URL
+      - VITE_API_BASE_URL=http://localhost:5000
     networks:
       - proxybackend
 
