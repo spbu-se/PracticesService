@@ -1,12 +1,11 @@
-version: "3.9"
-
 services:
   rabbitmq:
     image: rabbitmq:3.12-management-alpine
     container_name: rabbitmq-practices-service
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "127.0.0.1:15672:15672"
+    expose:
+      - "5672"
     environment:
       - RABBITMQ_DEFAULT_USER=admin
       - RABBITMQ_DEFAULT_PASS=admin123
@@ -33,7 +32,7 @@ services:
       rabbitmq:
         condition: service_healthy
     ports:
-      - "5000:8080"
+      - "127.0.0.1:5000:8080"
     networks:
       - proxybackend
 
@@ -43,17 +42,17 @@ services:
     volumes:
       - ./Services/CoreService.Api/init-db/:/docker-entrypoint-initdb.d
       - ./Services/CoreService.Api/pg-data:/var/lib/postgresql/data
-    ports:
-      - "5435:5432"
+    expose:
+      - "5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U postgres"]
+    #   interval: 5s
+    #   timeout: 5s
+    #   retries: 5
     networks:
       - proxybackend
 
@@ -72,13 +71,13 @@ services:
       dockerfile: Services/CoreService.Api/Dockerfile
     volumes:
       - ./Services/CoreService.Api:/src
-    ports:
-      - "5007:8080"
+    expose:
+      - "8080"
     depends_on:
       rabbitmq:
         condition: service_healthy
-      core.db:
-        condition: service_healthy
+      # core.db:
+      #   condition: service_healthy
     networks:
       - proxybackend
 
@@ -87,8 +86,8 @@ services:
     container_name: auth.db
     volumes:
       - ./Services/AuthService.Api/pg-data:/var/lib/postgresql/data
-    ports:
-      - "1435:5432"
+    expose:
+      - "5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -117,8 +116,8 @@ services:
       dockerfile: Services/AuthService.Api/Dockerfile
     volumes:
       - ./Services/AuthService.Api:/src
-    ports:
-      - "5002:8080"
+    expose:
+      - "8080"
     depends_on:
       auth.db:
         condition: service_healthy
@@ -139,8 +138,8 @@ services:
       dockerfile: Services/PracticeEntitiesService.Api/Dockerfile
     volumes:
       - ./Services/PracticeEntitiesService.Api:/src
-    ports:
-      - "5003:8080"
+    expose:
+      - "8080"
     depends_on:
       auth.db:
         condition: service_healthy
@@ -152,8 +151,8 @@ services:
   practice-entities.db:
     image: mongo:6.0
     container_name: practice-entities.db
-    ports:
-      - "27017:27017"
+    expose:
+      - "27017"
     volumes:
       - ./mongo-data:/data/db
     environment:
@@ -175,7 +174,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     networks:
       - proxybackend
 
