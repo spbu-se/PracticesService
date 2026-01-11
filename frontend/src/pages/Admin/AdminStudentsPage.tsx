@@ -117,7 +117,7 @@ export function AdminStudentsPage() {
 
     const handleUserSelectChange = (e: any) => {
         const selectedUserId = e.target.value as string;
-        if (selectedUserId === '') {
+        if (selectedUserId === '' || selectedUserId == null) {
             setCurrentStudent(prev => ({
                 ...prev!,
                 userid: ''
@@ -250,11 +250,11 @@ export function AdminStudentsPage() {
                     <FormControl fullWidth margin="dense">
                         <InputLabel>Пользователь</InputLabel>
                         <Select
-                            value={currentStudent?.userid ?? ''}
+                            value={currentStudent?.userid ?? null}
                             onChange={handleUserSelectChange}
                             displayEmpty
                         >
-                            <MenuItem value=""><em>Без пользователя</em></MenuItem>
+                            <MenuItem value="">Не выбран</MenuItem>
                             {users.map(user => (
                                 <MenuItem key={user.userId} value={user.userId}>
                                     {user.lastName} {user.firstName} {user.middleName} ({user.email})
