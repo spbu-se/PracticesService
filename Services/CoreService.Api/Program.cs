@@ -26,8 +26,17 @@ builder.Services.Configure<JsonOptions>(options =>
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
+
+var gatewayBasePath = builder.Configuration["Swagger:GatewayBasePath"] ?? "/api";
+
 builder.Services.AddSwaggerGen(c =>
 {
+    c.AddServer(new OpenApiServer
+    {
+        Url = gatewayBasePath,
+        Description = "Gateway endpoint",
+    });
+
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
