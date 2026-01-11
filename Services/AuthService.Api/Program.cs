@@ -63,9 +63,16 @@ builder.Services.AddAuthorization(
     options => { options.AddPolicy("AdminOnly", policy => policy.RequireRole("Администратор")); });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(
-    c =>
-    {
+var gatewayBasePath = builder.Configuration["Swagger:GatewayBasePath"] ?? "/api";
+
+builder.Services.AddSwaggerGen(c =>
+{
+        c.AddServer(new OpenApiServer
+        {
+            Url = gatewayBasePath,
+            Description = "Gateway endpoint",
+        });
+
         c.AddSecurityDefinition(
             "Bearer",
             new OpenApiSecurityScheme

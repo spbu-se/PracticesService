@@ -21,7 +21,8 @@ import {
     Snackbar,
     Alert,
     Chip,
-    Box
+    Box,
+    Grid
 } from "@mui/material";
 import {
     getAllUsers,
@@ -275,16 +276,29 @@ export function AdminUsersPage() {
                         required
                     />
                     {!currentUser?.userId && (
-                        <TextField
-                            margin="dense"
-                            name="password"
-                            label="Пароль"
-                            type="password"
-                            fullWidth
-                            value={currentUser?.password || ''}
-                            onChange={handleInputChange}
-                            required
-                        />
+                        <>
+                            <TextField
+                                margin="dense"
+                                name="password"
+                                label="Пароль"
+                                type="password"
+                                fullWidth
+                                value={currentUser?.password || ''}
+                                onChange={handleInputChange}
+                                required
+                            />
+                            <Grid item xs={12}>
+                                <Typography variant="body2" color="textSecondary">
+                                    Пароль должен содержать:
+                                </Typography>
+                                <ul style={{ marginTop: 0, fontSize: '0.875rem' }}>
+                                    <li>Минимум 8 символов</li>
+                                    <li>Хотя бы одну цифру (0-9)</li>
+                                    <li>Хотя бы одну заглавную (A-Z) и строчную (a-z) букву</li>
+                                    <li>Хотя бы один спецсимвол (!@#$%^&*)</li>
+                                </ul>
+                            </Grid>
+                        </>
                     )}
                     <TextField
                         select

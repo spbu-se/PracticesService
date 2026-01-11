@@ -2,15 +2,26 @@
 
 ## Описание
 
-**PracticesService** — Сервис для работы с учебными/производственными практиками кафедры. Запуск производится через Docker Compose. 
+**PracticesService** — Сервис для работы с учебными/производственными практиками кафедры. Запуск производится через Docker Compose.
 
-## Контейнеры
+## Архитектура
 
-- **RabbitMQ** — брокер сообщений
-- **gateway.api** — шлюзовый API
-- **core.api / core.db** — основной сервис и его база данных
-- **auth.api / auth.db** — сервис авторизации и его база данных
-- **frontend** — клиентская часть
+Сервис состоит из следующих компонентов:
+
+### Backend (микросервисы)
+- **gateway.api** (порт 5000) - API Gateway на YARP, агрегирует все сервисы
+- **core.api** - Основной сервис практик (PostgreSQL)
+- **auth.api** - Сервис авторизации и аутентификации (PostgreSQL)
+- **practice-entities.api** - Сервис сущностей практик (MongoDB)
+- **rabbitmq** - Брокер сообщений для межсервисной коммуникации
+
+### Базы данных
+- **core.db** - PostgreSQL для Core Service
+- **auth.db** - PostgreSQL для Auth Service
+- **practice-entities.db** - MongoDB для Practice Entities
+
+### Frontend
+- **frontend** (порт 8000) - React приложение на Vite
 
 ## Предварительные требования
 
@@ -19,86 +30,69 @@
 
 ## Запуск проекта
 
-1. Клонируйте репозиторий:
+### Разработка
 
+1. Клонируйте репозиторий:
     ```bash
     git clone <URL вашего репозитория>
-    cd <название директории>
+    cd PracticesService
     ```
 
-2. Запустите все сервисы:
-
+2. Запустите все сервисы для разработки:
     ```bash
     docker-compose up --build
     ```
 
-    Все сервисы поднимутся автоматически, включая RabbitMQ, базы данных и API.
-
-3. Убедитесь, что RabbitMQ доступен по адресу:
-    ```
-    http://localhost:15672
-    ```
-    Логин: `admin`, пароль: `admin123`
-
-## Применение миграций для AuthService
-
-После запуска контейнеров, необходимо применить миграции к базе данных авторизации.
-
-1. Войдите в контейнер `auth.api`:
-
+3. Проверьте состояние всех сервисов:
     ```bash
-    docker exec -it <CONTAINER_ID_ИЛИ_NAME> /bin/sh
+    docker-compose ps
     ```
 
-    Например:
+### Production
 
+1. Соберите и запустите в production режиме:
     ```bash
-    docker exec -it auth.api /bin/sh
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
     ```
 
-2. Примените миграции (предположим, используется Entity Framework CLI):
-
-    ```bash
-    dotnet ef database update --project Services/AuthService.Api
-    ```
-
-    > Убедитесь, что внутри контейнера установлен `dotnet-ef`. Если нет — установите или примените миграции локально и пересоберите образ.
-
-## Доступ к сервисам
-
-| Сервис       | URL                        |
-|--------------|----------------------------|
-| Gateway API  | http://localhost:5000      |
-| Core API     | http://localhost:5001      |
-| Auth API     | http://localhost:5002      |
-| Frontend     | http://localhost:8000      |
-| RabbitMQ UI  | http://localhost:15672     |
-
-## Сеть
-
-Все сервисы находятся в общей Docker-сети `proxybackend`.
-
----
-
-## Полезные команды
-
-- Остановка всех сервисов:
-
-    ```bash
-    docker-compose down
-    ```
-
-- Просмотр логов:
-
+2. Проверьте логи:
     ```bash
     docker-compose logs -f
     ```
 
-- Проверка состояния контейнеров:
+## Доступ к сервисам (разработка)
 
-    ```bash
-    docker ps
-    ```
+| Сервис                 | URL                                      | Описание                    |
+|------------------------|------------------------------------------|-----------------------------|
+| **Frontend**           | http://localhost:8000                    | Клиентское приложение       |
+| **Gateway API**        | http://localhost:5000                    | Единая точка входа API      |
+| **Gateway Swagger**    | http://localhost:5000/swagger            | Документация Gateway        |
+| **Core API Swagger**   | http://localhost:5000/swagger/core.json  | Core Service API            |
+| **Auth API Swagger**   | http://localhost:5000/swagger/auth.json  | Auth Service API            |
+| **RabbitMQ UI**        | http://localhost:15672                   | Управление RabbitMQ         |
+| **PostgreSQL (Core)**  | localhost:5432 (внутри Docker)           | База Core Service           |
+| **PostgreSQL (Auth)**  | localhost:5432 (внутри Docker)           | База Auth Service           |
+| **MongoDB**            | localhost:27017 (внутри Docker)          | База Practice Entities      |
+
+## Структура API через Gateway
+
+Все запросы проходят через Gateway:
+- /core-api/{endpoint} → Core Service
+- /auth-api/{endpoint} → Auth Service
+- /practice-entities-api/{endpoint} → Practice Entities Service
 
 
+## Переменные окружения
 
+### Frontend
+- `VITE_API_BASE_URL` - Базовый URL API (по умолчанию: http://localhost:5000)
+
+### Backend
+- `ASPNETCORE_ENVIRONMENT` - Development/Production
+- `RabbitMQ__Host`, `RabbitMQ__Username`, `RabbitMQ__Password`
+- `RUN_MIGRATIONS` - Применять миграции при запуске (только Auth)
+
+## Конфигурационные файлы
+
+- `docker-compose.yml` - Базовая конфигурация
+- `docker-compose.prod.yml` - Настройки для продакшена

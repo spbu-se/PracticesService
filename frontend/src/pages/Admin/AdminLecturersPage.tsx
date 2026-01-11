@@ -266,11 +266,11 @@ export function AdminLecturersPage() {
                     <FormControl fullWidth margin="dense">
                         <InputLabel>Пользователь</InputLabel>
                         <Select
-                            value={currentLecturer?.userid ?? ''}
+                            value={currentLecturer?.userid ?? null}
                             onChange={handleUserSelectChange}
                             displayEmpty
                         >
-                            <MenuItem value=""><em>Без пользователя</em></MenuItem>
+                            <MenuItem value="">Не выбран</MenuItem>
                             {users.map(user => (
                                 <MenuItem key={user.userId} value={user.userId}>
                                     {user.lastName} {user.firstName} {user.middleName} ({user.email})

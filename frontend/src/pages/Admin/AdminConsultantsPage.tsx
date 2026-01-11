@@ -236,7 +236,7 @@ export function AdminConsultantsPage() {
                     <FormControl fullWidth sx={{ mt: 2 }}>
                         <InputLabel>Пользователь (необязательно)</InputLabel>
                         <Select
-                            value={currentConsultant?.userid ?? ''}
+                            value={currentConsultant?.userid ?? null}
                             onChange={handleUserSelect}
                             displayEmpty
                         >
