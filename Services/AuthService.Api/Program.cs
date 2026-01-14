@@ -219,15 +219,14 @@ app.MapPut("/users/{userId}", async (
 
     var assignedRoles = await userService.AssignRolesAsync(user, userDto.Roles);
 
-    await publishEndpoint.Publish(new UserCreatedEvent(
-        user.Id,
-        user.UserName!,
-        user.FirstName,
-        user.LastName,
-        user.MiddleName,
-        assignedRoles.ToArray(),
-        DateTime.UtcNow));
-
+    // await publishEndpoint.Publish(new UserCreatedEvent(
+    //     user.Id,
+    //     user.UserName!,
+    //     user.FirstName,
+    //     user.LastName,
+    //     user.MiddleName,
+    //     assignedRoles.ToArray(),
+    //     DateTime.UtcNow));
     return Results.Ok(new
     {
         UserId = user.Id,

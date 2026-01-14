@@ -104,7 +104,7 @@ export function AdminLecturersPage() {
             middleName: '',
             department: '',
             cansupervisevkr: false,
-            userid: ''
+            userId: null
         });
         setOpenDialog(true);
     };
@@ -119,30 +119,42 @@ export function AdminLecturersPage() {
         setCurrentLecturer(null);
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
-        const { name, value, type } = e.target as HTMLInputElement;
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value, type, checked } = e.target;
         setCurrentLecturer(prev => ({
             ...prev!,
-            [name!]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+            [name]: type === 'checkbox' ? checked : value
         }));
     };
 
-    const handleUserSelectChange = (e: React.ChangeEvent<{ value: unknown }>) => {
-        const selectedUserId = e.target.value as string | '';
+    const handleSelectChange = (e: any) => {
+        const { name, value } = e.target;
+        setCurrentLecturer(prev => ({
+            ...prev!,
+            [name]: value
+        }));
+    };
+
+    const handleUserSelectChange = (e: any) => {
+        const selectedUserId = e.target.value;
+
         if (selectedUserId === '') {
             setCurrentLecturer(prev => ({
                 ...prev!,
-                userId: null
+                userid: null,
+                firstName: '',
+                lastName: '',
+                middleName: ''
             }));
         } else {
             const selectedUser = users.find(u => u.userId === selectedUserId);
             if (selectedUser) {
                 setCurrentLecturer(prev => ({
                     ...prev!,
-                    userId: selectedUserId,
-                    firstName: selectedUser.firstName,
-                    lastName: selectedUser.lastName,
-                    middleName: selectedUser.middleName || ''
+                    userid: selectedUserId,
+                    firstName: selectedUser.firstName || prev?.firstName || '',
+                    lastName: selectedUser.lastName || prev?.lastName || '',
+                    middleName: selectedUser.middleName || prev?.middleName || ''
                 }));
             }
         }
@@ -225,6 +237,7 @@ export function AdminLecturersPage() {
                                 <TableCell>Отчество</TableCell>
                                 <TableCell>Кафедра</TableCell>
                                 <TableCell>Может руководить ВКР</TableCell>
+                                <TableCell>Пользователь</TableCell>
                                 <TableCell>Действия</TableCell>
                             </TableRow>
                         </TableHead>
@@ -237,6 +250,7 @@ export function AdminLecturersPage() {
                                     <TableCell>{lecturer.middleName || '-'}</TableCell>
                                     <TableCell>{lecturer.department}</TableCell>
                                     <TableCell>{lecturer.cansupervisevkr ? 'Да' : 'Нет'}</TableCell>
+                                    <TableCell>{lecturer.userId || 'Не привязан'}</TableCell>
                                     <TableCell>
                                         <IconButton
                                             onClick={() => handleOpenEdit(lecturer)}
@@ -263,21 +277,24 @@ export function AdminLecturersPage() {
                     {currentLecturer?.id ? 'Редактирование преподавателя' : 'Создание преподавателя'}
                 </DialogTitle>
                 <DialogContent>
+                    {/* Селект для выбора пользователя */}
                     <FormControl fullWidth margin="dense">
-                        <InputLabel>Пользователь</InputLabel>
+                        <InputLabel id="user-select-label">Пользователь</InputLabel>
                         <Select
-                            value={currentLecturer?.userid ?? null}
+                            labelId="user-select-label"
+                            label="Пользователь"
+                            value={currentLecturer?.userid || ''}
                             onChange={handleUserSelectChange}
-                            displayEmpty
                         >
-                            <MenuItem value="">Не выбран</MenuItem>
+                            <MenuItem value="">Не привязан</MenuItem>
                             {users.map(user => (
                                 <MenuItem key={user.userId} value={user.userId}>
-                                    {user.lastName} {user.firstName} {user.middleName} ({user.email})
+                                    {user.lastName} {user.firstName} {user.middleName || ''} ({user.email})
                                 </MenuItem>
                             ))}
                         </Select>
                     </FormControl>
+
                     <TextField
                         margin="dense"
                         name="firstName"
@@ -305,12 +322,15 @@ export function AdminLecturersPage() {
                         value={currentLecturer?.middleName || ''}
                         onChange={handleInputChange}
                     />
+                    
                     <FormControl fullWidth margin="dense">
-                        <InputLabel>Кафедра</InputLabel>
+                        <InputLabel id="department-select-label">Кафедра</InputLabel>
                         <Select
+                            labelId="department-select-label"
                             name="department"
+                            label="Кафедра"
                             value={currentLecturer?.department || ''}
-                            onChange={handleInputChange}
+                            onChange={handleSelectChange}
                             required
                         >
                             {departments.map((dept, i) => (
@@ -318,6 +338,7 @@ export function AdminLecturersPage() {
                             ))}
                         </Select>
                     </FormControl>
+
                     <FormControlLabel
                         control={
                             <Checkbox
@@ -353,7 +374,7 @@ export function AdminLecturersPage() {
             >
                 <Alert
                     onClose={handleCloseSnackbar}
-                    severity={snackbar.severity}
+                    severity={snackbar.severity as any}
                     sx={{ width: '100%' }}
                 >
                     {snackbar.message}

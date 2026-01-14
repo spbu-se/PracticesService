@@ -294,12 +294,13 @@ public static class EndpointGroups
             "/",
             async (Student student, CoreContext context, IPublishEndpoint publishEndpoint) =>
             {
-                var result = await new StudentsQueries(context).UpdateStudent(student);
                 var prev = await context.Students.FindAsync(student.Id);
                 if (prev == null)
                 {
                     return Results.BadRequest();
                 }
+
+                var result = await new StudentsQueries(context).UpdateStudent(student);
 
                 await publishEndpoint.Publish(
                     new UserWithRoleActionEvent(
@@ -317,7 +318,7 @@ public static class EndpointGroups
             async (int studentId, CoreContext context, IPublishEndpoint publishEndpoint) =>
             {
                 var student = await context.Students.FindAsync(studentId);
-                var result = await new LecturersQueries(context).DeleteLecturer(studentId);
+                var result = await new StudentsQueries(context).DeleteStudent(studentId);
 
                 if (student != null)
                 {

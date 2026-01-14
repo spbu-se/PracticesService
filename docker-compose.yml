@@ -174,8 +174,18 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     environment:
-      # DEFAULT: Localhost URL
       - VITE_API_BASE_URL=http://localhost:5000
+      - HMR_HOST=0.0.0.0
+      - HMR_PORT=8000
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/dist
+    stdin_open: true
+    tty: true
     networks:
       - proxybackend
 

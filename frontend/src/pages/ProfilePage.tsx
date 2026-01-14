@@ -1,6 +1,6 @@
 import { Layout } from "@shared/ui/layout/Layout.tsx";
 import { getJWTToken } from "../shared/services/localStorage.service.ts";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import {
     getMe,
@@ -32,37 +32,67 @@ import {
     MenuItem,
     InputLabel,
     FormControl,
-    Switch,
-    FormControlLabel
+    Skeleton,
+    Card,
+    CardContent,
+    Stack,
+    IconButton,
+    Tooltip,
+    InputAdornment
 } from "@mui/material";
+import {
+    Email as EmailIcon,
+    School as SchoolIcon,
+    Person as PersonIcon,
+    Badge as BadgeIcon,
+    Edit as EditIcon,
+    ArrowBack as ArrowBackIcon,
+    Work as WorkIcon,
+    ContactPhone as ContactPhoneIcon,
+    Groups as GroupsIcon
+} from "@mui/icons-material";
 import { User } from "@/entities/User.ts";
-import { useNavigate } from "react-router-dom";
 import { Student } from "@/entities/Student";
 import { Lecturer } from "@/entities/Lecturer";
 import { Consultant } from "@/entities/Consultant";
 import { UserRole } from "@/entities/UserRoles";
 import { Group } from "@/entities/Group";
 
+const ProfileField = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: React.ReactNode }) => (
+    <Box display="flex" alignItems="flex-start" gap={2} mb={2}>
+        <Box sx={{ color: 'text.secondary', mt: 0.5 }}>{icon}</Box>
+        <Box>
+            <Typography variant="caption" color="text.secondary" display="block">
+                {label}
+            </Typography>
+            <Typography variant="body1" color="text.primary">
+                {value}
+            </Typography>
+        </Box>
+    </Box>
+);
+
 export function ProfilePage() {
     const navigate = useNavigate();
     const tokenIsEmpty = getJWTToken() === "";
+    
     const [user, setUser] = useState<User>();
     const [studentInfo, setStudentInfo] = useState<Student | null>(null);
     const [lecturerInfo, setLecturerInfo] = useState<Lecturer | null>(null);
     const [consultantInfo, setConsultantInfo] = useState<Consultant | null>(null);
+    
     const [loading, setLoading] = useState(true);
-    const [editMode, setEditMode] = useState(false);
+    const [groups, setGroups] = useState<Group[]>([]);
+    
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [editedUser, setEditedUser] = useState<Partial<User>>({});
     const [editedStudent, setEditedStudent] = useState<Partial<Student>>({});
     const [editedLecturer, setEditedLecturer] = useState<Partial<Lecturer>>({});
     const [editedConsultant, setEditedConsultant] = useState<Partial<Consultant>>({});
-    const [groups, setGroups] = useState<Group[]>([]);
 
     useEffect(() => {
         fetchUserData();
-
-        getAllGroups().then(response => setGroups(response.data))
+        getAllGroups().then(response => setGroups(response.data));
     }, []);
 
     const fetchUserData = () => {
@@ -72,64 +102,41 @@ export function ProfilePage() {
             setUser(data);
             setEditedUser({...data});
 
+            const promises = [];
+
             if (data.roles.includes(UserRole.STUDENT)) {
-                getStudentByUserId(data.userId).then(res => {
+                promises.push(getStudentByUserId(data.userId).then(res => {
                     setStudentInfo(res.data);
                     setEditedStudent({...res.data});
-                    setLoading(false);
-                });
+                }));
             }
             if (data.roles.includes(UserRole.SUPERVISOR)) {
-                getLecturerByUserId(data.userId).then(res => {
+                promises.push(getLecturerByUserId(data.userId).then(res => {
                     setLecturerInfo(res.data);
                     setEditedLecturer({...res.data});
-                    setLoading(false);
-                }).catch(() => {
-                    setLoading(false);
-                });
+                }));
             }
             if (data.roles.includes(UserRole.CONSULTANT)) {
-                getConsultantByUserId(data.userId).then(res => {
+                promises.push(getConsultantByUserId(data.userId).then(res => {
                     setConsultantInfo(res.data);
                     setEditedConsultant({...res.data});
-                    setLoading(false);
-                }).catch(() => {
-                    setLoading(false);
-                });
-            } else {
-                setLoading(false);
+                }));
             }
+
+            Promise.allSettled(promises).finally(() => setLoading(false));
         }).catch(() => {
             setLoading(false);
         });
     };
 
-    const handleEditClick = () => {
-        setEditMode(true);
-        setEditDialogOpen(true);
-    };
-
     const handleSaveChanges = async () => {
         try {
-            // Update user basic info
-            if (editedUser) {
-                await updateUser(editedUser);
-            }
+            if (editedUser) await updateUser(editedUser);
+            if (user?.roles?.includes(UserRole.STUDENT)) await updateStudent(editedStudent);
+            if (user?.roles?.includes(UserRole.SUPERVISOR)) await updateLecturer(editedLecturer);
+            if (user?.roles?.includes(UserRole.CONSULTANT)) await updateConsultant(editedConsultant);
 
-            // Update role-specific info
-            if (user?.roles?.includes(UserRole.STUDENT)) {
-                await updateStudent(editedStudent);
-            }
-            if (user?.roles?.includes(UserRole.SUPERVISOR)) {
-                await updateLecturer(editedLecturer);
-            }
-            if (user?.roles?.includes(UserRole.CONSULTANT)) {
-                await updateConsultant(editedConsultant);
-            }
-
-            // Refresh data
             fetchUserData();
-            setEditMode(false);
             setEditDialogOpen(false);
         } catch (error) {
             console.error("Error updating profile:", error);
@@ -137,254 +144,326 @@ export function ProfilePage() {
     };
 
     const handleCancelEdit = () => {
-        setEditMode(false);
         setEditDialogOpen(false);
-        // Reset edited data
         if (user) setEditedUser({...user});
         if (studentInfo) setEditedStudent({...studentInfo});
         if (lecturerInfo) setEditedLecturer({...lecturerInfo});
         if (consultantInfo) setEditedConsultant({...consultantInfo});
     };
 
-    const handleUserFieldChange = (field: keyof User, value: any) => {
-        setEditedUser(prev => ({ ...prev, [field]: value }));
-    };
-
-    const handleStudentFieldChange = (field: keyof Student, value: any) => {
-        setEditedStudent(prev => ({ ...prev, [field]: value }));
-    };
-
-    const handleLecturerFieldChange = (field: keyof Lecturer, value: any) => {
-        setEditedLecturer(prev => ({ ...prev, [field]: value }));
-    };
-
-    const handleConsultantFieldChange = (field: keyof Consultant, value: any) => {
-        setEditedConsultant(prev => ({ ...prev, [field]: value }));
-    };
-
     if (tokenIsEmpty) {
         return <Navigate to="/login" replace />;
     }
 
-    if (loading || !user) {
-        return (
-            <Layout>
-                <Container maxWidth="md" sx={{ mt: 4 }}>
-                    <Typography variant="h6">Загрузка...</Typography>
-                </Container>
-            </Layout>
-        );
-    }
-
     const getGroupName = (group: Group) => {
-        return group ? `${group.name} (${group.program}, ${group.year} год)` : 'Не указана';
+        return group ? `${group.name} (${group.year} г.)` : 'Не указана';
     };
 
-    const fullName = `${user.lastName} ${user.firstName} ${user.middleName || ''}`.trim();
+    const fullName = user ? `${user.lastName} ${user.firstName} ${user.middleName || ''}`.trim() : "";
 
     return (
         <Layout>
-            <Container maxWidth="md" sx={{ mt: 4 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Button variant="contained" color="secondary" onClick={() => navigate(-1)}>
-                        ← Назад
-                    </Button>
-                    <Button variant="contained" color="primary" onClick={handleEditClick}>
-                        Редактировать профиль
+            <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                    <Button 
+                        startIcon={<ArrowBackIcon />} 
+                        onClick={() => navigate(-1)}
+                        color="inherit"
+                    >
+                        Назад
                     </Button>
                 </Box>
 
-                <Paper elevation={3} sx={{ p: 4, mt: 2 }}>
-                    <Box display="flex" alignItems="center" gap={4} mb={4}>
-                        <Avatar
-                            sx={{
-                                width: 100,
-                                height: 100,
-                                fontSize: 40,
-                                bgcolor: 'primary.main'
-                            }}
-                        >
-                            {user.firstName?.[0]}{user.lastName?.[0]}
-                        </Avatar>
-
-                        <Box>
-                            <Typography variant="h5" component="div">
-                                {fullName || "Не указано"}
-                            </Typography>
-                            <Typography variant="subtitle1" color="text.secondary">
-                                {user.userName}
-                            </Typography>
+                {loading || !user ? (
+                    <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
+                        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+                            <Skeleton variant="circular" width={120} height={120} />
+                            <Skeleton variant="text" width={200} height={40} />
+                            <Skeleton variant="text" width={150} height={20} />
+                            <Skeleton variant="rectangular" width="100%" height={200} sx={{ mt: 2 }} />
                         </Box>
-                    </Box>
+                    </Paper>
+                ) : (
+                    <Card elevation={2} sx={{ borderRadius: 3, overflow: 'visible' }}>
+                        <Box 
+                            sx={{ 
+                                height: 140, 
+                                bgcolor: 'primary.main',
+                                background: 'linear-gradient(45deg, #1976d2 30%, #21CBF3 90%)',
+                                borderRadius: '12px 12px 0 0'
+                            }} 
+                        />
+                        
+                        <CardContent sx={{ position: 'relative', pt: 0, pb: 4 }}>
+                            <Box 
+                                display="flex" 
+                                flexDirection={{ xs: 'column', sm: 'row' }} 
+                                alignItems={{ xs: 'center', sm: 'flex-end' }}
+                                sx={{ mt: -6, mb: 4, px: 2 }}
+                            >
+                                <Avatar
+                                    sx={{
+                                        width: 120,
+                                        height: 120,
+                                        fontSize: 48,
+                                        bgcolor: 'background.paper',
+                                        color: 'primary.main',
+                                        border: '4px solid white',
+                                        boxShadow: 2
+                                    }}
+                                >
+                                    {user.firstName?.[0]}{user.lastName?.[0]}
+                                </Avatar>
 
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} md={6}>
-                            <Typography variant="subtitle1" color="text.secondary">
-                                Email
-                            </Typography>
-                            <Typography variant="body1" paragraph>
-                                {user.email || "Не указан"}
-                            </Typography>
-                        </Grid>
-
-                        <Grid item xs={12} md={6}>
-                            <Typography variant="subtitle1" color="text.secondary">
-                                Роли
-                            </Typography>
-                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                {user.roles.map(role => (
-                                    <Chip
-                                        key={role}
-                                        label={role}
-                                        color={
-                                            role === UserRole.ADMIN ? 'error' :
-                                                role === UserRole.SUPERVISOR ? 'primary' :
-                                                    role === UserRole.CONSULTANT ? 'info' :
-                                                        role === UserRole.PRACTICE_SUPERVISOR ? 'secondary' :
-                                                            'default'
-                                        }
-                                    />
-                                ))}
-                            </Box>
-                        </Grid>
-
-                        {user.roles.includes(UserRole.STUDENT) && studentInfo && (
-                            <Grid item xs={12}>
-                                <Typography variant="subtitle1" color="text.secondary">
-                                    Группа
-                                </Typography>
-                                <Typography variant="body1" paragraph>
-                                    {studentInfo.group ? getGroupName(studentInfo.group) : 'Не указана'}
-                                </Typography>
-                            </Grid>
-                        )}
-
-                        {user.roles.includes(UserRole.SUPERVISOR) && lecturerInfo && (
-                            <Grid item xs={12}>
-                                <Typography variant="subtitle1" color="text.secondary">
-                                    Может руководить ВКР
-                                </Typography>
-                                <Typography variant="body1" paragraph>
-                                    {lecturerInfo.cansupervisevkr ? 'Да' : 'Нет'}
-                                </Typography>
-                            </Grid>
-                        )}
-
-                        {user.roles.includes(UserRole.CONSULTANT) && consultantInfo && (
-                            <>
-                                <Grid item xs={12}>
-                                    <Divider sx={{ my: 2 }} />
-                                    <Typography variant="h6" gutterBottom>
-                                        Контактная информация
+                                <Box sx={{ ml: { xs: 0, sm: 3 }, mt: { xs: 2, sm: 0 }, textAlign: { xs: 'center', sm: 'left' }, flexGrow: 1 }}>
+                                    <Typography variant="h4" fontWeight="bold">
+                                        {fullName}
                                     </Typography>
-                                </Grid>
-                                <Grid item xs={12} md={6}>
-                                    <Typography variant="subtitle1" color="text.secondary">
-                                        Контактные данные
-                                    </Typography>
-                                    <Typography variant="body1" paragraph>
-                                        {consultantInfo.contact || 'Не указаны'}
-                                    </Typography>
-                                </Grid>
-                            </>
-                        )}
-                    </Grid>
-                </Paper>
-            </Container>
+                                </Box>
 
-            {/* Edit Dialog */}
-            <Dialog open={editDialogOpen} onClose={handleCancelEdit} maxWidth="md" fullWidth>
-                <DialogTitle>Редактирование профиля</DialogTitle>
-                <DialogContent>
-                    <Grid container spacing={3} sx={{ mt: 1 }}>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                fullWidth
-                                label="Фамилия"
-                                value={editedUser.lastName || ''}
-                                onChange={(e) => handleUserFieldChange('lastName', e.target.value)}
-                                margin="normal"
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                fullWidth
-                                label="Имя"
-                                value={editedUser.firstName || ''}
-                                onChange={(e) => handleUserFieldChange('firstName', e.target.value)}
-                                margin="normal"
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                fullWidth
-                                label="Отчество"
-                                value={editedUser.middleName || ''}
-                                onChange={(e) => handleUserFieldChange('middleName', e.target.value)}
-                                margin="normal"
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                fullWidth
-                                disabled
-                                label="Email"
-                                type="email"
-                                value={editedUser.email || ''}
-                                onChange={(e) => handleUserFieldChange('email', e.target.value)}
-                                margin="normal"
-                            />
-                        </Grid>
-
-                        {user.roles.includes(UserRole.STUDENT) && (
-                            <Grid item xs={12}>
-                                <FormControl fullWidth margin="normal">
-                                    <InputLabel id="group-select-label">Группа</InputLabel>
-                                    <Select
-                                        labelId="group-select-label"
-                                        value={editedStudent?.groupId || ''}
-                                        onChange={(e) => handleStudentFieldChange('groupId', e.target.value)}
-                                        label="Группа"
+                                <Box sx={{ mt: { xs: 2, sm: 0 } }}>
+                                    <Button 
+                                        variant="outlined" 
+                                        startIcon={<EditIcon />} 
+                                        onClick={() => setEditDialogOpen(true)}
+                                        sx={{ borderRadius: 20 }}
                                     >
-                                        <MenuItem value="" disabled>
-                                            Выберите группу
-                                        </MenuItem>
-                                        {groups.map((group) => (
-                                            <MenuItem key={group.id} value={group.id}>
-                                                {group.name} ({group.program}, {group.year} год)
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                        )}
+                                        Редактировать
+                                    </Button>
+                                </Box>
+                            </Box>
 
-                        {user.roles.includes(UserRole.CONSULTANT) && (
-                            <>
-                                <Grid item xs={12}>
-                                    <Divider sx={{ my: 2 }} />
-                                    <Typography variant="h6">Контактная информация</Typography>
+                            <Divider sx={{ mb: 4 }} />
+                            
+                            <Grid container spacing={4} px={2}>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
+                                        Личные данные
+                                    </Typography>
+
+                                    <ProfileField 
+                                        icon={<EmailIcon />} 
+                                        label="Email" 
+                                        value={user.email || "Не указан"} 
+                                    />
+                                    
+                                    <ProfileField 
+                                        icon={<BadgeIcon />} 
+                                        label="Роли в системе" 
+                                        value={
+                                            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                                {user.roles.map(role => (
+                                                    <Chip
+                                                        key={role}
+                                                        label={role}
+                                                        size="small"
+                                                        color={
+                                                            role === UserRole.ADMIN ? 'error' :
+                                                            role === UserRole.SUPERVISOR ? 'primary' :
+                                                            role === UserRole.STUDENT ? 'success' :
+                                                            role === UserRole.CONSULTANT ? 'info' : 'default'
+                                                        }
+                                                        variant="outlined"
+                                                    />
+                                                ))}
+                                            </Stack>
+                                        } 
+                                    />
                                 </Grid>
-                                <Grid item xs={12}>
+                                
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
+                                        Информация об обучении/работе
+                                    </Typography>
+
+                                    {user.roles.includes(UserRole.STUDENT) && studentInfo && (
+                                        <ProfileField 
+                                            icon={<SchoolIcon />} 
+                                            label="Учебная группа" 
+                                            value={studentInfo.group ? getGroupName(studentInfo.group) : 'Группа не назначена'} 
+                                        />
+                                    )}
+
+                                    {user.roles.includes(UserRole.SUPERVISOR) && lecturerInfo && (
+                                        <ProfileField 
+                                            icon={<WorkIcon />} 
+                                            label="Статус преподавателя" 
+                                            value={lecturerInfo.cansupervisevkr ? 'Может руководить ВКР' : 'Не руководит ВКР'} 
+                                        />
+                                    )}
+
+                                    {user.roles.includes(UserRole.CONSULTANT) && consultantInfo && (
+                                        <ProfileField 
+                                            icon={<ContactPhoneIcon />} 
+                                            label="Контактные данные для консультаций" 
+                                            value={consultantInfo.contact || 'Не указаны'} 
+                                        />
+                                    )}
+
+                                    {!user.roles.includes(UserRole.STUDENT) && 
+                                     !user.roles.includes(UserRole.SUPERVISOR) && 
+                                     !user.roles.includes(UserRole.CONSULTANT) && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Нет дополнительной информации для отображения.
+                                        </Typography>
+                                     )}
+                                </Grid>
+                            </Grid>
+                        </CardContent>
+                    </Card>
+                )}
+            </Container>
+            
+            <Dialog
+                open={editDialogOpen}
+                onClose={handleCancelEdit}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{
+                    sx: { borderRadius: 3 }
+                }}
+            >
+                <DialogTitle sx={{ pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <EditIcon color="primary" />
+                    Редактирование профиля
+                </DialogTitle>
+                <Divider />
+                <DialogContent>
+                    <Box component="form" sx={{ mt: 2 }}>
+                        <Stack spacing={3}>
+                            
+                            <Box>
+                                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: 1 }}>
+                                    Личные данные
+                                </Typography>
+                                <Stack spacing={2}>
+                                    <TextField
+                                        fullWidth
+                                        label="Фамилия"
+                                        value={editedUser.lastName || ''}
+                                        onChange={(e) => setEditedUser({...editedUser, lastName: e.target.value})}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <PersonIcon color="action" />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                    />
+                                    <TextField
+                                        fullWidth
+                                        label="Имя"
+                                        value={editedUser.firstName || ''}
+                                        onChange={(e) => setEditedUser({...editedUser, firstName: e.target.value})}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <PersonIcon color="action" />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                    />
+                                    <TextField
+                                        fullWidth
+                                        label="Отчество"
+                                        value={editedUser.middleName || ''}
+                                        onChange={(e) => setEditedUser({...editedUser, middleName: e.target.value})}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <PersonIcon color="action" />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                    />
+                                    <TextField
+                                        fullWidth
+                                        disabled
+                                        label="Email"
+                                        value={editedUser.email || ''}
+                                        helperText="Email изменить нельзя"
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <EmailIcon color="action" />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                    />
+                                </Stack>
+                            </Box>
+                            
+                            {user?.roles.includes(UserRole.STUDENT) && (
+                                <Box>
+                                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: 1 }}>
+                                        Студент
+                                    </Typography>
+                                    <FormControl fullWidth>
+                                        <InputLabel id="group-select-label">Учебная группа</InputLabel>
+                                        <Select
+                                            labelId="group-select-label"
+                                            id="group-select"
+                                            value={editedStudent?.groupId || ''}
+                                            label="Учебная группа"
+                                            startAdornment={
+                                                <InputAdornment position="start" sx={{ ml: 1 }}>
+                                                    <SchoolIcon color="action" />
+                                                </InputAdornment>
+                                            }
+                                            onChange={(e) => setEditedStudent({...editedStudent, groupId: e.target.value as string})}
+                                        >
+                                            <MenuItem value="">
+                                                <em>Не выбрана</em>
+                                            </MenuItem>
+                                            {groups.map((group) => (
+                                                <MenuItem key={group.id} value={group.id}>
+                                                    {group.name} ({group.program}, {group.year})
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                            )}
+                            
+                            {user?.roles.includes(UserRole.CONSULTANT) && (
+                                <Box>
+                                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: 1 }}>
+                                        Консультант
+                                    </Typography>
                                     <TextField
                                         fullWidth
                                         label="Контактные данные"
                                         value={editedConsultant.contact || ''}
-                                        onChange={(e) => handleConsultantFieldChange('contact', e.target.value)}
-                                        margin="normal"
+                                        onChange={(e) => setEditedConsultant({...editedConsultant, contact: e.target.value})}
                                         multiline
-                                        rows={3}
+                                        minRows={3}
+                                        placeholder="Например: Telegram @username или почта..."
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start" sx={{ mt: 1 }}>
+                                                    <ContactPhoneIcon color="action" />
+                                                </InputAdornment>
+                                            ),
+                                            alignItems: 'flex-start'
+                                        }}
                                     />
-                                </Grid>
-                            </>
-                        )}
-                    </Grid>
+                                </Box>
+                            )}
+                        </Stack>
+                    </Box>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCancelEdit} color="secondary">
+                <Divider />
+                <DialogActions sx={{ p: 3, justifyContent: 'space-between' }}>
+                    <Button onClick={handleCancelEdit} color="inherit" variant="text">
                         Отмена
                     </Button>
-                    <Button onClick={handleSaveChanges} color="primary" variant="contained">
+                    <Button
+                        onClick={handleSaveChanges}
+                        variant="contained"
+                        color="primary"
+                        disableElevation
+                        sx={{ px: 4 }}
+                    >
                         Сохранить
                     </Button>
                 </DialogActions>

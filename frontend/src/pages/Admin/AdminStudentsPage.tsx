@@ -252,7 +252,6 @@ export function AdminStudentsPage() {
                         <Select
                             value={currentStudent?.userid ?? null}
                             onChange={handleUserSelectChange}
-                            displayEmpty
                         >
                             <MenuItem value="">Не выбран</MenuItem>
                             {users.map(user => (
