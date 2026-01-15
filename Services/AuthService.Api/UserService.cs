@@ -2,13 +2,12 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-using Contracts;
-
 namespace AuthService.Api;
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AuthService.Api.Models;
+using Contracts;
 using Microsoft.AspNetCore.Identity;
 
 /// <summary>

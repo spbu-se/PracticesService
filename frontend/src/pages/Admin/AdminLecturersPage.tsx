@@ -250,7 +250,7 @@ export function AdminLecturersPage() {
                                     <TableCell>{lecturer.middleName || '-'}</TableCell>
                                     <TableCell>{lecturer.department}</TableCell>
                                     <TableCell>{lecturer.cansupervisevkr ? 'Да' : 'Нет'}</TableCell>
-                                    <TableCell>{lecturer.userId || 'Не привязан'}</TableCell>
+                                    <TableCell>{lecturer.userid || 'Не привязан'}</TableCell>
                                     <TableCell>
                                         <IconButton
                                             onClick={() => handleOpenEdit(lecturer)}

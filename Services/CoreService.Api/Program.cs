@@ -93,6 +93,7 @@ builder.Services.AddCors(
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<UserCreatedConsumer>();
+    x.AddConsumer<UserEditedConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -105,6 +106,10 @@ builder.Services.AddMassTransit(x =>
         cfg.ReceiveEndpoint("user-events", e =>
         {
             e.ConfigureConsumer<UserCreatedConsumer>(context);
+        });
+        cfg.ReceiveEndpoint("user-edited-events", e =>
+        {
+            e.ConfigureConsumer<UserEditedConsumer>(context);
         });
 
         cfg.Message<UserWithRoleActionEvent>(x => x.SetEntityName("user-with-role-events"));

@@ -69,7 +69,7 @@ public static class EndpointGroups
                         consultant.FirstName,
                         consultant.LastName,
                         consultant.MiddleName,
-                        UserActionType.Update,
+                        UserActionType.Create,
                         RoleNames.GetName(UserRoleType.Consultant),
                         DateTime.UtcNow));
                 return result;

@@ -1,3 +1,7 @@
+// <copyright file="Program.cs" company="Gleb Kargin">
+// Copyright (c) Gleb Kargin. All rights reserved.
+// </copyright>
+
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.AspNetCore.Mvc;

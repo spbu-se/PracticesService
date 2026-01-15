@@ -127,6 +127,7 @@ builder.Services.AddMassTransit(
                     });
 
                 cfg.Message<UserCreatedEvent>(x => x.SetEntityName("user-events"));
+                cfg.Message<UserEditedEvent>(x => x.SetEntityName("user-edited-events"));
 
                 cfg.ReceiveEndpoint("user-with-role-events", e =>
                 {
@@ -215,18 +216,31 @@ app.MapPut("/users/{userId}", async (
     }
 
     var currentRoles = await userManager.GetRolesAsync(user);
-    await userManager.RemoveFromRolesAsync(user, currentRoles);
+
+    var rolesToAdd = userDto.Roles.Except(currentRoles).ToList();
+    var rolesToRemove = currentRoles.Except(userDto.Roles).ToList();
+    if (rolesToRemove.Any())
+    {
+        await userManager.RemoveFromRolesAsync(user, rolesToRemove);
+    }
+
+    if (rolesToAdd.Any())
+    {
+        await userManager.AddToRolesAsync(user, rolesToAdd);
+    }
 
     var assignedRoles = await userService.AssignRolesAsync(user, userDto.Roles);
 
-    // await publishEndpoint.Publish(new UserCreatedEvent(
-    //     user.Id,
-    //     user.UserName!,
-    //     user.FirstName,
-    //     user.LastName,
-    //     user.MiddleName,
-    //     assignedRoles.ToArray(),
-    //     DateTime.UtcNow));
+    await publishEndpoint.Publish(new UserEditedEvent(
+        user.Id,
+        user.UserName!,
+        user.FirstName,
+        user.LastName,
+        user.MiddleName,
+        rolesToAdd,
+        rolesToRemove,
+        currentRoles,
+        DateTime.UtcNow));
     return Results.Ok(new
     {
         UserId = user.Id,
@@ -236,14 +250,34 @@ app.MapPut("/users/{userId}", async (
 
 app.MapDelete("/users/{userId}", async (
     string userId,
-    UserService userService) =>
+    IPublishEndpoint publishEndpoint,
+    UserService userService,
+    UserManager<ApplicationUser> userManager) =>
 {
+    var user = await userManager.FindByIdAsync(userId);
+    if (user == null)
+    {
+        return Results.NotFound("User not found");
+    }
+
+    var currentRoles = await userManager.GetRolesAsync(user);
     var result = await userService.DeleteUserAsync(userId);
 
     if (!result.Succeeded)
     {
         return Results.BadRequest(result.Errors);
     }
+
+    await publishEndpoint.Publish(new UserEditedEvent(
+        user.Id,
+        user.UserName!,
+        user.FirstName,
+        user.LastName,
+        user.MiddleName,
+        null,
+        currentRoles,
+        null,
+        DateTime.UtcNow));
 
     return Results.Ok(new { UserId = userId });
 });

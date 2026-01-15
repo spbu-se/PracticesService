@@ -196,6 +196,7 @@ export function AdminConsultantsPage() {
                                 <TableCell>Имя</TableCell>
                                 <TableCell>Отчество</TableCell>
                                 <TableCell>Контакт</TableCell>
+                                <TableCell>Пользователь</TableCell>
                                 <TableCell>Действия</TableCell>
                             </TableRow>
                         </TableHead>
@@ -207,6 +208,7 @@ export function AdminConsultantsPage() {
                                     <TableCell>{consultant.firstName}</TableCell>
                                     <TableCell>{consultant.middleName || '-'}</TableCell>
                                     <TableCell>{consultant.contact}</TableCell>
+                                    <TableCell>{consultant.userid || 'Не привязан'}</TableCell>
                                     <TableCell>
                                         <IconButton
                                             onClick={() => handleOpenEdit(consultant)}

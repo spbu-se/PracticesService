@@ -216,6 +216,7 @@ export function AdminStudentsPage() {
                                 <TableCell>Имя</TableCell>
                                 <TableCell>Отчество</TableCell>
                                 <TableCell>Группа</TableCell>
+                                <TableCell>Пользователь</TableCell>
                                 <TableCell>Действия</TableCell>
                             </TableRow>
                         </TableHead>
@@ -227,6 +228,7 @@ export function AdminStudentsPage() {
                                     <TableCell>{student.firstName}</TableCell>
                                     <TableCell>{student.middleName || '-'}</TableCell>
                                     <TableCell>{getGroupName(student.group)}</TableCell>
+                                    <TableCell>{student.userid || 'Не привязан'}</TableCell>
                                     <TableCell>
                                         <IconButton onClick={() => handleOpenEdit(student)} color="primary">
                                             <EditIcon />
