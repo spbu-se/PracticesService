@@ -9,6 +9,7 @@ import {
     Paper,
     FormControl,
     InputLabel,
+    Alert,
     Select, Stack, FormControlLabel, Checkbox
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
@@ -102,7 +103,15 @@ export function CreatePracticePage() {
                             <InputLabel>Ваша группа</InputLabel>
                             {getGroupName(currentStudent?.group)}
                         </Grid>
-                        
+
+                        {!currentStudent?.group && (
+                            <Grid item>
+                                <Alert severity="warning" sx={{ mt: 1 }}>
+                                    Для создания практики необходимо сначала указать группу студента в разделе "Профиль"
+                                </Alert>
+                            </Grid>
+                        )}
+
                         <Grid item>
                             <FormControl fullWidth required>
                                 <InputLabel>Тип практики</InputLabel>
@@ -110,6 +119,8 @@ export function CreatePracticePage() {
                                     value={type}
                                     label="Тип практики"
                                     onChange={(e) => setType(e.target.value)}
+                                    disabled={!currentStudent?.group}
+                                    helperText={!currentStudent?.group ? "Сначала нужно указать группу студента" : ""}
                                 >
                                     {practiceTypes.map((type) => (
                                         <MenuItem key={type} value={type}>
@@ -127,6 +138,7 @@ export function CreatePracticePage() {
                                     value={themeId}
                                     label="Тема"
                                     onChange={(e) => setThemeId(Number(e.target.value))}
+                                    disabled={!currentStudent?.group}
                                 >
                                     {themes.map((theme) => (
                                         <MenuItem key={theme.id} value={theme.id}>
@@ -144,6 +156,7 @@ export function CreatePracticePage() {
                                     value={supervisorId}
                                     label={UserRole.SUPERVISOR}
                                     onChange={(e) => setSupervisorId(Number(e.target.value))}
+                                    disabled={!currentStudent?.group}
                                 >
                                     {lecturers.map((lecturer) => (
                                         <MenuItem key={lecturer.id} value={lecturer.id}>
@@ -161,7 +174,9 @@ export function CreatePracticePage() {
                                     value={consultantId}
                                     label={UserRole.CONSULTANT}
                                     onChange={(e) => setConsultantId(Number(e.target.value))}
+                                    disabled={!currentStudent?.group}
                                 >
+                                    <MenuItem value="">Не выбран</MenuItem>
                                     {consultants.map((consultant) => (
                                         <MenuItem key={consultant.id} value={consultant.id}>
                                             {`${consultant.lastName} ${consultant.firstName} ${consultant.middleName}`}

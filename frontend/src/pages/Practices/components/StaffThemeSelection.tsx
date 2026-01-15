@@ -135,6 +135,8 @@ export function StaffThemeSelection({ practiceId }: { practiceId?: number }) {
                             {practice?.theme?.title}
                         </Typography>
                         <Typography paragraph sx={{ mb: 0 }}>
+                            Студент: <b>{practice?.student?.lastName} {practice?.sstudent?.firstName} {practice?.student?.middleName} (Группа: {practice?.student?.group?.name})</b>
+                            <br />
                             Научный руководитель:{" "}
                             <b>
                                 {practice?.supervisor?.lastName} {practice?.supervisor?.firstName}{" "}

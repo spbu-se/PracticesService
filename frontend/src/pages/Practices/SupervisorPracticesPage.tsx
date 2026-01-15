@@ -48,7 +48,10 @@ export function SupervisorPracticesPage() {
     // Filter practices by search term (e.g. by student name, practice title)
     const filteredPractices = practices.filter(
         (p) =>
-            p.theme.title.toLowerCase().includes(searchTerm.toLowerCase())
+            p.theme.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (p.student?.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+            (p.student?.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+            (p.student?.middleName.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
     );
 
     return tokenIsEmpty ? (

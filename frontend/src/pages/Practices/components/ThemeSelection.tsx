@@ -47,6 +47,7 @@ export function ThemeSelection({ practiceId }: { practiceId?: number }) {
             setPractice(selectedPractice);
             setSelectedTheme(selectedPractice?.themeid ?? null);
             setSelectedSupervisor(selectedPractice?.supervisorid ?? null);
+            setConsultantId(selectedPractice?.consultantid ?? null);
         });
     }, [practiceId]);
 
@@ -156,6 +157,7 @@ export function ThemeSelection({ practiceId }: { practiceId?: number }) {
                     <FormControl fullWidth sx={{ mt: 2 }}>
                         <InputLabel>{UserRole.CONSULTANT}</InputLabel>
                         <Select value={consultantId ?? ""} onChange={e => setConsultantId(Number(e.target.value))}>
+                            <MenuItem value="">Не выбран</MenuItem>
                             {consultants.map(c => (
                                 <MenuItem key={c.id} value={c.id}>{c.lastName} {c.firstName} {c.middleName}</MenuItem>
                             ))}

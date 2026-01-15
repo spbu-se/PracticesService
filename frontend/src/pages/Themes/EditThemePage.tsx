@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import {useNavigate, useParams} from "react-router-dom";
 import {InputTheme, Theme} from "@/entities/Theme.ts";
-import {getConsultants, getLecturers, getMe, getThemes, postTheme, putTheme} from "@/shared/services/axios.service.ts";
+import {getConsultants, getLecturers, getMe, getTheme, postTheme, putTheme} from "@/shared/services/axios.service.ts";
 import MDEditor from '@uiw/react-md-editor';
 import {Lecturer} from "@/entities/Lecturer.ts";
 import {Consultant} from "@/entities/Consultant.ts";
@@ -51,7 +51,7 @@ export function EditThemePage() {
     const isMdError = isMdTouched && !description;
 
     useEffect(() => {
-        getThemes().then(response => {
+        getTheme(parseInt(id)).then(response => {
             const themes: Theme[] = response.data;
             const currentTheme = themes.find(s => s.id == id);
             setTitle(currentTheme?.title ?? title);
@@ -59,6 +59,8 @@ export function EditThemePage() {
             setDepartment(currentTheme?.department ?? department);
             setSource(currentTheme?.source ?? source);
             transformStringToLevels(currentTheme?.level);
+            setLecturerId(currentTheme.supervisorid);
+            setConsultantId(currentTheme.consultantid);
 
             setSources(Array.from(new Set(themes.map((t) => t.source))));
         });
@@ -236,7 +238,6 @@ export function EditThemePage() {
                                     Источник темы:
                                 </Typography>
                                 <FormControl fullWidth>
-                                    <InputLabel>Источник темы</InputLabel>
                                     <TextField
                                         fullWidth
                                         label="Источник темы"
