@@ -15,6 +15,7 @@ using MassTransit.Transports;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -128,6 +129,7 @@ builder.Services.AddMassTransit(
 
                 cfg.Message<UserCreatedEvent>(x => x.SetEntityName("user-events"));
                 cfg.Message<UserEditedEvent>(x => x.SetEntityName("user-edited-events"));
+                cfg.Message<PasswordResetRequestedEvent>(x => x.SetEntityName("password-reset-events"));
 
                 cfg.ReceiveEndpoint("user-with-role-events", e =>
                 {
@@ -155,6 +157,72 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.MapPost("/forgot-password", async (
+    ForgotPasswordDto dto,
+    UserManager<ApplicationUser> userManager,
+    IPublishEndpoint publishEndpoint,
+    IConfiguration configuration,
+    ILogger<Program> logger) =>
+{
+    var user = await userManager.FindByEmailAsync(dto.Email);
+    if (user == null)
+    {
+        return Results.Ok(new { message = "Если email существует, ссылка для сброса пароля была отправлена." });
+    }
+
+    var token = await userManager.GeneratePasswordResetTokenAsync(user);
+    var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+    var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:8000";
+    var resetLink = $"{frontendUrl}/practices-service/reset-password?token={encodedToken}&email={dto.Email}";
+    await publishEndpoint.Publish(new PasswordResetRequestedEvent(
+        UserId: user.Id,
+        Email: user.Email,
+        ResetLink: resetLink,
+        UserName: user.UserName,
+        RequestedAt: DateTime.UtcNow));
+
+    logger.LogInformation("Password reset requested for user {UserId}", user.Id);
+
+    return Results.Ok(new { message = "Если email существует, ссылка для сброса пароля была отправлена." });
+})
+.WithName("ForgotPassword")
+.AllowAnonymous()
+.WithOpenApi();
+
+app.MapPost("/reset-password", async (
+    ResetPasswordDto dto,
+    UserManager<ApplicationUser> userManager,
+    ILogger<Program> logger) =>
+{
+    var user = await userManager.FindByEmailAsync(dto.Email);
+    if (user == null)
+    {
+        return Results.BadRequest(new { message = "Неверный запрос." });
+    }
+
+    try
+    {
+        var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(dto.Token));
+        var result = await userManager.ResetPasswordAsync(user, decodedToken, dto.NewPassword);
+        if (!result.Succeeded)
+        {
+            return Results.BadRequest(result.Errors);
+         }
+
+        logger.LogInformation("Password reset successful for user {UserId}", user.Id);
+
+        return Results.Ok(new { message = "Пароль успешно изменен." });
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error resetting password for email {Email}", dto.Email);
+        return Results.BadRequest(new { message = "Неверный или просроченный токен." });
+    }
+})
+.WithName("ResetPassword")
+.AllowAnonymous()
+.WithOpenApi();
 
 app.MapPost("/register", async (
     UserService userService,

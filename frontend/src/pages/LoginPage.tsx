@@ -9,16 +9,16 @@ import {
     Button,
     Typography,
     Paper,
-    Box
+    Box,
+    Link
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-// Page for login
 export function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const navigate = useNavigate();
-    
+
     const onChangeLogin = (event: ChangeEvent<HTMLInputElement>) => {
         setEmail(event.target.value);
     };
@@ -40,6 +40,11 @@ export function LoginPage() {
                 console.log(e);
                 alert("Не удалось войти");
             });
+    };
+
+    const handleForgotPassword = (event: React.MouseEvent) => {
+        event.preventDefault();
+        navigate('/forgot-password');
     };
 
     return (
@@ -73,6 +78,18 @@ export function LoginPage() {
                             required
                         />
 
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                            <Link
+                                component="button"
+                                variant="body2"
+                                onClick={handleForgotPassword}
+                                sx={{ color: 'primary.main' }}
+                                type="button" 
+                            >
+                                Забыли пароль?
+                            </Link>
+                        </Box>
+
                         <Button
                             type="submit"
                             fullWidth
@@ -88,6 +105,7 @@ export function LoginPage() {
                             color="secondary"
                             onClick={() => navigate('/register')}
                             sx={{ mt: 2 }}
+                            type="button"
                         >
                             Регистрация
                         </Button>

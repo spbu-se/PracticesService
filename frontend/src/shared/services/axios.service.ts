@@ -14,6 +14,8 @@ import {Message} from "../../entities/Message";
 import {Feedback, FeedbackUploadInput } from "@/entities/Feedback.ts";
 import { TextWork, TextWorkUploadInput } from "@/entities/TextWork.ts";
 import {Presentation, PresentationUploadInput } from "@/entities/Presentation.ts";
+import {ForgotPassword} from "@/entities/ForgotPassword";
+import {ResetPassword} from "@/entities/entities/ResetPassword";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -255,3 +257,8 @@ export const getLatestPresentationVersion = (practiceId: number) =>
 
 export const postPresentationComment = (presentationId: string, input: Presentation) =>
     axiosService.post(`/practice-entities-api/presentations/${presentationId}/comments`, input);
+
+export const postForgotPassword = (input: ForgotPassword) =>
+    axiosService.post(`/auth-api/forgot-password`, input);
+export const resetPassword = (input: ResetPassword) =>
+    axiosService.post(`/auth-api/reset-password`, input);
