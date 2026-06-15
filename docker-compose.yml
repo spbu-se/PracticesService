@@ -165,6 +165,29 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      
+  notification.api:
+    container_name: notification.api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ENVIRONMENT=Docker
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin123
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    build:
+      context: .
+      dockerfile: Services/NotificationService.Api/Dockerfile
+    volumes:
+      - ./Services/NotificationService.Api:/src
+    expose:
+      - "8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - proxybackend
 
   frontend:
     container_name: frontend

@@ -14,6 +14,7 @@ namespace Contracts;
 /// <param name="MiddleName">Middle Name.</param>
 /// <param name="RolesToAdd">Roles that need to add.</param>
 /// <param name="RolesToRemove">Roles that need to remove.</param>
+/// <param name="CurrentRoles">Current roles.</param>
 /// <param name="CreatedAt">Date of creation.</param>
 public record UserEditedEvent(
     string UserId,
