@@ -107,7 +107,7 @@ builder.Services.AddMassTransit(x =>
         });
 
         // Configure endpoints
-        cfg.ReceiveEndpoint("notification-service", e =>
+        cfg.ReceiveEndpoint("password-reset-events", e =>
         {
             e.ConfigureConsumer<PasswordResetRequestedConsumer>(context);
         });

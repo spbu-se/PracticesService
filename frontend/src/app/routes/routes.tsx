@@ -19,6 +19,8 @@ import { PracticePage } from "@/pages/Practices/PracticePage";
 import { SupervisorPracticesPage } from "@/pages/Practices/SupervisorPracticesPage";
 import { ManagerPracticesPage } from "@/pages/Practices/ManagerPracticesPage";
 import { PracticeStaffPage } from "@/pages/Practices/PracticeStaffPage";
+import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 
 export const BASENAME = "/practices-service/";
 
@@ -62,6 +64,14 @@ export const routes = createBrowserRouter([
     {
         path: "/register",
         element: <RegisterPage/>,
+    },
+    {
+        path: "/forgot-password",
+        element: <ForgotPasswordPage/>,
+    },
+    {
+        path: "/reset-password",
+        element: <ResetPasswordPage/>,
     },
     {
         path: "/theme/:id",

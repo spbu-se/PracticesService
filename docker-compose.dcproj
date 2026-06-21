@@ -16,6 +16,7 @@
   <ItemGroup>
     <TypeScriptCompile Include="frontend\src\entities\Comment.ts" />
     <TypeScriptCompile Include="frontend\src\entities\Feedback.ts" />
+    <TypeScriptCompile Include="frontend\src\entities\ForgotPassword.ts" />
     <TypeScriptCompile Include="frontend\src\entities\GoalsTasks.ts" />
     <TypeScriptCompile Include="frontend\src\entities\Group.ts" />
     <TypeScriptCompile Include="frontend\src\entities\Message.ts" />
@@ -23,6 +24,7 @@
     <TypeScriptCompile Include="frontend\src\entities\RegisterData.ts" />
     <TypeScriptCompile Include="frontend\src\entities\Report.ts" />
     <TypeScriptCompile Include="frontend\src\entities\Repository.ts" />
+    <TypeScriptCompile Include="frontend\src\entities\ResetPassword.ts" />
     <TypeScriptCompile Include="frontend\src\entities\Student.ts" />
     <TypeScriptCompile Include="frontend\src\entities\TextWork.ts" />
     <TypeScriptCompile Include="frontend\src\entities\UserRoles.ts" />

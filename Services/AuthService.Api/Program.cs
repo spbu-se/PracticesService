@@ -173,8 +173,8 @@ app.MapPost("/forgot-password", async (
 
     var token = await userManager.GeneratePasswordResetTokenAsync(user);
     var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-    var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:5000";
-    var resetLink = $"{frontendUrl}/reset-password?token={encodedToken}&email={dto.Email}";
+    var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:8000";
+    var resetLink = $"{frontendUrl}/practices-service/reset-password?token={encodedToken}&email={dto.Email}";
     await publishEndpoint.Publish(new PasswordResetRequestedEvent(
         UserId: user.Id,
         Email: user.Email,
