@@ -2,6 +2,7 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Contracts;
@@ -101,14 +102,37 @@ builder.Services.AddMassTransit(x =>
         {
             h.Username(builder.Configuration["RabbitMQ:Username"]);
             h.Password(builder.Configuration["RabbitMQ:Password"]);
+            h.Heartbeat(TimeSpan.FromSeconds(30));
+            h.RequestedConnectionTimeout(TimeSpan.FromSeconds(30));
         });
 
         cfg.ReceiveEndpoint("user-events", e =>
         {
+            e.UseMessageRetry(retry =>
+            {
+                retry.Intervals(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5));
+                retry.Ignore<ValidationException>();
+                retry.Ignore<ArgumentException>();
+            });
+
+            e.PrefetchCount = 10;
+            e.ConcurrentMessageLimit = 5;
+
             e.ConfigureConsumer<UserCreatedConsumer>(context);
         });
+
         cfg.ReceiveEndpoint("user-edited-events", e =>
         {
+            e.UseMessageRetry(retry =>
+            {
+                retry.Intervals(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5));
+                retry.Ignore<ValidationException>();
+                retry.Ignore<ArgumentException>();
+            });
+
+            e.PrefetchCount = 10;
+            e.ConcurrentMessageLimit = 5;
+
             e.ConfigureConsumer<UserEditedConsumer>(context);
         });
 

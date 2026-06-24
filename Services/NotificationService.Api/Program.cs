@@ -2,6 +2,7 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Contracts;
 using MassTransit;
@@ -104,11 +105,22 @@ builder.Services.AddMassTransit(x =>
         {
             h.Username(username);
             h.Password(password);
+            h.Heartbeat(TimeSpan.FromSeconds(30));
+            h.RequestedConnectionTimeout(TimeSpan.FromSeconds(30));
         });
 
-        // Configure endpoints
         cfg.ReceiveEndpoint("password-reset-events", e =>
         {
+            e.UseMessageRetry(retry =>
+            {
+                retry.Intervals(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(5));
+                retry.Ignore<ValidationException>();
+                retry.Ignore<ArgumentException>();
+            });
+
+            e.PrefetchCount = 5;
+            e.ConcurrentMessageLimit = 3;
+
             e.ConfigureConsumer<PasswordResetRequestedConsumer>(context);
         });
     });
