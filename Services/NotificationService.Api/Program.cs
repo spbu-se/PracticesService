@@ -94,6 +94,7 @@ builder.Services.AddCors(
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<PasswordResetRequestedConsumer>();
+    x.AddConsumer<EmailConfirmationConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -122,6 +123,13 @@ builder.Services.AddMassTransit(x =>
             e.ConcurrentMessageLimit = 3;
 
             e.ConfigureConsumer<PasswordResetRequestedConsumer>(context);
+        });
+        cfg.ReceiveEndpoint("email-confirmation-events", e =>
+        {
+            e.UseMessageRetry(retry => retry.Intervals(1, 2, 5));
+            e.PrefetchCount = 10;
+            e.ConcurrentMessageLimit = 5;
+            e.ConfigureConsumer<EmailConfirmationConsumer>(context);
         });
     });
 });

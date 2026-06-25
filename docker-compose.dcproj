@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="frontend\src\entities\Comment.ts" />
+    <TypeScriptCompile Include="frontend\src\entities\ConfirmEmail.ts" />
     <TypeScriptCompile Include="frontend\src\entities\Feedback.ts" />
     <TypeScriptCompile Include="frontend\src\entities\ForgotPassword.ts" />
     <TypeScriptCompile Include="frontend\src\entities\GoalsTasks.ts" />

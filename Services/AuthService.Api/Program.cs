@@ -133,6 +133,7 @@ builder.Services.AddMassTransit(
                 cfg.Message<UserCreatedEvent>(x => x.SetEntityName("user-events"));
                 cfg.Message<UserEditedEvent>(x => x.SetEntityName("user-edited-events"));
                 cfg.Message<PasswordResetRequestedEvent>(x => x.SetEntityName("password-reset-events"));
+                cfg.Message<EmailConfirmationRequestedEvent>(x => x.SetEntityName("email-confirmation-events"));
 
                 cfg.ReceiveEndpoint("user-with-role-events", e =>
                 {
@@ -186,8 +187,8 @@ app.MapPost("/forgot-password", async (
 
     var token = await userManager.GeneratePasswordResetTokenAsync(user);
     var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-    var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:8000";
-    var resetLink = $"{frontendUrl}/practices-service/reset-password?token={encodedToken}&email={dto.Email}";
+    var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:8000/practices-service";
+    var resetLink = $"{frontendUrl}/reset-password?token={encodedToken}&email={dto.Email}";
     await publishEndpoint.Publish(new PasswordResetRequestedEvent(
         UserId: user.Id,
         Email: user.Email,
@@ -241,7 +242,9 @@ app.MapPost("/register", async (
     UserService userService,
     IPublishEndpoint publishEndpoint,
     ApplicationUserDTO userDto,
-    TokenService tokenService) =>
+    TokenService tokenService,
+    UserManager<ApplicationUser> userManager,
+    IConfiguration configuration) =>
 {
     var (result, user) = await userService.RegisterUserAsync(userDto);
 
@@ -261,6 +264,18 @@ app.MapPost("/register", async (
         assignedRoles.ToArray(),
         DateTime.UtcNow));
 
+    var emailToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
+    var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(emailToken));
+    var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:8000/practices-service";
+    var confirmLink = $"{frontendUrl}/confirm-email?token={encodedToken}&email={user.Email}";
+
+    await publishEndpoint.Publish(new EmailConfirmationRequestedEvent(
+        UserId: user.Id,
+        Email: user.Email!,
+        UserName: user.UserName!,
+        ConfirmLink: confirmLink,
+        RequestedAt: DateTime.UtcNow));
+
     var token = await tokenService.GenerateJwtToken(user);
     var refreshToken = await tokenService.GenerateRefreshToken(user);
 
@@ -270,8 +285,45 @@ app.MapPost("/register", async (
         AssignedRoles = assignedRoles,
         Token = token,
         RefreshToken = refreshToken,
+        Message = "Registration successful. Please confirm your email.",
     });
 });
+
+app.MapPost("/confirm-email", async (
+        ConfirmEmailDto dto,
+        UserManager<ApplicationUser> userManager) =>
+    {
+        var user = await userManager.FindByEmailAsync(dto.Email);
+        if (user == null)
+        {
+            return Results.BadRequest(new { message = "User not found" });
+        }
+
+        if (user.EmailConfirmed)
+        {
+            return Results.Ok(new { message = "Email already confirmed" });
+        }
+
+        try
+        {
+            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(dto.Token));
+            var result = await userManager.ConfirmEmailAsync(user, decodedToken);
+
+            if (!result.Succeeded)
+            {
+                return Results.BadRequest(result.Errors);
+            }
+
+            return Results.Ok(new { message = "Email confirmed successfully" });
+        }
+        catch (Exception ex)
+        {
+            return Results.BadRequest(new { message = "Invalid or expired token" });
+        }
+    })
+    .WithName("ConfirmEmail")
+    .AllowAnonymous()
+    .WithOpenApi();
 
 app.MapPut("/users/{userId}", async (
     string userId,
