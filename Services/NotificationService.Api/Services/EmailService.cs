@@ -55,7 +55,7 @@ public class EmailService : IEmailService
 
             using var client = new SmtpClient();
 
-            client.ServerCertificateValidationCallback = (s, c, h, e) => true;
+            client.ServerCertificateValidationCallback = (_, _, _, _) => true;
 
             var secureOption = this.smtpSettings.Port == 465
                 ? SecureSocketOptions.SslOnConnect
@@ -103,6 +103,38 @@ public class EmailService : IEmailService
         {
             To = request.Email,
             Subject = "Восстановление пароля - Система практик",
+            Body = body,
+            IsHtml = true,
+        };
+
+        return await this.SendEmailAsync(emailDto).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> SendEmailConfirmationAsync(EmailConfirmationRequestDto request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var body = $@"
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                <h2>Добро пожаловать, {request.UserName}!</h2>
+                <p>Пожалуйста, подтвердите ваш email, перейдя по ссылке:</p>
+                <p>
+                    <a href='{request.ConfirmLink}'
+                       style='padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px;'>
+                        Подтвердить email
+                    </a>
+                </p>
+                <p>Ссылка действительна в течение 24 часов.</p>
+                <p>Если вы не регистрировались в системе, проигнорируйте это письмо.</p>
+                <br/>
+                <p>С уважением,<br/>Команда системы практик</p>
+            </div>";
+
+        var emailDto = new SendEmailDto
+        {
+            To = request.Email,
+            Subject = "Подтверждение email - Система практик",
             Body = body,
             IsHtml = true,
         };

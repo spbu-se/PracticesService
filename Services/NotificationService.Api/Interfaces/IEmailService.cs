@@ -24,4 +24,11 @@ public interface IEmailService
     /// <param name="request">Password reset request data.</param>
     /// <returns>True if email was sent successfully, false otherwise.</returns>
     Task<bool> SendPasswordResetEmailAsync(PasswordResetRequestDto request);
+
+    /// <summary>
+    /// Sends an email confirmation email.
+    /// </summary>
+    /// <param name="request">Email confirmation request data.</param>
+    /// <returns>True if email was sent successfully, false otherwise.</returns>
+    Task<bool> SendEmailConfirmationAsync(EmailConfirmationRequestDto request);
 }
