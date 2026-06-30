@@ -78,15 +78,25 @@ export function LoginPage() {
                             required
                         />
 
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
                             <Link
                                 component="button"
                                 variant="body2"
                                 onClick={handleForgotPassword}
                                 sx={{ color: 'primary.main' }}
-                                type="button" 
+                                type="button"
                             >
                                 Забыли пароль?
+                            </Link>
+                            
+                            <Link
+                                component="button"
+                                variant="body2"
+                                onClick={() => navigate('/resend-confirmation')}
+                                sx={{ color: 'primary.main' }}
+                                type="button"
+                            >
+                                Не пришло подтверждение?
                             </Link>
                         </Box>
 

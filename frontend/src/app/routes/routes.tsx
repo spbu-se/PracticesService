@@ -22,6 +22,7 @@ import { PracticeStaffPage } from "@/pages/Practices/PracticeStaffPage";
 import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 import { ConfirmEmailPage } from "@/pages/ConfirmEmailPage";
+import { ResendConfirmationPage } from "@/pages/ResendConfirmationPage";
 
 export const BASENAME = "/practices-service/";
 
@@ -77,6 +78,10 @@ export const routes = createBrowserRouter([
     {
         path: "/confirm-email",
         element: <ConfirmEmailPage/>,
+    },
+    {
+        path: "/resend-confirmation",
+        element: <ResendConfirmationPage/>,
     },
     {
         path: "/theme/:id",

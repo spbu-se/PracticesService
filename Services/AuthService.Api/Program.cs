@@ -289,6 +289,46 @@ app.MapPost("/register", async (
     });
 });
 
+app.MapPost("/resend-confirmation", async (
+        ResendConfirmationDto dto,
+        UserManager<ApplicationUser> userManager,
+        IPublishEndpoint publishEndpoint,
+        IConfiguration configuration,
+        ILogger<Program> logger) =>
+    {
+        var user = await userManager.FindByEmailAsync(dto.Email);
+        if (user == null)
+        {
+            logger.LogWarning("Resend confirmation requested for non-existent email: {Email}", dto.Email);
+            return Results.Ok(new { message = "Если email существует, письмо подтверждения отправлено." });
+        }
+
+        if (user.EmailConfirmed)
+        {
+            logger.LogInformation("Email already confirmed for user: {Email}", dto.Email);
+            return Results.BadRequest(new { message = "Email уже подтвержден. Вы можете войти в систему." });
+        }
+
+        var emailToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(emailToken));
+        var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:8000";
+        var confirmLink = $"{frontendUrl}/confirm-email?token={encodedToken}&email={user.Email}";
+
+        await publishEndpoint.Publish(new EmailConfirmationRequestedEvent(
+            UserId: user.Id,
+            Email: user.Email!,
+            UserName: user.UserName!,
+            ConfirmLink: confirmLink,
+            RequestedAt: DateTime.UtcNow));
+
+        logger.LogInformation("Resent confirmation email for user {UserId}", user.Id);
+
+        return Results.Ok(new { message = "Если email существует, письмо подтверждения отправлено." });
+    })
+    .WithName("ResendConfirmation")
+    .AllowAnonymous()
+    .WithOpenApi();
+
 app.MapPost("/confirm-email", async (
         ConfirmEmailDto dto,
         UserManager<ApplicationUser> userManager) =>
