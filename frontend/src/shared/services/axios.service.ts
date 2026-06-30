@@ -17,6 +17,7 @@ import {Presentation, PresentationUploadInput } from "@/entities/Presentation.ts
 import {ForgotPassword} from "@/entities/ForgotPassword";
 import {ResetPassword} from "@/entities/ResetPassword";
 import {ConfirmEmail} from "@/entities/ConfirmEmail";
+import {ResendConfirmation} from "../../entities/ResendConfirmation";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -265,3 +266,5 @@ export const resetPassword = (input: ResetPassword) =>
     axiosService.post(`/auth-api/reset-password`, input);
 export const confirmEmail = (input: ConfirmEmail) =>
     axiosService.post(`/auth-api/confirm-email`, input);
+export const resendConfirmation = (input: ResendConfirmation) =>
+    axiosService.post(`/auth-api/resend-confirmation`, input);

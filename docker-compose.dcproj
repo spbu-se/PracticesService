@@ -25,6 +25,7 @@
     <TypeScriptCompile Include="frontend\src\entities\RegisterData.ts" />
     <TypeScriptCompile Include="frontend\src\entities\Report.ts" />
     <TypeScriptCompile Include="frontend\src\entities\Repository.ts" />
+    <TypeScriptCompile Include="frontend\src\entities\ResendConfirmation.ts" />
     <TypeScriptCompile Include="frontend\src\entities\ResetPassword.ts" />
     <TypeScriptCompile Include="frontend\src\entities\Student.ts" />
     <TypeScriptCompile Include="frontend\src\entities\TextWork.ts" />
