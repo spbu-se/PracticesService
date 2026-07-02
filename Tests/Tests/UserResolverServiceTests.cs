@@ -78,7 +78,7 @@ namespace Tests
                     ItExpr.Is<HttpRequestMessage>(
                         req =>
                         req.Method == HttpMethod.Get &&
-                        req.RequestUri!.ToString().Contains($"user?userId={userId}")),
+                        req.RequestUri!.ToString().Contains($"users/{userId}")),
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(
                     new HttpResponseMessage
