@@ -95,6 +95,7 @@ builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<PasswordResetRequestedConsumer>();
     x.AddConsumer<EmailConfirmationConsumer>();
+    x.AddConsumer<ThemeArchivedConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -130,6 +131,14 @@ builder.Services.AddMassTransit(x =>
             e.PrefetchCount = 10;
             e.ConcurrentMessageLimit = 5;
             e.ConfigureConsumer<EmailConfirmationConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("theme-events", e =>
+        {
+            e.UseMessageRetry(retry => retry.Intervals(1, 2, 5));
+            e.PrefetchCount = 10;
+            e.ConcurrentMessageLimit = 5;
+            e.ConfigureConsumer<ThemeArchivedConsumer>(context);
         });
     });
 });

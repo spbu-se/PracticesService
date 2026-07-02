@@ -34,7 +34,7 @@ public class UserResolverService
     public async Task<UserDTO?> GetUserAsync(Guid userId)
     {
         var client = this.httpClientFactory.CreateClient("AuthService");
-        var response = await client.GetAsync($"user?userId={userId}");
+        var response = await client.GetAsync($"users/{userId}");
 
         if (!response.IsSuccessStatusCode)
         {
