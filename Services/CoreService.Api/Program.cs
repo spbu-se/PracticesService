@@ -137,6 +137,7 @@ builder.Services.AddMassTransit(x =>
         });
 
         cfg.Message<UserWithRoleActionEvent>(x => x.SetEntityName("user-with-role-events"));
+        cfg.Message<ThemeArchivedEvent>(x => x.SetEntityName("theme-events"));
     });
 });
 

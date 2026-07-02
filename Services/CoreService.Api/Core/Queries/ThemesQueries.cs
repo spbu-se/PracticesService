@@ -4,15 +4,41 @@
 
 namespace CoreService.Api.Core.Queries;
 
+using Contracts;
 using CoreService.Api.Core.Models;
+using CoreService.Api.Services;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Themes table queries.
 /// </summary>
-/// <param name="context">Core context.</param>
-public class ThemesQueries(CoreContext context)
+public class ThemesQueries
 {
+    private readonly CoreContext context;
+    private readonly IPublishEndpoint publishEndpoint;
+    private readonly UserResolverService userResolver;
+    private readonly ILogger<ThemesQueries> logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ThemesQueries"/> class.
+    /// </summary>
+    /// <param name="context">Core context.</param>
+    /// <param name="publishEndpoint">MassTransit publish endpoint.</param>
+    /// <param name="userResolver">User resolver service.</param>
+    /// <param name="logger">Logger instance.</param>
+    public ThemesQueries(
+        CoreContext context,
+        IPublishEndpoint publishEndpoint,
+        UserResolverService userResolver,
+        ILogger<ThemesQueries> logger)
+    {
+        this.context = context;
+        this.publishEndpoint = publishEndpoint;
+        this.userResolver = userResolver;
+        this.logger = logger;
+    }
+
     /// <summary>
     /// Gets themes.
     /// </summary>
@@ -20,13 +46,16 @@ public class ThemesQueries(CoreContext context)
     /// <returns>List of themes.</returns>
     public async Task<IEnumerable<Theme>> GetThemes(int? id = null)
     {
-        var result = context.Themes.AsQueryable();
+        var result = this.context.Themes.AsQueryable();
         if (id != null)
         {
             result = result.Where(theme => theme.Id == id);
         }
 
-        return await result.Include(theme => theme.Consultant).Include(theme => theme.Supervisor).ToListAsync();
+        return await result
+            .Include(theme => theme.Consultant)
+            .Include(theme => theme.Supervisor)
+            .ToListAsync();
     }
 
     /// <summary>
@@ -36,8 +65,8 @@ public class ThemesQueries(CoreContext context)
     /// <returns>Response status.</returns>
     public async Task<int> InsertTheme(Theme theme)
     {
-        context.Themes.Add(theme);
-        await context.SaveChangesAsync();
+        this.context.Themes.Add(theme);
+        await this.context.SaveChangesAsync();
         return theme.Id;
     }
 
@@ -50,11 +79,13 @@ public class ThemesQueries(CoreContext context)
     {
         try
         {
-            var prev = await context.Themes.FindAsync(theme.Id);
+            var prev = await this.context.Themes.FindAsync(theme.Id);
             if (prev == null)
             {
                 return Results.BadRequest();
             }
+
+            var isArchivedChanged = prev.Isarchived != theme.Isarchived;
 
             prev.Updateddate = DateTime.Now;
             prev.Title = string.IsNullOrEmpty(theme.Title) ? prev.Title : theme.Title;
@@ -68,7 +99,38 @@ public class ThemesQueries(CoreContext context)
             prev.Supervisorid = theme.Supervisorid ?? prev.Supervisorid;
             prev.Isarchived = theme.Isarchived;
 
-            await context.SaveChangesAsync();
+            await this.context.SaveChangesAsync();
+
+            // If IsArchived status changed, publish event
+            if (isArchivedChanged && !string.IsNullOrEmpty(prev.Suggestedby))
+            {
+                // Try to convert string to Guid
+                if (Guid.TryParse(prev.Suggestedby, out var userId))
+                {
+                    var user = await this.userResolver.GetUserAsync(userId);
+
+                    await this.publishEndpoint.Publish(new ThemeArchivedEvent(
+                        ThemeId: prev.Id,
+                        ThemeName: prev.Title,
+                        IsArchived: prev.Isarchived,
+                        UserId: user?.UserId,
+                        UserEmail: user?.Email,
+                        ActionDateTime: DateTime.UtcNow));
+
+                    this.logger.LogInformation(
+                        "Theme {ThemeId} archive status changed to {IsArchived}. Suggested by: {SuggestedBy}.",
+                        prev.Id,
+                        prev.Isarchived,
+                        user?.Email ?? "unknown");
+                }
+                else
+                {
+                    this.logger.LogWarning(
+                        "Could not parse Suggestedby as Guid: {SuggestedBy}",
+                        prev.Suggestedby);
+                }
+            }
+
             return Results.Ok();
         }
         catch (InvalidOperationException exception)
@@ -84,9 +146,9 @@ public class ThemesQueries(CoreContext context)
     /// <returns>Response status.</returns>
     public async Task<IResult> DeleteTheme(int id)
     {
-        var deletedTheme = context.Themes.First(theme => theme.Id == id);
-        context.Themes.Remove(deletedTheme);
-        await context.SaveChangesAsync();
+        var deletedTheme = this.context.Themes.First(theme => theme.Id == id);
+        this.context.Themes.Remove(deletedTheme);
+        await this.context.SaveChangesAsync();
         return Results.Ok();
     }
 }

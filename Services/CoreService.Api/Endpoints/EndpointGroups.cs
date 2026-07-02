@@ -2,6 +2,8 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
+using CoreService.Api.Services;
+
 namespace CoreService.Api.Endpoints;
 
 using Contracts;
@@ -24,20 +26,46 @@ public static class EndpointGroups
     {
         group.MapGet(
             "/",
-            (CoreContext context) => new ThemesQueries(context).GetThemes().Result);
+            async (CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger) =>
+            {
+                var queries = new ThemesQueries(context, publishEndpoint, userResolver, logger);
+                return await queries.GetThemes();
+            });
+
         group.MapGet(
             "/{themeId:int}",
-            (int themeId, CoreContext context) => new ThemesQueries(context).GetThemes(themeId).Result);
+            async (int themeId, CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger) =>
+            {
+                var queries = new ThemesQueries(context, publishEndpoint, userResolver, logger);
+                return await queries.GetThemes(themeId);
+            });
+
         group.MapPost(
             "/",
-            (Theme theme, CoreContext context) => new ThemesQueries(context).InsertTheme(theme).Result).RequireAuthorization();
+            async (Theme theme, CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger) =>
+            {
+                var queries = new ThemesQueries(context, publishEndpoint, userResolver, logger);
+                return await queries.InsertTheme(theme);
+            })
+            .RequireAuthorization();
+
         group.MapPut(
             "/",
-            (Theme theme, CoreContext context) =>
-                new ThemesQueries(context).UpdateTheme(theme).Result).RequireAuthorization();
+            async (Theme theme, CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger) =>
+            {
+                var queries = new ThemesQueries(context, publishEndpoint, userResolver, logger);
+                return await queries.UpdateTheme(theme);
+            })
+            .RequireAuthorization();
+
         group.MapDelete(
             "/{themeId:int}",
-            (int themeId, CoreContext context) => new ThemesQueries(context).DeleteTheme(themeId).Result).RequireAuthorization();
+            async (int themeId, CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger) =>
+            {
+                var queries = new ThemesQueries(context, publishEndpoint, userResolver, logger);
+                return await queries.DeleteTheme(themeId);
+            })
+            .RequireAuthorization();
 
         return group;
     }
