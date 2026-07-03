@@ -96,10 +96,27 @@ export function AdminUsersPage() {
     };
 
     const handleRolesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { value } = e.target;
+        const selectedRoles = typeof e.target.value === 'string'
+            ? e.target.value.split(',')
+            : e.target.value;
+
+        let updatedRoles = [...selectedRoles];
+
+        // If PRACTICE_SUPERVISOR is selected, add SUPERVISOR
+        if (selectedRoles?.includes(UserRole.PRACTICE_SUPERVISOR)) {
+            if (!updatedRoles.includes(UserRole.SUPERVISOR)) {
+                updatedRoles.push(UserRole.SUPERVISOR);
+            }
+        }
+
+        // If SUPERVISOR is removed, remove PRACTICE_SUPERVISOR
+        if (!selectedRoles?.includes(UserRole.SUPERVISOR)) {
+            updatedRoles = updatedRoles.filter(role => role !== UserRole.PRACTICE_SUPERVISOR);
+        }
+
         setCurrentUser(prev => ({
             ...prev!,
-            roles: typeof value === 'string' ? value.split(',') : value
+            roles: updatedRoles
         }));
     };
 
@@ -326,6 +343,11 @@ export function AdminUsersPage() {
                             </MenuItem>
                         ))}
                     </TextField>
+                    {currentUser?.roles?.includes(UserRole.PRACTICE_SUPERVISOR) && (
+                        <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                            При выборе "Руководитель практики" автоматически добавляется "Научный руководитель"
+                        </Typography>
+                    )}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseDialog}>Отмена</Button>

@@ -45,6 +45,7 @@ namespace CoreService.Api.Consumers
                     FirstName = context.Message.FirstName,
                     LastName = context.Message.LastName,
                     MiddleName = context.Message.MiddleName,
+                    Cansupervisevkr = context.Message.Roles.Contains(RoleNames.GetName(UserRoleType.PracticeLeader)),
                 };
                 await this.lecturersQueries.InsertOrUpdateLecturer(lecturer);
             }
