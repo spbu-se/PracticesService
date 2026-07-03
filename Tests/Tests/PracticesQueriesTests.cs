@@ -207,7 +207,6 @@ namespace Tests
             var updatedPractice = new Practice
             {
                 Id = 1,
-                Status = "Completed",
                 Finalgrade = "A",
                 Type = "TypeC",
                 Studentid = 1,
@@ -223,7 +222,7 @@ namespace Tests
             Assert.Multiple(
                 () =>
             {
-                Assert.That(practiceInDb?.Status, Is.EqualTo("Completed"));
+                Assert.That(practiceInDb?.Status, Is.EqualTo("Завершено"));
                 Assert.That(practiceInDb?.Finalgrade, Is.EqualTo("A"));
             });
         }

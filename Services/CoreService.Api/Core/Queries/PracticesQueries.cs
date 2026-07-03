@@ -103,7 +103,8 @@ public class PracticesQueries(CoreContext context)
             prev.Supervisorid = practice.Supervisorid;
             prev.Studentid = practice.Studentid;
             prev.Finalgrade = practice.Finalgrade;
-            prev.Status = string.IsNullOrEmpty(practice.Status) ? prev.Status : practice.Status;
+            prev.Status = !string.IsNullOrEmpty(prev.Finalgrade) ? "Завершено" : "Не  завершено";
+
             prev.Updateddate = DateTime.Now;
             prev.Type = string.IsNullOrEmpty(practice.Type) ? prev.Type : practice.Type;
             await context.SaveChangesAsync();

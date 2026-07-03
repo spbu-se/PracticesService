@@ -101,6 +101,8 @@ export function ThemeSelection({ practiceId }: { practiceId?: number }) {
                         <Typography paragraph sx={{ mb: 0 }}>
                             Научный руководитель: <b>{practice?.supervisor?.lastName} {practice?.supervisor?.firstName} {practice?.supervisor?.middleName}</b><br/>
                             Тип работы: <b>{practice?.type}</b><br/>
+                            Итоговая оценка: <b>{practice?.finalgrade || "Не указана"} </b>
+                            <br />
                             {practice?.consultant == null ? (
                                 <Button size="small" onClick={() => setShowConsultantInput(true)} sx={{ p: 0, textTransform: 'none' }}>Добавить консультанта</Button>
                             ) : (
