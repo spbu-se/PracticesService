@@ -30,6 +30,11 @@ public partial class Student
     public string? MiddleName { get; set; }
 
     /// <summary>
+    /// Gets or sets Email column.
+    /// </summary>
+    public string Email { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets UserId column.
     /// </summary>
     public string Userid { get; set; } = null!;

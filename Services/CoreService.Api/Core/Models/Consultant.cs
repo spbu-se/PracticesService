@@ -30,6 +30,11 @@ public partial class Consultant
     public string? MiddleName { get; set; }
 
     /// <summary>
+    /// Gets or sets Email column.
+    /// </summary>
+    public string Email { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets Contact column.
     /// </summary>
     public string Contact { get; set; } = null!;

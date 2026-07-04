@@ -61,6 +61,7 @@ public class ConsultantsQueries(CoreContext context)
             existingConsultant.FirstName = string.IsNullOrEmpty(consultant.FirstName) ? existingConsultant.FirstName : consultant.FirstName;
             existingConsultant.LastName = string.IsNullOrEmpty(consultant.LastName) ? existingConsultant.LastName : consultant.LastName;
             existingConsultant.MiddleName = string.IsNullOrEmpty(consultant.MiddleName) ? existingConsultant.MiddleName : consultant.MiddleName;
+            existingConsultant.Email = string.IsNullOrEmpty(consultant.Email) ? existingConsultant.Email : consultant.Email;
             existingConsultant.Contact = string.IsNullOrEmpty(consultant.Contact) ? existingConsultant.Contact : consultant.Contact;
             existingConsultant.Userid = string.IsNullOrEmpty(consultant.Userid) ? existingConsultant.Userid : consultant.Userid;
         }
@@ -87,6 +88,7 @@ public class ConsultantsQueries(CoreContext context)
             prev.FirstName = string.IsNullOrEmpty(consultant.FirstName) ? prev.FirstName : consultant.FirstName;
             prev.LastName = string.IsNullOrEmpty(consultant.LastName) ? prev.LastName : consultant.LastName;
             prev.MiddleName = string.IsNullOrEmpty(consultant.MiddleName) ? prev.MiddleName : consultant.MiddleName;
+            prev.Email = string.IsNullOrEmpty(consultant.Email) ? prev.Email : consultant.Email;
             prev.Contact = string.IsNullOrEmpty(consultant.Contact) ? prev.Contact : consultant.Contact;
             await context.SaveChangesAsync();
             return Results.Ok();

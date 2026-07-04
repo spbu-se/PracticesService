@@ -36,6 +36,10 @@ builder.Services.AddSingleton<IMongoClient>(sp => new MongoClient(mongoConnectio
 builder.Services.AddScoped(sp => sp.GetRequiredService<IMongoClient>().GetDatabase(mongoDatabaseName));
 
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHttpClient("CoreService", client =>
+{
+    client.BaseAddress = new Uri("http://core.api:8080/");
+});
 
 var gatewayBasePath = builder.Configuration["Swagger:GatewayBasePath"] ?? "/api";
 

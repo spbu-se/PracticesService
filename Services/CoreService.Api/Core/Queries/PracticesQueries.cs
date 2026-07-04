@@ -4,15 +4,36 @@
 
 namespace CoreService.Api.Core.Queries;
 
+using Contracts;
 using CoreService.Api.Core.Models;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Practices table queries.
 /// </summary>
-/// <param name="context">Core context.</param>
-public class PracticesQueries(CoreContext context)
+public class PracticesQueries
 {
+    private readonly CoreContext context;
+    private readonly IPublishEndpoint publishEndpoint;
+    private readonly ILogger<PracticesQueries> logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PracticesQueries"/> class.
+    /// </summary>
+    /// <param name="context">Core context.</param>
+    /// <param name="publishEndpoint">MassTransit publish endpoint.</param>
+    /// <param name="logger">Logger instance.</param>
+    public PracticesQueries(
+        CoreContext context,
+        IPublishEndpoint publishEndpoint,
+        ILogger<PracticesQueries> logger)
+    {
+        this.context = context;
+        this.publishEndpoint = publishEndpoint;
+        this.logger = logger;
+    }
+
     /// <summary>
     /// Gets Practices.
     /// </summary>
@@ -20,7 +41,7 @@ public class PracticesQueries(CoreContext context)
     /// <returns>List of practices.</returns>
     public async Task<IEnumerable<Practice>> GetPractices(int? id = null)
     {
-        var result = context.Practices.Include(p => p.Supervisor).Include(p => p.Consultant).Include(p => p.Theme).Include(p => p.Student).ThenInclude(s => s.Group).AsQueryable();
+        var result = this.context.Practices.Include(p => p.Supervisor).Include(p => p.Consultant).Include(p => p.Theme).Include(p => p.Student).ThenInclude(s => s.Group).AsQueryable();
         if (id != null)
         {
             result = result.Where(practice => practice.Id == id);
@@ -36,7 +57,7 @@ public class PracticesQueries(CoreContext context)
     /// <returns>List of practices.</returns>
     public async Task<IEnumerable<Practice>> GetPracticesByStudent(string userId)
     {
-        var result = context.Practices.Include(p => p.Theme).Include(p => p.Student).Include(p => p.Supervisor).Include(p => p.Consultant).AsQueryable();
+        var result = this.context.Practices.Include(p => p.Theme).Include(p => p.Student).Include(p => p.Supervisor).Include(p => p.Consultant).AsQueryable();
         if (string.IsNullOrEmpty(userId))
         {
             return new List<Practice>();
@@ -54,7 +75,7 @@ public class PracticesQueries(CoreContext context)
     /// <returns>List of practices supervised by this supervisor.</returns>
     public async Task<IEnumerable<Practice>> GetPracticesBySupervisor(string supervisorUserId)
     {
-        var result = context.Practices
+        var result = this.context.Practices
             .Include(p => p.Theme)
             .Include(p => p.Student)
             .Include(p => p.Supervisor)
@@ -78,8 +99,8 @@ public class PracticesQueries(CoreContext context)
     /// <returns>Response status.</returns>
     public async Task<int> InsertPractice(Practice practice)
     {
-        context.Practices.Add(practice);
-        await context.SaveChangesAsync();
+        this.context.Practices.Add(practice);
+        await this.context.SaveChangesAsync();
         return practice.Id;
     }
 
@@ -92,7 +113,12 @@ public class PracticesQueries(CoreContext context)
     {
         try
         {
-            var prev = await context.Practices.FindAsync(practice.Id);
+            var prev = await this.context.Practices
+                .Include(p => p.Supervisor)
+                .Include(p => p.Student)
+                .Include(p => p.Theme)
+                .FirstOrDefaultAsync(p => p.Id == practice.Id);
+
             if (prev == null)
             {
                 return Results.BadRequest();
@@ -103,15 +129,44 @@ public class PracticesQueries(CoreContext context)
             prev.Supervisorid = practice.Supervisorid;
             prev.Studentid = practice.Studentid;
             prev.Finalgrade = practice.Finalgrade;
-            prev.Status = !string.IsNullOrEmpty(prev.Finalgrade) ? "Завершено" : "Не  завершено";
-
             prev.Updateddate = DateTime.Now;
             prev.Type = string.IsNullOrEmpty(practice.Type) ? prev.Type : practice.Type;
-            await context.SaveChangesAsync();
+
+            // Update status based on Finalgrade
+            if (!string.IsNullOrEmpty(practice.Finalgrade))
+            {
+                prev.Status = "Завершено";
+            }
+            else
+            {
+                prev.Status = "Не завершено";
+            }
+
+            await this.context.SaveChangesAsync();
+
+            // Publish practice updated event
+            var studentEmail = prev.Student?.Email ?? prev.Student?.Userid ?? "unknown";
+            var supervisorEmail = prev.Supervisor?.Email;
+            var practiceTitle = prev.Theme?.Title ?? "Practice";
+
+            await this.publishEndpoint.Publish(new PracticeUpdatedEvent(
+                PracticeId: prev.Id,
+                SupervisorEmail: supervisorEmail,
+                StudentEmail: studentEmail,
+                UpdatedAt: DateTime.UtcNow,
+                PracticeTitle: practiceTitle));
+
+            this.logger.LogInformation(
+                "Practice {PracticeId} updated. Student: {StudentEmail}, Status: {Status}",
+                prev.Id,
+                studentEmail,
+                prev.Status);
+
             return Results.Ok();
         }
         catch (InvalidOperationException exception)
         {
+            this.logger.LogError(exception, "Error updating practice {PracticeId}", practice.Id);
             return Results.BadRequest(exception);
         }
     }
@@ -123,9 +178,9 @@ public class PracticesQueries(CoreContext context)
     /// <returns>Response status.</returns>
     public async Task<IResult> DeletePractice(int id)
     {
-        var deletedPractice = context.Practices.First(practice => practice.Id == id);
-        context.Practices.Remove(deletedPractice);
-        await context.SaveChangesAsync();
+        var deletedPractice = this.context.Practices.First(practice => practice.Id == id);
+        this.context.Practices.Remove(deletedPractice);
+        await this.context.SaveChangesAsync();
         return Results.Ok();
     }
 }

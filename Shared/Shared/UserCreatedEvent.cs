@@ -17,6 +17,7 @@ namespace Contracts
     public record UserCreatedEvent(
     string UserId,
     string Username,
+    string Email,
     string FirstName,
     string LastName,
     string? MiddleName,
