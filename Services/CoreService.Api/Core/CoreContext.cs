@@ -84,6 +84,9 @@ public partial class CoreContext : DbContext
                 .HasMaxLength(500)
                 .HasColumnName("contact");
             entity.Property(e => e.Userid).HasMaxLength(255).HasColumnName("userid");
+            entity.Property(e => e.Email)
+                .HasMaxLength(255)
+                .HasColumnName("Email");
         });
 
         modelBuilder.Entity<Group>(entity =>
@@ -125,6 +128,9 @@ public partial class CoreContext : DbContext
                 .HasMaxLength(500)
                 .HasColumnName("department");
             entity.Property(e => e.Userid).HasMaxLength(255).HasColumnName("userid");
+            entity.Property(e => e.Email)
+                .HasMaxLength(255)
+                .HasColumnName("Email");
         });
 
         modelBuilder.Entity<Practice>(entity =>
@@ -195,6 +201,9 @@ public partial class CoreContext : DbContext
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Groupid).HasColumnName("groupid");
             entity.Property(e => e.Userid).HasMaxLength(255).HasColumnName("userid");
+            entity.Property(e => e.Email)
+                .HasMaxLength(255)
+                .HasColumnName("Email");
 
             entity.HasOne(d => d.Group).WithMany(p => p.Students)
                 .HasForeignKey(d => d.Groupid)

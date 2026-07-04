@@ -2,14 +2,13 @@
 // Copyright (c) Gleb Kargin. All rights reserved.
 // </copyright>
 
-using CoreService.Api.Services;
-
 namespace CoreService.Api.Endpoints;
 
 using Contracts;
 using CoreService.Api.Core;
 using CoreService.Api.Core.Models;
 using CoreService.Api.Core.Queries;
+using CoreService.Api.Services;
 using MassTransit;
 
 /// <summary>
@@ -262,27 +261,62 @@ public static class EndpointGroups
     {
         group.MapGet(
             "/",
-            (CoreContext context) => new PracticesQueries(context).GetPractices().Result);
+            async (CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
+            {
+                var queries = new PracticesQueries(context, publishEndpoint, logger);
+                return await queries.GetPractices();
+            });
+
         group.MapGet(
             "/{practiceId:int}",
-            (int practiceId, CoreContext context) => new PracticesQueries(context).GetPractices(practiceId).Result);
+            async (int practiceId, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
+            {
+                var queries = new PracticesQueries(context, publishEndpoint, logger);
+                return await queries.GetPractices(practiceId);
+            });
+
         group.MapGet(
             "/student",
-            (string userId, CoreContext context) => new PracticesQueries(context).GetPracticesByStudent(userId).Result);
+            async (string userId, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
+            {
+                var queries = new PracticesQueries(context, publishEndpoint, logger);
+                return await queries.GetPracticesByStudent(userId);
+            });
+
         group.MapGet(
             "/supervisor",
-            (string userId, CoreContext context) => new PracticesQueries(context).GetPracticesBySupervisor(userId).Result);
-        group.MapPost(
-            "/",
-            (Practice practice, CoreContext context) => new PracticesQueries(context).InsertPractice(practice).Result).RequireAuthorization();
-        group.MapPut(
-            "/",
-            (Practice practice, CoreContext context) =>
-                new PracticesQueries(context).UpdatePractice(practice).Result).RequireAuthorization();
-        group.MapDelete(
-            "/{practiceId:int}",
-            (int practiceId, CoreContext context) => new PracticesQueries(context).DeletePractice(practiceId).Result).RequireAuthorization();
+            async (string userId, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
+            {
+                var queries = new PracticesQueries(context, publishEndpoint, logger);
+                return await queries.GetPracticesBySupervisor(userId);
+            });
 
+        group.MapPost(
+                "/",
+                async (Practice practice, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
+                {
+                    var queries = new PracticesQueries(context, publishEndpoint, logger);
+                    return await queries.InsertPractice(practice);
+                })
+            .RequireAuthorization();
+
+        group.MapPut(
+                "/",
+                async (Practice practice, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
+                {
+                    var queries = new PracticesQueries(context, publishEndpoint, logger);
+                    return await queries.UpdatePractice(practice);
+                })
+            .RequireAuthorization();
+
+        group.MapDelete(
+                "/{practiceId:int}",
+                async (int practiceId, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
+                {
+                    var queries = new PracticesQueries(context, publishEndpoint, logger);
+                    return await queries.DeletePractice(practiceId);
+                })
+            .RequireAuthorization();
         return group;
     }
 

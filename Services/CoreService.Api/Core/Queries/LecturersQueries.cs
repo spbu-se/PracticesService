@@ -77,6 +77,7 @@ public class LecturersQueries(CoreContext context)
             prev.FirstName = string.IsNullOrEmpty(lecturer.FirstName) ? prev.FirstName : lecturer.FirstName;
             prev.LastName = string.IsNullOrEmpty(lecturer.LastName) ? prev.LastName : lecturer.LastName;
             prev.MiddleName = string.IsNullOrEmpty(lecturer.MiddleName) ? prev.MiddleName : lecturer.MiddleName;
+            prev.Email = string.IsNullOrEmpty(lecturer.Email) ? prev.Email : lecturer.Email;
             prev.Department = string.IsNullOrEmpty(lecturer.Department) ? prev.Department : lecturer.Department;
             prev.Cansupervisevkr = lecturer.Cansupervisevkr;
             await context.SaveChangesAsync();

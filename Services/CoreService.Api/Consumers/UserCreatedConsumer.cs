@@ -45,6 +45,7 @@ namespace CoreService.Api.Consumers
                     FirstName = context.Message.FirstName,
                     LastName = context.Message.LastName,
                     MiddleName = context.Message.MiddleName,
+                    Email = context.Message.Email,
                     Cansupervisevkr = context.Message.Roles.Contains(RoleNames.GetName(UserRoleType.PracticeLeader)),
                 };
                 await this.lecturersQueries.InsertOrUpdateLecturer(lecturer);
@@ -57,6 +58,7 @@ namespace CoreService.Api.Consumers
                     FirstName = context.Message.FirstName,
                     LastName = context.Message.LastName,
                     MiddleName = context.Message.MiddleName,
+                    Email = context.Message.Email,
                 };
                 await this.studentsQueries.InsertOrUpdateStudent(student);
             }
@@ -68,6 +70,7 @@ namespace CoreService.Api.Consumers
                     FirstName = context.Message.FirstName,
                     LastName = context.Message.LastName,
                     MiddleName = context.Message.MiddleName,
+                    Email = context.Message.Email,
                 };
                 await this.consultantsQueries.InsertOrUpdateConsultant(consultant);
             }

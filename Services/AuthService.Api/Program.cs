@@ -258,6 +258,7 @@ app.MapPost("/register", async (
     await publishEndpoint.Publish(new UserCreatedEvent(
         user.Id,
         user.UserName!,
+        user.Email,
         user.FirstName,
         user.LastName,
         user.MiddleName,
@@ -554,6 +555,7 @@ app.MapPost("/add-role", async (
     await publishEndpoint.Publish(new UserCreatedEvent(
         user.Id,
         user.UserName!,
+        user.Email!,
         user.FirstName,
         user.LastName,
         user.MiddleName,

@@ -138,12 +138,23 @@ builder.Services.AddMassTransit(x =>
 
         cfg.Message<UserWithRoleActionEvent>(x => x.SetEntityName("user-with-role-events"));
         cfg.Message<ThemeArchivedEvent>(x => x.SetEntityName("theme-events"));
+        cfg.Message<PracticeUpdatedEvent>(x => x.SetEntityName("practice-updated-events"));
     });
 });
 
 builder.Services.AddScoped<UserResolverService>();
 
 var app = builder.Build();
+
+// Apply migrations automatically
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<CoreContext>();
+    if (dbContext.Database.GetPendingMigrations().Any())
+    {
+        dbContext.Database.Migrate();
+    }
+}
 
 app.UseCors("CorsPolicy");
 
