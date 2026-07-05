@@ -1,98 +1,123 @@
 # PracticesService
 
+[![CI](https://github.com/spbu-se/PracticesService/actions/workflows/main.yml/badge.svg)](https://github.com/spbu-se/PracticesService/actions/workflows/main.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+Сервис для работы с учебными и производственными практиками кафедры. Запуск производится через Docker Compose.
+
 ## Описание
 
-**PracticesService** — Сервис для работы с учебными/производственными практиками кафедры. Запуск производится через Docker Compose.
+PracticesService — микросервисная платформа для управления процессом прохождения учебных практик.
 
 ## Архитектура
 
-Сервис состоит из следующих компонентов:
-
 ### Backend (микросервисы)
-- **gateway.api** (порт 5000) - API Gateway на YARP, агрегирует все сервисы
-- **core.api** - Основной сервис практик (PostgreSQL)
-- **auth.api** - Сервис авторизации и аутентификации (PostgreSQL)
-- **practice-entities.api** - Сервис сущностей практик (MongoDB)
-- **rabbitmq** - Брокер сообщений для межсервисной коммуникации
+
+| Сервис | Порт | Описание |
+|--------|------|----------|
+| gateway.api | 5000 | API Gateway на YARP |
+| core.api | 8080 | Основной сервис практик (PostgreSQL) |
+| auth.api | 8080 | Сервис авторизации (PostgreSQL) |
+| practice-entities.api | 8080 | Сервис сущностей практик (MongoDB) |
+| notification.api | 8080 | Сервис уведомлений (SMTP, RabbitMQ) |
+| audit.api | 8080 | Сервис аудита |
+| llm.api | 8080 | Сервис анализа документов |
+| rabbitmq | 15672 | Брокер сообщений |
 
 ### Базы данных
-- **core.db** - PostgreSQL для Core Service
-- **auth.db** - PostgreSQL для Auth Service
-- **practice-entities.db** - MongoDB для Practice Entities
+
+| Сервис | БД | Назначение |
+|--------|-----|------------|
+| core.db | PostgreSQL | Практики, темы, студенты, преподаватели |
+| auth.db | PostgreSQL | Пользователи и роли |
+| practice-entities.db | MongoDB | Документы, фидбеки, сообщения |
 
 ### Frontend
-- **frontend** (порт 8000) - React приложение на Vite
 
-## Предварительные требования
-
-- [Docker](https://www.docker.com/)
-- [Docker Compose](https://docs.docker.com/compose/)
+| Сервис | Порт | Описание |
+|--------|------|----------|
+| frontend | 8000 | React приложение на Vite |
 
 ## Запуск проекта
 
+### Предварительные требования
+
+- Docker
+- Docker Compose
+
 ### Разработка
 
-1. Клонируйте репозиторий:
-    ```bash
-    git clone <URL вашего репозитория>
-    cd PracticesService
-    ```
+```bash
+git clone <URL репозитория>
+cd PracticesService
+docker-compose up --build
+```
 
-2. Запустите все сервисы для разработки:
-    ```bash
-    docker-compose up --build
-    ```
+### Проверка состояния
 
-3. Проверьте состояние всех сервисов:
-    ```bash
-    docker-compose ps
-    ```
+```bash
+docker-compose ps
+docker-compose logs -f
+```
 
 ### Production
 
-1. Соберите и запустите в production режиме:
-    ```bash
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-    ```
+```bash
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
 
-2. Проверьте логи:
-    ```bash
-    docker-compose logs -f
-    ```
+## Доступ к сервисам
 
-## Доступ к сервисам (разработка)
+| Сервис | URL |
+|--------|-----|
+| Frontend | http://localhost:8000 |
+| Gateway API | http://localhost:5000 |
+| Gateway Swagger | http://localhost:5000/swagger |
+| Core API Swagger | http://localhost:5000/core-swagger |
+| Auth API Swagger | http://localhost:5000/auth-swagger |
+| Practice Entities Swagger | http://localhost:5000/practice-entities-swagger |
+| Notification Swagger | http://localhost:5000/notification-swagger |
+| Audit Swagger | http://localhost:5000/audit-swagger |
+| LLM Swagger | http://localhost:5000/llm-swagger |
+| RabbitMQ UI | http://localhost:15672 |
 
-| Сервис                 | URL                                      | Описание                    |
-|------------------------|------------------------------------------|-----------------------------|
-| **Frontend**           | http://localhost:8000                    | Клиентское приложение       |
-| **Gateway API**        | http://localhost:5000                    | Единая точка входа API      |
-| **Gateway Swagger**    | http://localhost:5000/swagger            | Документация Gateway        |
-| **Core API Swagger**   | http://localhost:5000/swagger/core.json  | Core Service API            |
-| **Auth API Swagger**   | http://localhost:5000/swagger/auth.json  | Auth Service API            |
-| **RabbitMQ UI**        | http://localhost:15672                   | Управление RabbitMQ         |
-| **PostgreSQL (Core)**  | localhost:5432 (внутри Docker)           | База Core Service           |
-| **PostgreSQL (Auth)**  | localhost:5432 (внутри Docker)           | База Auth Service           |
-| **MongoDB**            | localhost:27017 (внутри Docker)          | База Practice Entities      |
+## API Маршруты через Gateway
 
-## Структура API через Gateway
-
-Все запросы проходят через Gateway:
-- /core-api/{endpoint} → Core Service
-- /auth-api/{endpoint} → Auth Service
-- /practice-entities-api/{endpoint} → Practice Entities Service
-
+| Префикс | Сервис |
+|---------|--------|
+| /core-api/{**catch-all} | Core Service |
+| /auth-api/{**catch-all} | Auth Service |
+| /practice-entities-api/{**catch-all} | Practice Entities Service |
+| /notification-api/{**catch-all} | Notification Service |
+| /audit-api/{**catch-all} | Audit Service |
+| /llm-api/{**catch-all} | LLM Service |
 
 ## Переменные окружения
 
 ### Frontend
-- `VITE_API_BASE_URL` - Базовый URL API (по умолчанию: http://localhost:5000)
+
+| Переменная | Описание | Значение по умолчанию |
+|------------|----------|----------------------|
+| VITE_API_BASE_URL | Базовый URL API | http://localhost:5000 |
 
 ### Backend
-- `ASPNETCORE_ENVIRONMENT` - Development/Production
-- `RabbitMQ__Host`, `RabbitMQ__Username`, `RabbitMQ__Password`
-- `RUN_MIGRATIONS` - Применять миграции при запуске (только Auth)
+
+| Переменная | Описание |
+|------------|----------|
+| ASPNETCORE_ENVIRONMENT | Development/Production |
+| RabbitMQ__Host | Хост RabbitMQ |
+| RabbitMQ__Username | Имя пользователя RabbitMQ |
+| RabbitMQ__Password | Пароль RabbitMQ |
+| RUN_MIGRATIONS | Применять миграции при запуске |
 
 ## Конфигурационные файлы
 
-- `docker-compose.yml` - Базовая конфигурация
-- `docker-compose.prod.yml` - Настройки для продакшена
+| Файл | Назначение |
+|------|------------|
+| docker-compose.yml | Базовая конфигурация |
+| docker-compose.prod.yml | Настройки для продакшена |
+
+
+## Лицензия
+
+MIT
