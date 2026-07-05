@@ -52,7 +52,6 @@ public class PracticeUpdatedConsumer : IConsumer<PracticeUpdatedEvent>
                     <h2>Обновление практики</h2>
                     <p>Здравствуйте!</p>
                     <p>Информация о вашей практике <strong>'{message.PracticeTitle}'</strong> была обновлена.</p>
-                    <p>Дата обновления: {message.UpdatedAt:dd.MM.yyyy HH:mm}</p>
                     <p>Для просмотра подробностей перейдите в личный кабинет.</p>
                 ";
 
@@ -80,7 +79,6 @@ public class PracticeUpdatedConsumer : IConsumer<PracticeUpdatedEvent>
                     <h2>Обновление практики</h2>
                     <p>Здравствуйте!</p>
                     <p>Обновилась информация о практике <strong>'{message.PracticeTitle}'</strong>.</p>
-                    <p>Дата обновления: {message.UpdatedAt:dd.MM.yyyy HH:mm}</p>
                     <p>Для просмотра подробностей перейдите в систему.</p>
                 ";
 

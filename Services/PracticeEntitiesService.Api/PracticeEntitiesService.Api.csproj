@@ -12,6 +12,8 @@
     <ItemGroup>
         <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.0-preview" />
         <PackageReference Include="AWSSDK.S3" Version="4.0.0-preview" />
+        <PackageReference Include="MassTransit" Version="8.4.0" />
+        <PackageReference Include="MassTransit.RabbitMQ" Version="8.4.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.5"/>
         <PackageReference Include="MongoDB.Driver" Version="3.4.0" />
         <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
@@ -25,6 +27,11 @@
 
     <ItemGroup>
         <AdditionalFiles Include="..\..\stylecop.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Helpers\GatewayAuthHandler\GatewayAuthHandler.csproj" />
+        <ProjectReference Include="..\..\Shared\Shared\Shared.csproj" />
     </ItemGroup>
 
     <ItemGroup>

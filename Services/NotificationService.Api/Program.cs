@@ -97,6 +97,15 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumer<EmailConfirmationConsumer>();
     x.AddConsumer<ThemeArchivedConsumer>();
     x.AddConsumer<PracticeUpdatedConsumer>();
+    x.AddConsumer<GoalsAndTasksUpdatedConsumer>();
+    x.AddConsumer<FeedbackSubmittedConsumer>();
+    x.AddConsumer<TextWorkSubmittedConsumer>();
+    x.AddConsumer<TextWorkCommentAddedConsumer>();
+    x.AddConsumer<PresentationSubmittedConsumer>();
+    x.AddConsumer<PresentationCommentAddedConsumer>();
+    x.AddConsumer<ReportSubmittedConsumer>();
+    x.AddConsumer<ReportCommentAddedConsumer>();
+    x.AddConsumer<MessageSentConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -148,6 +157,78 @@ builder.Services.AddMassTransit(x =>
             e.PrefetchCount = 10;
             e.ConcurrentMessageLimit = 5;
             e.ConfigureConsumer<PracticeUpdatedConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("goals-tasks-events", e =>
+        {
+            e.UseMessageRetry(retry => retry.Intervals(1, 2, 5, 10));
+            e.PrefetchCount = 10;
+            e.ConcurrentMessageLimit = 5;
+            e.ConfigureConsumer<GoalsAndTasksUpdatedConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("feedback-events", e =>
+        {
+            e.UseMessageRetry(retry => retry.Intervals(1, 2, 5));
+            e.PrefetchCount = 10;
+            e.ConcurrentMessageLimit = 5;
+            e.ConfigureConsumer<FeedbackSubmittedConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("textwork-events", e =>
+        {
+            e.UseMessageRetry(retry => retry.Intervals(1, 2, 5));
+            e.PrefetchCount = 10;
+            e.ConcurrentMessageLimit = 5;
+            e.ConfigureConsumer<TextWorkSubmittedConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("textwork-comment-events", e =>
+        {
+            e.UseMessageRetry(retry => retry.Intervals(1, 2, 5));
+            e.PrefetchCount = 10;
+            e.ConcurrentMessageLimit = 5;
+            e.ConfigureConsumer<TextWorkCommentAddedConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("presentation-events", e =>
+        {
+            e.UseMessageRetry(retry => retry.Intervals(1, 2, 5));
+            e.PrefetchCount = 10;
+            e.ConcurrentMessageLimit = 5;
+            e.ConfigureConsumer<PresentationSubmittedConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("presentation-comment-events", e =>
+        {
+            e.UseMessageRetry(retry => retry.Intervals(1, 2, 5));
+            e.PrefetchCount = 10;
+            e.ConcurrentMessageLimit = 5;
+            e.ConfigureConsumer<PresentationCommentAddedConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("report-events", e =>
+        {
+            e.UseMessageRetry(retry => retry.Intervals(1, 2, 5));
+            e.PrefetchCount = 10;
+            e.ConcurrentMessageLimit = 5;
+            e.ConfigureConsumer<ReportSubmittedConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("report-comment-events", e =>
+        {
+            e.UseMessageRetry(retry => retry.Intervals(1, 2, 5));
+            e.PrefetchCount = 10;
+            e.ConcurrentMessageLimit = 5;
+            e.ConfigureConsumer<ReportCommentAddedConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("message-events", e =>
+        {
+            e.UseMessageRetry(retry => retry.Intervals(1, 2, 5));
+            e.PrefetchCount = 10;
+            e.ConcurrentMessageLimit = 5;
+            e.ConfigureConsumer<MessageSentConsumer>(context);
         });
     });
 });

@@ -93,6 +93,22 @@ public class PracticesQueries
     }
 
     /// <summary>
+    /// Gets a single practice by ID.
+    /// </summary>
+    /// <param name="id">Practice id.</param>
+    /// <returns>Practice or null if not found.</returns>
+    public async Task<Practice?> GetPracticeById(int id)
+    {
+        return await this.context.Practices
+            .Include(p => p.Supervisor)
+            .Include(p => p.Consultant)
+            .Include(p => p.Theme)
+            .Include(p => p.Student)
+            .ThenInclude(s => s.Group)
+            .FirstOrDefaultAsync(p => p.Id == id);
+    }
+
+    /// <summary>
     /// Inserts new practice.
     /// </summary>
     /// <param name="practice">Input practice.</param>
