@@ -15,6 +15,7 @@ using NotificationService.Api.Interfaces;
 using NotificationService.Api.Models;
 using NotificationService.Api.Models.DTOs;
 using NotificationService.Api.Services;
+using Shared.Audit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -90,6 +91,9 @@ builder.Services.AddCors(
                 .SetIsOriginAllowed((_) => true)
                 .AllowAnyHeader());
     });
+
+// Add Audit Service
+builder.Services.AddAuditService();
 
 builder.Services.AddMassTransit(x =>
 {
@@ -245,11 +249,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
- // Send email endpoint
-app.MapPost("/api/email/send", async (SendEmailDto dto, IEmailService emailService) =>
+// Send email endpoint
+app.MapPost("/api/email/send", async (SendEmailDto dto, IEmailService emailService, IAuditService auditService) =>
 {
     if (dto == null)
     {
+        await auditService.LogErrorAsync("SendEmail", "Email", null, "Request body is required");
         return Results.BadRequest(new { message = "Request body is required" });
     }
 
@@ -257,43 +262,60 @@ app.MapPost("/api/email/send", async (SendEmailDto dto, IEmailService emailServi
         string.IsNullOrEmpty(dto.Subject) ||
         string.IsNullOrEmpty(dto.Body))
     {
+        await auditService.LogErrorAsync("SendEmail", "Email", null, "To, Subject and Body are required");
         return Results.BadRequest(new { message = "To, Subject and Body are required" });
     }
 
     var result = await emailService.SendEmailAsync(dto);
 
-    return result
-        ? Results.Ok(new { message = "Email sent successfully" })
-        : Results.BadRequest(new { message = "Failed to send email" });
+    if (result)
+    {
+        await auditService.LogActionAsync("SendEmail", "Email", null, new { To = dto.To, Subject = dto.Subject });
+        return Results.Ok(new { message = "Email sent successfully" });
+    }
+    else
+    {
+        await auditService.LogErrorAsync("SendEmail", "Email", null, "Failed to send email");
+        return Results.BadRequest(new { message = "Failed to send email" });
+    }
 })
 .WithName("SendEmail")
 .WithOpenApi();
 
 // Send password reset email endpoint
-app.MapPost("/api/email/password-reset", async (PasswordResetRequestDto request, IEmailService emailService) =>
+app.MapPost("/api/email/password-reset", async (PasswordResetRequestDto request, IEmailService emailService, IAuditService auditService) =>
 {
     if (request == null)
     {
+        await auditService.LogErrorAsync("SendPasswordResetEmail", "Email", null, "Request body is required");
         return Results.BadRequest(new { message = "Request body is required" });
     }
 
     if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.ResetLink))
     {
+        await auditService.LogErrorAsync("SendPasswordResetEmail", "Email", null, "Email and ResetLink are required");
         return Results.BadRequest(new { message = "Email and ResetLink are required" });
     }
 
     var result = await emailService.SendPasswordResetEmailAsync(request);
 
-    return result
-        ? Results.Ok(new { message = "Password reset email sent successfully" })
-        : Results.BadRequest(new { message = "Failed to send password reset email" });
+    if (result)
+    {
+        await auditService.LogActionAsync("SendPasswordResetEmail", "Email", null, new { Email = request.Email });
+        return Results.Ok(new { message = "Password reset email sent successfully" });
+    }
+    else
+    {
+        await auditService.LogErrorAsync("SendPasswordResetEmail", "Email", null, "Failed to send password reset email");
+        return Results.BadRequest(new { message = "Failed to send password reset email" });
+    }
 })
 .WithName("SendPasswordResetEmail")
 .AllowAnonymous()
 .WithOpenApi();
 
-// Test email endpoint
-app.MapPost("/api/email/test", async (IEmailService emailService, string email) =>
+// Test email endpoint with audit
+app.MapPost("/api/email/test", async (IEmailService emailService, string email, IAuditService auditService) =>
 {
     var testDto = new SendEmailDto
     {
@@ -304,9 +326,16 @@ app.MapPost("/api/email/test", async (IEmailService emailService, string email) 
 
     var result = await emailService.SendEmailAsync(testDto);
 
-    return result
-        ? Results.Ok(new { message = "Test email sent" })
-        : Results.BadRequest(new { message = "Failed to send test email" });
+    if (result)
+    {
+        await auditService.LogActionAsync("SendTestEmail", "Email", null, new { Email = email });
+        return Results.Ok(new { message = "Test email sent" });
+    }
+    else
+    {
+        await auditService.LogErrorAsync("SendTestEmail", "Email", null, "Failed to send test email");
+        return Results.BadRequest(new { message = "Failed to send test email" });
+    }
 })
 .WithName("SendTestEmail")
 .AllowAnonymous()
