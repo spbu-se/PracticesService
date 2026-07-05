@@ -43,7 +43,7 @@ export function ThemeSelection({ practiceId }: { practiceId?: number }) {
         getThemes().then(res => setThemes(res.data));
         getLecturers().then(res => setSupervisors(res.data));
         getPractice(practiceId).then(response => {
-            const selectedPractice = response.data.find((t: Practice) => t.id == practiceId);
+            const selectedPractice: Practice = response.data;
             setPractice(selectedPractice);
             setSelectedTheme(selectedPractice?.themeid ?? null);
             setSelectedSupervisor(selectedPractice?.supervisorid ?? null);

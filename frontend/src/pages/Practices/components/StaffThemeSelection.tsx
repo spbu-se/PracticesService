@@ -63,9 +63,7 @@ export function StaffThemeSelection({ practiceId }: { practiceId?: number }) {
         getLecturers().then((res) => setSupervisors(res.data));
         if (practiceId) {
             getPractice(practiceId).then((response) => {
-                const selectedPractice = response.data.find(
-                    (t: Practice) => t.id == practiceId
-                );
+                const selectedPractice: Practice = response.data
                 setPractice(selectedPractice);
                 setSelectedTheme(selectedPractice?.themeid ?? null);
                 setSelectedSupervisor(selectedPractice?.supervisorid ?? null);
@@ -86,9 +84,7 @@ export function StaffThemeSelection({ practiceId }: { practiceId?: number }) {
             };
             await putPractice(updatedPractice);
             const response = await getPractice(practiceId);
-            const refreshedPractice = response.data.find(
-                (t: Practice) => t.id == practiceId
-            );
+            const refreshedPractice: Practice = response.data;
             setPractice(refreshedPractice);
             setEditModalOpen(false);
             setShowConsultantInput(false);
@@ -135,7 +131,7 @@ export function StaffThemeSelection({ practiceId }: { practiceId?: number }) {
                             {practice?.theme?.title}
                         </Typography>
                         <Typography paragraph sx={{ mb: 0 }}>
-                            Студент: <b>{practice?.student?.lastName} {practice?.sstudent?.firstName} {practice?.student?.middleName} (Группа: {practice?.student?.group?.name})</b>
+                            Студент: <b>{practice?.student?.lastName} {practice?.student?.firstName} {practice?.student?.middleName} (Группа: {practice?.student?.group?.name})</b>
                             <br />
                             Научный руководитель:{" "}
                             <b>

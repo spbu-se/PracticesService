@@ -272,7 +272,14 @@ public static class EndpointGroups
             async (int practiceId, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
             {
                 var queries = new PracticesQueries(context, publishEndpoint, logger);
-                return await queries.GetPractices(practiceId);
+                var practice = await queries.GetPracticeById(practiceId);
+
+                if (practice == null)
+                {
+                    return Results.NotFound($"Practice with ID {practiceId} not found");
+                }
+
+                return Results.Ok(practice);
             });
 
         group.MapGet(
