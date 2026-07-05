@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Shared.Audit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -143,6 +144,9 @@ builder.Services.AddMassTransit(x =>
 });
 
 builder.Services.AddScoped<UserResolverService>();
+
+// Add Audit Service
+builder.Services.AddAuditService();
 
 var app = builder.Build();
 
