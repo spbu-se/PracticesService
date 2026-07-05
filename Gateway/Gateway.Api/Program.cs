@@ -18,6 +18,7 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("auth", new OpenApiInfo { Title = "Auth Service", Version = "v1" });
     c.SwaggerDoc("practice-entities", new OpenApiInfo { Title = "Practice Entities", Version = "v1" });
     c.SwaggerDoc("notification", new OpenApiInfo { Title = "Notification Service", Version = "v1" });
+    c.SwaggerDoc("audit", new OpenApiInfo { Title = "Audit Service", Version = "v1" });
 });
 
 byte[] key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing."));
@@ -78,6 +79,7 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/auth-swagger/swagger/v1/swagger.json", "Auth Service");
         c.SwaggerEndpoint("/practice-entities-swagger/swagger/v1/swagger.json", "Practice Entities Service");
         c.SwaggerEndpoint("/notification-swagger/swagger/v1/swagger.json", "Notification Service");
+        c.SwaggerEndpoint("/audit-swagger/swagger/v1/swagger.json", "Audit Service");
     });
 }
 

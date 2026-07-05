@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.ComponentModel.DataAnnotations;
-using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -12,14 +11,13 @@ using AuthService.Api.Consumers;
 using AuthService.Api.Models;
 using Contracts;
 using MassTransit;
-using MassTransit.Transports;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Shared.Audit;
 
 var predefinedRoles = RoleNames.GetAllRoleNames();
 
@@ -60,6 +58,9 @@ builder.Services.AddAuthentication(
         });
 
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<TokenService>();
+
+builder.Services.AddAuditService();
 
 builder.Services.AddAuthorization(
     options => { options.AddPolicy("AdminOnly", policy => policy.RequireRole("Администратор")); });
@@ -69,35 +70,35 @@ var gatewayBasePath = builder.Configuration["Swagger:GatewayBasePath"] ?? "/api"
 
 builder.Services.AddSwaggerGen(c =>
 {
-        c.AddServer(new OpenApiServer
+    c.AddServer(new OpenApiServer
+    {
+        Url = gatewayBasePath,
+        Description = "Gateway endpoint",
+    });
+
+    c.AddSecurityDefinition(
+        "Bearer",
+        new OpenApiSecurityScheme
         {
-            Url = gatewayBasePath,
-            Description = "Gateway endpoint",
+            In = ParameterLocation.Header,
+            Description = "Enter JWT token",
+            Name = "Authorization",
+            Type = SecuritySchemeType.Http,
+            Scheme = "Bearer",
         });
 
-        c.AddSecurityDefinition(
-            "Bearer",
-            new OpenApiSecurityScheme
+    c.AddSecurityRequirement(
+        new OpenApiSecurityRequirement
+        {
             {
-                In = ParameterLocation.Header,
-                Description = "Enter JWT token",
-                Name = "Authorization",
-                Type = SecuritySchemeType.Http,
-                Scheme = "Bearer",
-            });
-
-        c.AddSecurityRequirement(
-            new OpenApiSecurityRequirement
-            {
+                new OpenApiSecurityScheme
                 {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
-                    },
-                    new List<string>()
+                    Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
                 },
-            });
-    });
+                new List<string>()
+            },
+        });
+});
 
 builder.Services.AddCors(
     options =>
@@ -152,8 +153,6 @@ builder.Services.AddMassTransit(
             });
     });
 
-builder.Services.AddScoped<TokenService>();
-
 var app = builder.Build();
 
 if (Environment.GetEnvironmentVariable("RUN_MIGRATIONS") == "true")
@@ -172,84 +171,27 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapPost("/forgot-password", async (
-    ForgotPasswordDto dto,
-    UserManager<ApplicationUser> userManager,
-    IPublishEndpoint publishEndpoint,
-    IConfiguration configuration,
-    ILogger<Program> logger) =>
-{
-    var user = await userManager.FindByEmailAsync(dto.Email);
-    if (user == null)
-    {
-        return Results.Ok(new { message = "Если email существует, ссылка для сброса пароля была отправлена." });
-    }
-
-    var token = await userManager.GeneratePasswordResetTokenAsync(user);
-    var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-    var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:8000/practices-service";
-    var resetLink = $"{frontendUrl}/reset-password?token={encodedToken}&email={dto.Email}";
-    await publishEndpoint.Publish(new PasswordResetRequestedEvent(
-        UserId: user.Id,
-        Email: user.Email,
-        ResetLink: resetLink,
-        UserName: user.UserName,
-        RequestedAt: DateTime.UtcNow));
-
-    logger.LogInformation("Password reset requested for user {UserId}", user.Id);
-
-    return Results.Ok(new { message = "Если email существует, ссылка для сброса пароля была отправлена." });
-})
-.WithName("ForgotPassword")
-.AllowAnonymous()
-.WithOpenApi();
-
-app.MapPost("/reset-password", async (
-    ResetPasswordDto dto,
-    UserManager<ApplicationUser> userManager,
-    ILogger<Program> logger) =>
-{
-    var user = await userManager.FindByEmailAsync(dto.Email);
-    if (user == null)
-    {
-        return Results.BadRequest(new { message = "Неверный запрос." });
-    }
-
-    try
-    {
-        var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(dto.Token));
-        var result = await userManager.ResetPasswordAsync(user, decodedToken, dto.NewPassword);
-        if (!result.Succeeded)
-        {
-            return Results.BadRequest(result.Errors);
-         }
-
-        logger.LogInformation("Password reset successful for user {UserId}", user.Id);
-
-        return Results.Ok(new { message = "Пароль успешно изменен." });
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Error resetting password for email {Email}", dto.Email);
-        return Results.BadRequest(new { message = "Неверный или просроченный токен." });
-    }
-})
-.WithName("ResetPassword")
-.AllowAnonymous()
-.WithOpenApi();
-
 app.MapPost("/register", async (
     UserService userService,
     IPublishEndpoint publishEndpoint,
     ApplicationUserDTO userDto,
     TokenService tokenService,
     UserManager<ApplicationUser> userManager,
-    IConfiguration configuration) =>
+    IConfiguration configuration,
+    IAuditService auditService) =>
 {
     var (result, user) = await userService.RegisterUserAsync(userDto);
 
     if (!result.Succeeded || user is null)
     {
+        await auditService.LogErrorAsync(
+            "UserRegistration",
+            "User",
+            null,
+            string.Join(", ", result.Errors.Select(e => e.Description)),
+            null,
+            userDto.Email);
+
         return Results.BadRequest(result.Errors);
     }
 
@@ -280,6 +222,14 @@ app.MapPost("/register", async (
     var token = await tokenService.GenerateJwtToken(user);
     var refreshToken = await tokenService.GenerateRefreshToken(user);
 
+    await auditService.LogActionAsync(
+        "UserRegistration",
+        "User",
+        user.Id,
+        new { Email = user.Email, Roles = assignedRoles },
+        user.Id,
+        user.Email);
+
     return Results.Ok(new
     {
         UserId = user.Id,
@@ -288,96 +238,354 @@ app.MapPost("/register", async (
         RefreshToken = refreshToken,
         Message = "Registration successful. Please confirm your email.",
     });
-});
+})
+.WithName("Register")
+.AllowAnonymous()
+.WithOpenApi();
+
+app.MapPost("/login", async (
+    LoginModel login,
+    UserManager<ApplicationUser> userManager,
+    SignInManager<ApplicationUser> signInManager,
+    TokenService tokenService,
+    IAuditService auditService) =>
+{
+    var user = await userManager.FindByEmailAsync(login.Email);
+    if (user == null)
+    {
+        await auditService.LogErrorAsync(
+            "UserLogin",
+            "User",
+            null,
+            "Invalid credentials - user not found",
+            null,
+            login.Email);
+
+        return Results.BadRequest("Invalid credentials");
+    }
+
+    var result = await signInManager.CheckPasswordSignInAsync(user, login.Password, false);
+    if (!result.Succeeded)
+    {
+        await auditService.LogErrorAsync(
+            "UserLogin",
+            "User",
+            user.Id,
+            "Invalid credentials - wrong password",
+            user.Id,
+            user.Email);
+
+        return Results.BadRequest("Invalid credentials");
+    }
+
+    var roles = await userManager.GetRolesAsync(user);
+    var token = await tokenService.GenerateJwtToken(user);
+    var refreshToken = await tokenService.GenerateRefreshToken(user);
+
+    await auditService.LogActionAsync(
+        "UserLogin",
+        "User",
+        user.Id,
+        new { Email = user.Email },
+        user.Id,
+        user.Email,
+        roles.ToArray());
+
+    return Results.Ok(new AuthResponse
+    {
+        Token = token,
+        RefreshToken = refreshToken,
+    });
+})
+.WithName("Login")
+.AllowAnonymous()
+.WithOpenApi();
+
+app.MapPost("/forgot-password", async (
+    ForgotPasswordDto dto,
+    UserManager<ApplicationUser> userManager,
+    IPublishEndpoint publishEndpoint,
+    IConfiguration configuration,
+    ILogger<Program> logger,
+    IAuditService auditService) =>
+{
+    var user = await userManager.FindByEmailAsync(dto.Email);
+    if (user == null)
+    {
+        await auditService.LogErrorAsync(
+            "ForgotPassword",
+            "User",
+            null,
+            "User not found",
+            null,
+            dto.Email);
+
+        return Results.Ok(new { message = "Если email существует, ссылка для сброса пароля была отправлена." });
+    }
+
+    var token = await userManager.GeneratePasswordResetTokenAsync(user);
+    var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+    var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:8000/practices-service";
+    var resetLink = $"{frontendUrl}/reset-password?token={encodedToken}&email={dto.Email}";
+    await publishEndpoint.Publish(new PasswordResetRequestedEvent(
+        UserId: user.Id,
+        Email: user.Email,
+        ResetLink: resetLink,
+        UserName: user.UserName,
+        RequestedAt: DateTime.UtcNow));
+
+    logger.LogInformation("Password reset requested for user {UserId}", user.Id);
+
+    await auditService.LogActionAsync(
+        "ForgotPassword",
+        "User",
+        user.Id,
+        new { Email = user.Email },
+        user.Id,
+        user.Email);
+
+    return Results.Ok(new { message = "Если email существует, ссылка для сброса пароля была отправлена." });
+})
+.WithName("ForgotPassword")
+.AllowAnonymous()
+.WithOpenApi();
+
+app.MapPost("/reset-password", async (
+    ResetPasswordDto dto,
+    UserManager<ApplicationUser> userManager,
+    ILogger<Program> logger,
+    IAuditService auditService) =>
+{
+    var user = await userManager.FindByEmailAsync(dto.Email);
+    if (user == null)
+    {
+        await auditService.LogErrorAsync(
+            "ResetPassword",
+            "User",
+            null,
+            "User not found",
+            null,
+            dto.Email);
+
+        return Results.BadRequest(new { message = "Неверный запрос." });
+    }
+
+    try
+    {
+        var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(dto.Token));
+        var result = await userManager.ResetPasswordAsync(user, decodedToken, dto.NewPassword);
+        if (!result.Succeeded)
+        {
+            await auditService.LogErrorAsync(
+                "ResetPassword",
+                "User",
+                user.Id,
+                string.Join(", ", result.Errors.Select(e => e.Description)),
+                user.Id,
+                user.Email);
+
+            return Results.BadRequest(result.Errors);
+        }
+
+        logger.LogInformation("Password reset successful for user {UserId}", user.Id);
+
+        await auditService.LogActionAsync(
+            "ResetPassword",
+            "User",
+            user.Id,
+            new { Email = user.Email, Status = "ResetSuccessful" },
+            user.Id,
+            user.Email);
+
+        return Results.Ok(new { message = "Пароль успешно изменен." });
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error resetting password for email {Email}", dto.Email);
+
+        await auditService.LogErrorAsync(
+            "ResetPassword",
+            "User",
+            user.Id,
+            ex.Message,
+            user.Id,
+            user.Email);
+
+        return Results.BadRequest(new { message = "Неверный или просроченный токен." });
+    }
+})
+.WithName("ResetPassword")
+.AllowAnonymous()
+.WithOpenApi();
 
 app.MapPost("/resend-confirmation", async (
-        ResendConfirmationDto dto,
-        UserManager<ApplicationUser> userManager,
-        IPublishEndpoint publishEndpoint,
-        IConfiguration configuration,
-        ILogger<Program> logger) =>
+    ResendConfirmationDto dto,
+    UserManager<ApplicationUser> userManager,
+    IPublishEndpoint publishEndpoint,
+    IConfiguration configuration,
+    ILogger<Program> logger,
+    IAuditService auditService) =>
+{
+    var user = await userManager.FindByEmailAsync(dto.Email);
+    if (user == null)
     {
-        var user = await userManager.FindByEmailAsync(dto.Email);
-        if (user == null)
-        {
-            logger.LogWarning("Resend confirmation requested for non-existent email: {Email}", dto.Email);
-            return Results.Ok(new { message = "Если email существует, письмо подтверждения отправлено." });
-        }
+        logger.LogWarning("Resend confirmation requested for non-existent email: {Email}", dto.Email);
 
-        if (user.EmailConfirmed)
-        {
-            logger.LogInformation("Email already confirmed for user: {Email}", dto.Email);
-            return Results.BadRequest(new { message = "Email уже подтвержден. Вы можете войти в систему." });
-        }
-
-        var emailToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(emailToken));
-        var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:8000";
-        var confirmLink = $"{frontendUrl}/confirm-email?token={encodedToken}&email={user.Email}";
-
-        await publishEndpoint.Publish(new EmailConfirmationRequestedEvent(
-            UserId: user.Id,
-            Email: user.Email!,
-            UserName: user.UserName!,
-            ConfirmLink: confirmLink,
-            RequestedAt: DateTime.UtcNow));
-
-        logger.LogInformation("Resent confirmation email for user {UserId}", user.Id);
+        await auditService.LogErrorAsync(
+            "ResendConfirmation",
+            "User",
+            null,
+            "User not found",
+            null,
+            dto.Email);
 
         return Results.Ok(new { message = "Если email существует, письмо подтверждения отправлено." });
-    })
-    .WithName("ResendConfirmation")
-    .AllowAnonymous()
-    .WithOpenApi();
+    }
+
+    if (user.EmailConfirmed)
+    {
+        logger.LogInformation("Email already confirmed for user: {Email}", dto.Email);
+
+        await auditService.LogActionAsync(
+            "ResendConfirmation",
+            "User",
+            user.Id,
+            new { Email = user.Email, Status = "AlreadyConfirmed" },
+            user.Id,
+            user.Email);
+
+        return Results.BadRequest(new { message = "Email уже подтвержден. Вы можете войти в систему." });
+    }
+
+    var emailToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
+    var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(emailToken));
+    var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:8000";
+    var confirmLink = $"{frontendUrl}/confirm-email?token={encodedToken}&email={user.Email}";
+
+    await publishEndpoint.Publish(new EmailConfirmationRequestedEvent(
+        UserId: user.Id,
+        Email: user.Email!,
+        UserName: user.UserName!,
+        ConfirmLink: confirmLink,
+        RequestedAt: DateTime.UtcNow));
+
+    logger.LogInformation("Resent confirmation email for user {UserId}", user.Id);
+
+    await auditService.LogActionAsync(
+        "ResendConfirmation",
+        "User",
+        user.Id,
+        new { Email = user.Email },
+        user.Id,
+        user.Email);
+
+    return Results.Ok(new { message = "Если email существует, письмо подтверждения отправлено." });
+})
+.WithName("ResendConfirmation")
+.AllowAnonymous()
+.WithOpenApi();
 
 app.MapPost("/confirm-email", async (
-        ConfirmEmailDto dto,
-        UserManager<ApplicationUser> userManager) =>
+    ConfirmEmailDto dto,
+    UserManager<ApplicationUser> userManager,
+    IAuditService auditService) =>
+{
+    var user = await userManager.FindByEmailAsync(dto.Email);
+    if (user == null)
     {
-        var user = await userManager.FindByEmailAsync(dto.Email);
-        if (user == null)
+        await auditService.LogErrorAsync(
+            "ConfirmEmail",
+            "User",
+            null,
+            "User not found",
+            null,
+            dto.Email);
+
+        return Results.BadRequest(new { message = "User not found" });
+    }
+
+    if (user.EmailConfirmed)
+    {
+        await auditService.LogActionAsync(
+            "ConfirmEmail",
+            "User",
+            user.Id,
+            new { Email = user.Email, Status = "AlreadyConfirmed" },
+            user.Id,
+            user.Email);
+
+        return Results.Ok(new { message = "Email already confirmed" });
+    }
+
+    try
+    {
+        var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(dto.Token));
+        var result = await userManager.ConfirmEmailAsync(user, decodedToken);
+
+        if (!result.Succeeded)
         {
-            return Results.BadRequest(new { message = "User not found" });
+            await auditService.LogErrorAsync(
+                "ConfirmEmail",
+                "User",
+                user.Id,
+                string.Join(", ", result.Errors.Select(e => e.Description)),
+                user.Id,
+                user.Email);
+
+            return Results.BadRequest(result.Errors);
         }
 
-        if (user.EmailConfirmed)
-        {
-            return Results.Ok(new { message = "Email already confirmed" });
-        }
+        await auditService.LogActionAsync(
+            "ConfirmEmail",
+            "User",
+            user.Id,
+            new { Email = user.Email, Status = "Confirmed" },
+            user.Id,
+            user.Email);
 
-        try
-        {
-            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(dto.Token));
-            var result = await userManager.ConfirmEmailAsync(user, decodedToken);
+        return Results.Ok(new { message = "Email confirmed successfully" });
+    }
+    catch (Exception ex)
+    {
+        await auditService.LogErrorAsync(
+            "ConfirmEmail",
+            "User",
+            user.Id,
+            ex.Message,
+            user.Id,
+            user.Email);
 
-            if (!result.Succeeded)
-            {
-                return Results.BadRequest(result.Errors);
-            }
-
-            return Results.Ok(new { message = "Email confirmed successfully" });
-        }
-        catch (Exception ex)
-        {
-            return Results.BadRequest(new { message = "Invalid or expired token" });
-        }
-    })
-    .WithName("ConfirmEmail")
-    .AllowAnonymous()
-    .WithOpenApi();
+        return Results.BadRequest(new { message = "Invalid or expired token" });
+    }
+})
+.WithName("ConfirmEmail")
+.AllowAnonymous()
+.WithOpenApi();
 
 app.MapPut("/users/{userId}", async (
     string userId,
     UserService userService,
     UserManager<ApplicationUser> userManager,
     IPublishEndpoint publishEndpoint,
-    UserDTO userDto) =>
+    UserDTO userDto,
+    IAuditService auditService) =>
 {
     var user = await userManager.FindByIdAsync(userId);
     if (user == null)
     {
+        await auditService.LogErrorAsync(
+            "UpdateUser",
+            "User",
+            userId,
+            "User not found");
+
         return Results.NotFound("User not found");
     }
+
+    var oldRoles = await userManager.GetRolesAsync(user);
+    var oldFirstName = user.FirstName;
+    var oldLastName = user.LastName;
+    var oldMiddleName = user.MiddleName;
 
     user.LastName = string.IsNullOrEmpty(userDto.LastName) ? userDto.LastName : user.LastName;
     user.FirstName = string.IsNullOrEmpty(userDto.FirstName) ? userDto.FirstName : user.FirstName;
@@ -386,6 +594,12 @@ app.MapPut("/users/{userId}", async (
     var result = await userService.UpdateUserAsync(userId, userDto);
     if (!result.Succeeded)
     {
+        await auditService.LogErrorAsync(
+            "UpdateUser",
+            "User",
+            userId,
+            string.Join(", ", result.Errors.Select(e => e.Description)));
+
         return Results.BadRequest(result.Errors);
     }
 
@@ -415,6 +629,28 @@ app.MapPut("/users/{userId}", async (
         rolesToRemove,
         currentRoles,
         DateTime.UtcNow));
+
+    await auditService.LogActionAsync(
+        "UpdateUser",
+        "User",
+        userId,
+        new
+        {
+            OldFirstName = oldFirstName,
+            NewFirstName = user.FirstName,
+            OldLastName = oldLastName,
+            NewLastName = user.LastName,
+            OldMiddleName = oldMiddleName,
+            NewMiddleName = user.MiddleName,
+            OldRoles = oldRoles,
+            NewRoles = assignedRoles,
+            RolesAdded = rolesToAdd,
+            RolesRemoved = rolesToRemove,
+        },
+        user.Id,
+        user.Email,
+        assignedRoles.ToArray());
+
     return Results.Ok(new
     {
         UserId = user.Id,
@@ -426,11 +662,18 @@ app.MapDelete("/users/{userId}", async (
     string userId,
     IPublishEndpoint publishEndpoint,
     UserService userService,
-    UserManager<ApplicationUser> userManager) =>
+    UserManager<ApplicationUser> userManager,
+    IAuditService auditService) =>
 {
     var user = await userManager.FindByIdAsync(userId);
     if (user == null)
     {
+        await auditService.LogErrorAsync(
+            "DeleteUser",
+            "User",
+            userId,
+            "User not found");
+
         return Results.NotFound("User not found");
     }
 
@@ -439,6 +682,12 @@ app.MapDelete("/users/{userId}", async (
 
     if (!result.Succeeded)
     {
+        await auditService.LogErrorAsync(
+            "DeleteUser",
+            "User",
+            userId,
+            string.Join(", ", result.Errors.Select(e => e.Description)));
+
         return Results.BadRequest(result.Errors);
     }
 
@@ -452,6 +701,14 @@ app.MapDelete("/users/{userId}", async (
         currentRoles,
         null,
         DateTime.UtcNow));
+
+    await auditService.LogActionAsync(
+        "DeleteUser",
+        "User",
+        userId,
+        new { Email = user.Email, Roles = currentRoles },
+        user.Id,
+        user.Email);
 
     return Results.Ok(new { UserId = userId });
 });
@@ -479,50 +736,42 @@ app.MapGet("/users/{userId}", async (
     });
 });
 
-app.MapPost("/login", async (
-    LoginModel login,
-    UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager,
-    TokenService tokenService) =>
-{
-    var user = await userManager.FindByEmailAsync(login.Email);
-    if (user == null)
-    {
-        return Results.BadRequest("Invalid credentials");
-    }
-
-    var result = await signInManager.CheckPasswordSignInAsync(user, login.Password, false);
-    if (!result.Succeeded)
-    {
-        return Results.BadRequest("Invalid credentials");
-    }
-
-    var token = await tokenService.GenerateJwtToken(user);
-    var refreshToken = await tokenService.GenerateRefreshToken(user);
-
-    return Results.Ok(new AuthResponse
-    {
-        Token = token,
-        RefreshToken = refreshToken,
-    });
-});
-
 app.MapPost("/refresh", async (
     TokenService tokenService,
-    AuthResponse model) =>
+    AuthResponse model,
+    IAuditService auditService) =>
 {
     if (string.IsNullOrEmpty(model.Token) || string.IsNullOrEmpty(model.RefreshToken))
     {
+        await auditService.LogErrorAsync(
+            "RefreshToken",
+            "Token",
+            null,
+            "Invalid tokens provided");
+
         return Results.BadRequest("Invalid tokens");
     }
 
     try
     {
         var response = await tokenService.RefreshTokenAsync(model.Token, model.RefreshToken);
+
+        await auditService.LogActionAsync(
+            "RefreshToken",
+            "Token",
+            null,
+            new { TokenRefreshed = true });
+
         return Results.Ok(response);
     }
     catch (SecurityTokenException ex)
     {
+        await auditService.LogErrorAsync(
+            "RefreshToken",
+            "Token",
+            null,
+            ex.Message);
+
         return Results.BadRequest(ex.Message);
     }
 });
@@ -532,16 +781,33 @@ app.MapPost("/add-role", async (
     RoleManager<IdentityRole> roleManager,
     IPublishEndpoint publishEndpoint,
     string email,
-    string role) =>
+    string role,
+    IAuditService auditService) =>
 {
     if (!predefinedRoles.Contains(role))
     {
+        await auditService.LogErrorAsync(
+            "AddRole",
+            "Role",
+            null,
+            $"Invalid role: {role}",
+            null,
+            email);
+
         return Results.BadRequest("Invalid role");
     }
 
     var user = await userManager.FindByEmailAsync(email);
     if (user == null)
     {
+        await auditService.LogErrorAsync(
+            "AddRole",
+            "User",
+            null,
+            "User not found",
+            null,
+            email);
+
         return Results.NotFound("User not found");
     }
 
@@ -561,12 +827,20 @@ app.MapPost("/add-role", async (
         user.MiddleName,
         new[] { role },
         DateTime.UtcNow));
-    return Results.Ok($"Role '{role}' added to {email}");
-}).RequireAuthorization();
 
-app.MapGet(
-    "/userId",
-    async (
+    await auditService.LogActionAsync(
+        "AddRole",
+        "User",
+        user.Id,
+        new { Email = user.Email, Role = role },
+        user.Id,
+        user.Email);
+
+    return Results.Ok($"Role '{role}' added to {email}");
+})
+.RequireAuthorization();
+
+app.MapGet("/userId", async (
     UserManager<ApplicationUser> userManager,
     string userName) =>
 {
@@ -574,31 +848,50 @@ app.MapGet(
     return user?.Id;
 });
 
-app.MapGet(
-    "/users",
-    async (
-    UserManager<ApplicationUser> userManager) =>
+app.MapGet("/users", async (
+    UserManager<ApplicationUser> userManager,
+    IAuditService auditService) =>
 {
-    var users = await userManager.Users.ToListAsync();
-    var userDtos = new List<UserDTO>();
-
-    foreach (var user in users)
+    try
     {
-        var roles = await userManager.GetRolesAsync(user);
-        userDtos.Add(new UserDTO
-        {
-            UserId = user.Id,
-            Email = user.Email ?? string.Empty,
-            UserName = user.UserName ?? string.Empty,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            MiddleName = user.MiddleName,
-            Roles = roles.ToArray(),
-        });
-    }
+        var users = await userManager.Users.ToListAsync();
+        var userDtos = new List<UserDTO>();
 
-    return Results.Ok(userDtos);
-}).RequireAuthorization("AdminOnly");
+        foreach (var user in users)
+        {
+            var roles = await userManager.GetRolesAsync(user);
+            userDtos.Add(new UserDTO
+            {
+                UserId = user.Id,
+                Email = user.Email ?? string.Empty,
+                UserName = user.UserName ?? string.Empty,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                MiddleName = user.MiddleName,
+                Roles = roles.ToArray(),
+            });
+        }
+
+        await auditService.LogActionAsync(
+            "GetUsers",
+            "User",
+            null,
+            new { Count = userDtos.Count });
+
+        return Results.Ok(userDtos);
+    }
+    catch (Exception ex)
+    {
+        await auditService.LogErrorAsync(
+            "GetUsers",
+            "User",
+            null,
+            ex.Message);
+
+        throw;
+    }
+})
+.RequireAuthorization("AdminOnly");
 
 using (var scope = app.Services.CreateScope())
 {
