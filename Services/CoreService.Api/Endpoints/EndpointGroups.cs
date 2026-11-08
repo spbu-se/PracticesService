@@ -10,6 +10,7 @@ using CoreService.Api.Core.Models;
 using CoreService.Api.Core.Queries;
 using CoreService.Api.Services;
 using MassTransit;
+using Shared.Audit;
 
 /// <summary>
 /// Endpoints groups.
@@ -25,44 +26,54 @@ public static class EndpointGroups
     {
         group.MapGet(
             "/",
-            async (CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger) =>
+            async (CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger, IAuditService auditService) =>
             {
                 var queries = new ThemesQueries(context, publishEndpoint, userResolver, logger);
-                return await queries.GetThemes();
+                var result = await queries.GetThemes();
+                await auditService.LogActionAsync("GetThemes", "Theme", null, new { Count = result.Count() });
+                return result;
             });
 
         group.MapGet(
             "/{themeId:int}",
-            async (int themeId, CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger) =>
+            async (int themeId, CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger, IAuditService auditService) =>
             {
                 var queries = new ThemesQueries(context, publishEndpoint, userResolver, logger);
-                return await queries.GetThemes(themeId);
+                var result = await queries.GetThemes(themeId);
+                await auditService.LogActionAsync("GetTheme", "Theme", themeId.ToString(), null);
+                return result;
             });
 
         group.MapPost(
             "/",
-            async (Theme theme, CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger) =>
+            async (Theme theme, CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger, IAuditService auditService) =>
             {
                 var queries = new ThemesQueries(context, publishEndpoint, userResolver, logger);
-                return await queries.InsertTheme(theme);
+                var id = await queries.InsertTheme(theme);
+                await auditService.LogActionAsync("CreateTheme", "Theme", id.ToString(), new { Title = theme.Title });
+                return id;
             })
             .RequireAuthorization();
 
         group.MapPut(
             "/",
-            async (Theme theme, CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger) =>
+            async (Theme theme, CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger, IAuditService auditService) =>
             {
                 var queries = new ThemesQueries(context, publishEndpoint, userResolver, logger);
-                return await queries.UpdateTheme(theme);
+                var result = await queries.UpdateTheme(theme);
+                await auditService.LogActionAsync("UpdateTheme", "Theme", theme.Id.ToString(), new { Title = theme.Title, IsArchived = theme.Isarchived });
+                return result;
             })
             .RequireAuthorization();
 
         group.MapDelete(
             "/{themeId:int}",
-            async (int themeId, CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger) =>
+            async (int themeId, CoreContext context, IPublishEndpoint publishEndpoint, UserResolverService userResolver, ILogger<ThemesQueries> logger, IAuditService auditService) =>
             {
                 var queries = new ThemesQueries(context, publishEndpoint, userResolver, logger);
-                return await queries.DeleteTheme(themeId);
+                var result = await queries.DeleteTheme(themeId);
+                await auditService.LogActionAsync("DeleteTheme", "Theme", themeId.ToString(), null);
+                return result;
             })
             .RequireAuthorization();
 
@@ -78,16 +89,34 @@ public static class EndpointGroups
     {
         group.MapGet(
             "/",
-            (CoreContext context) => new ConsultantsQueries(context).GetConsultants().Result);
+            async (CoreContext context, IAuditService auditService) =>
+            {
+                var result = await new ConsultantsQueries(context).GetConsultants();
+                await auditService.LogActionAsync("GetConsultants", "Consultant", null, new { Count = result.Count() });
+                return result;
+            });
+
         group.MapGet(
             "/{consultantId:int}",
-            (int consultantId, CoreContext context) => new ConsultantsQueries(context).GetConsultants(consultantId).Result);
+            async (int consultantId, CoreContext context, IAuditService auditService) =>
+            {
+                var result = await new ConsultantsQueries(context).GetConsultants(consultantId);
+                await auditService.LogActionAsync("GetConsultant", "Consultant", consultantId.ToString(), null);
+                return result;
+            });
+
         group.MapGet(
             "/byUserId",
-            (string userId, CoreContext context) => new ConsultantsQueries(context).GetConsultantByUserId(userId).Result);
+            async (string userId, CoreContext context, IAuditService auditService) =>
+            {
+                var result = await new ConsultantsQueries(context).GetConsultantByUserId(userId);
+                await auditService.LogActionAsync("GetConsultantByUserId", "Consultant", null, new { UserId = userId });
+                return result;
+            });
+
         group.MapPost(
             "/",
-            async (Consultant consultant, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            async (Consultant consultant, CoreContext context, IPublishEndpoint publishEndpoint, IAuditService auditService) =>
             {
                 var result = await new ConsultantsQueries(context).InsertOrUpdateConsultant(consultant);
                 await publishEndpoint.Publish(
@@ -99,11 +128,14 @@ public static class EndpointGroups
                         UserActionType.Create,
                         RoleNames.GetName(UserRoleType.Consultant),
                         DateTime.UtcNow));
+                await auditService.LogActionAsync("CreateConsultant", "Consultant", consultant.Id.ToString(), new { consultant.Userid });
                 return result;
-            }).RequireAuthorization();
+            })
+            .RequireAuthorization();
+
         group.MapPut(
             "/",
-            async (Consultant consultant, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            async (Consultant consultant, CoreContext context, IPublishEndpoint publishEndpoint, IAuditService auditService) =>
             {
                 var result = await new ConsultantsQueries(context).UpdateConsultant(consultant);
                 var prev = await context.Consultants.FindAsync(consultant.Id);
@@ -121,11 +153,14 @@ public static class EndpointGroups
                         UserActionType.Update,
                         RoleNames.GetName(UserRoleType.Consultant),
                         DateTime.UtcNow));
+                await auditService.LogActionAsync("UpdateConsultant", "Consultant", consultant.Id.ToString(), new { consultant.Userid });
                 return result;
-            }).RequireAuthorization();
+            })
+            .RequireAuthorization();
+
         group.MapDelete(
             "/{consultantId:int}",
-            async (int consultantId, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            async (int consultantId, CoreContext context, IPublishEndpoint publishEndpoint, IAuditService auditService) =>
             {
                 var consultant = await context.Consultants.FindAsync(consultantId);
                 var result = await new ConsultantsQueries(context).DeleteConsultant(consultantId);
@@ -138,8 +173,10 @@ public static class EndpointGroups
                         UserActionType.Delete,
                         RoleNames.GetName(UserRoleType.Consultant),
                         DateTime.UtcNow));
+                await auditService.LogActionAsync("DeleteConsultant", "Consultant", consultantId.ToString(), null);
                 return result;
-            }).RequireAuthorization();
+            })
+            .RequireAuthorization();
 
         return group;
     }
@@ -153,20 +190,51 @@ public static class EndpointGroups
     {
         group.MapGet(
             "/",
-            (CoreContext context) => new GroupsQueries(context).GetGroups().Result);
+            async (CoreContext context, IAuditService auditService) =>
+            {
+                var result = await new GroupsQueries(context).GetGroups();
+                await auditService.LogActionAsync("GetGroups", "Group", null, new { Count = result.Count() });
+                return result;
+            });
+
         group.MapGet(
             "/{groupId:int}",
-            (int groupId, CoreContext context) => new GroupsQueries(context).GetGroups(groupId).Result);
+            async (int groupId, CoreContext context, IAuditService auditService) =>
+            {
+                var result = await new GroupsQueries(context).GetGroups(groupId);
+                await auditService.LogActionAsync("GetGroup", "Group", groupId.ToString(), null);
+                return result;
+            });
+
         group.MapPost(
             "/",
-            (Group group, CoreContext context) => new GroupsQueries(context).InsertGroup(group).Result).RequireAuthorization();
+            async (Group group, CoreContext context, IAuditService auditService) =>
+            {
+                var id = await new GroupsQueries(context).InsertGroup(group);
+                await auditService.LogActionAsync("CreateGroup", "Group", id.ToString(), new { group.Name });
+                return id;
+            })
+            .RequireAuthorization();
+
         group.MapPut(
             "/",
-            (Group group, CoreContext context) =>
-                new GroupsQueries(context).UpdateGroup(group).Result).RequireAuthorization();
+            async (Group group, CoreContext context, IAuditService auditService) =>
+            {
+                var result = await new GroupsQueries(context).UpdateGroup(group);
+                await auditService.LogActionAsync("UpdateGroup", "Group", group.Id.ToString(), new { group.Name });
+                return result;
+            })
+            .RequireAuthorization();
+
         group.MapDelete(
             "/{groupId:int}",
-            (int groupId, CoreContext context) => new GroupsQueries(context).DeleteGroup(groupId).Result).RequireAuthorization();
+            async (int groupId, CoreContext context, IAuditService auditService) =>
+            {
+                var result = await new GroupsQueries(context).DeleteGroup(groupId);
+                await auditService.LogActionAsync("DeleteGroup", "Group", groupId.ToString(), null);
+                return result;
+            })
+            .RequireAuthorization();
 
         return group;
     }
@@ -180,16 +248,34 @@ public static class EndpointGroups
     {
         group.MapGet(
             "/",
-            (CoreContext context) => new LecturersQueries(context).GetLecturers().Result);
+            async (CoreContext context, IAuditService auditService) =>
+            {
+                var result = await new LecturersQueries(context).GetLecturers();
+                await auditService.LogActionAsync("GetLecturers", "Lecturer", null, new { Count = result.Count() });
+                return result;
+            });
+
         group.MapGet(
             "/{lecturerId:int}",
-            (int lecturerId, CoreContext context) => new LecturersQueries(context).GetLecturers(lecturerId).Result);
+            async (int lecturerId, CoreContext context, IAuditService auditService) =>
+            {
+                var result = await new LecturersQueries(context).GetLecturers(lecturerId);
+                await auditService.LogActionAsync("GetLecturer", "Lecturer", lecturerId.ToString(), null);
+                return result;
+            });
+
         group.MapGet(
             "/byUserId",
-            (string userId, CoreContext context) => new LecturersQueries(context).GetLecturerByUserId(userId).Result);
+            async (string userId, CoreContext context, IAuditService auditService) =>
+            {
+                var result = await new LecturersQueries(context).GetLecturerByUserId(userId);
+                await auditService.LogActionAsync("GetLecturerByUserId", "Lecturer", null, new { UserId = userId });
+                return result;
+            });
+
         group.MapPost(
             "/",
-            async (Lecturer lecturer, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            async (Lecturer lecturer, CoreContext context, IPublishEndpoint publishEndpoint, IAuditService auditService) =>
             {
                 var result = await new LecturersQueries(context).InsertOrUpdateLecturer(lecturer);
                 await publishEndpoint.Publish(
@@ -201,12 +287,14 @@ public static class EndpointGroups
                         UserActionType.Create,
                         RoleNames.GetName(UserRoleType.Supervisor),
                         DateTime.UtcNow));
-
+                await auditService.LogActionAsync("CreateLecturer", "Lecturer", lecturer.Id.ToString(), new { lecturer.Userid });
                 return result;
-            }).RequireAuthorization("AdminOnly");
+            })
+            .RequireAuthorization("AdminOnly");
+
         group.MapPut(
             "/",
-            async (Lecturer lecturer, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            async (Lecturer lecturer, CoreContext context, IPublishEndpoint publishEndpoint, IAuditService auditService) =>
             {
                 var result = await new LecturersQueries(context).UpdateLecturer(lecturer);
                 var prev = await context.Lecturers.FindAsync(lecturer.Id);
@@ -224,11 +312,14 @@ public static class EndpointGroups
                         UserActionType.Update,
                         RoleNames.GetName(UserRoleType.Supervisor),
                         DateTime.UtcNow));
+                await auditService.LogActionAsync("UpdateLecturer", "Lecturer", lecturer.Id.ToString(), new { lecturer.Userid });
                 return result;
-            }).RequireAuthorization("AdminOnly");
+            })
+            .RequireAuthorization("AdminOnly");
+
         group.MapDelete(
             "/{lecturerId:int}",
-            async (int lecturerId, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            async (int lecturerId, CoreContext context, IPublishEndpoint publishEndpoint, IAuditService auditService) =>
             {
                 var lecturer = await context.Lecturers.FindAsync(lecturerId);
                 var result = await new LecturersQueries(context).DeleteLecturer(lecturerId);
@@ -246,8 +337,10 @@ public static class EndpointGroups
                             DateTime.UtcNow));
                 }
 
+                await auditService.LogActionAsync("DeleteLecturer", "Lecturer", lecturerId.ToString(), null);
                 return result;
-            }).RequireAuthorization("AdminOnly");
+            })
+            .RequireAuthorization("AdminOnly");
 
         return group;
     }
@@ -261,15 +354,17 @@ public static class EndpointGroups
     {
         group.MapGet(
             "/",
-            async (CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
+            async (CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger, IAuditService auditService) =>
             {
                 var queries = new PracticesQueries(context, publishEndpoint, logger);
-                return await queries.GetPractices();
+                var result = await queries.GetPractices();
+                await auditService.LogActionAsync("GetPractices", "Practice", null, new { Count = result.Count() });
+                return result;
             });
 
         group.MapGet(
             "/{practiceId:int}",
-            async (int practiceId, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
+            async (int practiceId, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger, IAuditService auditService) =>
             {
                 var queries = new PracticesQueries(context, publishEndpoint, logger);
                 var practice = await queries.GetPracticeById(practiceId);
@@ -279,51 +374,63 @@ public static class EndpointGroups
                     return Results.NotFound($"Practice with ID {practiceId} not found");
                 }
 
+                await auditService.LogActionAsync("GetPractice", "Practice", practiceId.ToString(), null);
                 return Results.Ok(practice);
             });
 
         group.MapGet(
             "/student",
-            async (string userId, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
+            async (string userId, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger, IAuditService auditService) =>
             {
                 var queries = new PracticesQueries(context, publishEndpoint, logger);
-                return await queries.GetPracticesByStudent(userId);
+                var result = await queries.GetPracticesByStudent(userId);
+                await auditService.LogActionAsync("GetPracticesByStudent", "Practice", null, new { UserId = userId });
+                return result;
             });
 
         group.MapGet(
             "/supervisor",
-            async (string userId, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
+            async (string userId, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger, IAuditService auditService) =>
             {
                 var queries = new PracticesQueries(context, publishEndpoint, logger);
-                return await queries.GetPracticesBySupervisor(userId);
+                var result = await queries.GetPracticesBySupervisor(userId);
+                await auditService.LogActionAsync("GetPracticesBySupervisor", "Practice", null, new { UserId = userId });
+                return result;
             });
 
         group.MapPost(
-                "/",
-                async (Practice practice, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
-                {
-                    var queries = new PracticesQueries(context, publishEndpoint, logger);
-                    return await queries.InsertPractice(practice);
-                })
+            "/",
+            async (Practice practice, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger, IAuditService auditService) =>
+            {
+                var queries = new PracticesQueries(context, publishEndpoint, logger);
+                var id = await queries.InsertPractice(practice);
+                await auditService.LogActionAsync("CreatePractice", "Practice", id.ToString(), new { practice.Type });
+                return id;
+            })
             .RequireAuthorization();
 
         group.MapPut(
-                "/",
-                async (Practice practice, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
-                {
-                    var queries = new PracticesQueries(context, publishEndpoint, logger);
-                    return await queries.UpdatePractice(practice);
-                })
+            "/",
+            async (Practice practice, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger, IAuditService auditService) =>
+            {
+                var queries = new PracticesQueries(context, publishEndpoint, logger);
+                var result = await queries.UpdatePractice(practice);
+                await auditService.LogActionAsync("UpdatePractice", "Practice", practice.Id.ToString(), new { practice.Status, practice.Finalgrade });
+                return result;
+            })
             .RequireAuthorization();
 
         group.MapDelete(
-                "/{practiceId:int}",
-                async (int practiceId, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger) =>
-                {
-                    var queries = new PracticesQueries(context, publishEndpoint, logger);
-                    return await queries.DeletePractice(practiceId);
-                })
+            "/{practiceId:int}",
+            async (int practiceId, CoreContext context, IPublishEndpoint publishEndpoint, ILogger<PracticesQueries> logger, IAuditService auditService) =>
+            {
+                var queries = new PracticesQueries(context, publishEndpoint, logger);
+                var result = await queries.DeletePractice(practiceId);
+                await auditService.LogActionAsync("DeletePractice", "Practice", practiceId.ToString(), null);
+                return result;
+            })
             .RequireAuthorization();
+
         return group;
     }
 
@@ -336,16 +443,34 @@ public static class EndpointGroups
     {
         group.MapGet(
             "/",
-            (CoreContext context) => new StudentsQueries(context).GetStudents().Result);
+            async (CoreContext context, IAuditService auditService) =>
+            {
+                var result = await new StudentsQueries(context).GetStudents();
+                await auditService.LogActionAsync("GetStudents", "Student", null, new { Count = result.Count() });
+                return result;
+            });
+
         group.MapGet(
             "/{studentId:int}",
-            (int studentId, CoreContext context) => new StudentsQueries(context).GetStudents(studentId).Result);
+            async (int studentId, CoreContext context, IAuditService auditService) =>
+            {
+                var result = await new StudentsQueries(context).GetStudents(studentId);
+                await auditService.LogActionAsync("GetStudent", "Student", studentId.ToString(), null);
+                return result;
+            });
+
         group.MapGet(
             "/byUserId",
-            (string userId, CoreContext context) => new StudentsQueries(context).GetStudentByUserId(userId).Result);
+            async (string userId, CoreContext context, IAuditService auditService) =>
+            {
+                var result = await new StudentsQueries(context).GetStudentByUserId(userId);
+                await auditService.LogActionAsync("GetStudentByUserId", "Student", null, new { UserId = userId });
+                return result;
+            });
+
         group.MapPost(
             "/",
-            async (Student student, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            async (Student student, CoreContext context, IPublishEndpoint publishEndpoint, IAuditService auditService) =>
             {
                 var result = await new StudentsQueries(context).InsertOrUpdateStudent(student);
                 await publishEndpoint.Publish(
@@ -357,11 +482,14 @@ public static class EndpointGroups
                         UserActionType.Create,
                         RoleNames.GetName(UserRoleType.Student),
                         DateTime.UtcNow));
+                await auditService.LogActionAsync("CreateStudent", "Student", student.Id.ToString(), new { student.Userid });
                 return result;
-            }).RequireAuthorization();
+            })
+            .RequireAuthorization();
+
         group.MapPut(
             "/",
-            async (Student student, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            async (Student student, CoreContext context, IPublishEndpoint publishEndpoint, IAuditService auditService) =>
             {
                 var prev = await context.Students.FindAsync(student.Id);
                 if (prev == null)
@@ -380,11 +508,14 @@ public static class EndpointGroups
                         UserActionType.Update,
                         RoleNames.GetName(UserRoleType.Student),
                         DateTime.UtcNow));
+                await auditService.LogActionAsync("UpdateStudent", "Student", student.Id.ToString(), new { student.Userid });
                 return result;
-            }).RequireAuthorization();
+            })
+            .RequireAuthorization();
+
         group.MapDelete(
             "/{studentId:int}",
-            async (int studentId, CoreContext context, IPublishEndpoint publishEndpoint) =>
+            async (int studentId, CoreContext context, IPublishEndpoint publishEndpoint, IAuditService auditService) =>
             {
                 var student = await context.Students.FindAsync(studentId);
                 var result = await new StudentsQueries(context).DeleteStudent(studentId);
@@ -402,8 +533,10 @@ public static class EndpointGroups
                             DateTime.UtcNow));
                 }
 
+                await auditService.LogActionAsync("DeleteStudent", "Student", studentId.ToString(), null);
                 return result;
-            }).RequireAuthorization();
+            })
+            .RequireAuthorization();
 
         return group;
     }

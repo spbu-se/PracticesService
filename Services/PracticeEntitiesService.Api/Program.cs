@@ -11,6 +11,7 @@ using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 using PracticeEntities.Models;
 using PracticeEntities.Services;
+using Shared.Audit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +44,9 @@ builder.Services.AddHttpClient("CoreService", client =>
 {
     client.BaseAddress = new Uri("http://core.api:8080/");
 });
+
+// Add Audit Service
+builder.Services.AddAuditService();
 
 var gatewayBasePath = builder.Configuration["Swagger:GatewayBasePath"] ?? "/api";
 
@@ -108,7 +112,6 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-
     app.UseSwaggerUI();
 }
 
@@ -119,7 +122,8 @@ app.MapPost("/api/feedbacks", async (
     IConfiguration config,
     IPublishEndpoint publishEndpoint,
     PracticeService practiceService,
-    ILogger<Program> logger) =>
+    ILogger<Program> logger,
+    IAuditService auditService) =>
 {
     try
     {
@@ -155,11 +159,9 @@ app.MapPost("/api/feedbacks", async (
         var collection = db.GetCollection<Feedback>("feedbacks");
         await collection.InsertOneAsync(feedback);
 
-        // Get practice details for email
         var practice = await practiceService.GetPracticeAsync(feedback.PracticeId);
         var studentEmail = practice?.Student?.Email;
 
-        // Publish event
         if (!string.IsNullOrEmpty(studentEmail))
         {
             await publishEndpoint.Publish(new FeedbackSubmittedEvent(
@@ -170,16 +172,36 @@ app.MapPost("/api/feedbacks", async (
                 FileName: feedback.FileName,
                 SubmittedAt: feedback.UploadedAt));
 
+            await auditService.LogActionAsync(
+                "SubmitFeedback",
+                "Feedback",
+                feedback.Id,
+                new { feedback.PracticeId, feedback.FeedbackType, StudentEmail = studentEmail });
+
             logger.LogInformation(
                 "Feedback submitted for practice {PracticeId}. Notification sent to student: {StudentEmail}",
                 feedback.PracticeId,
                 studentEmail);
+        }
+        else
+        {
+            await auditService.LogErrorAsync(
+                "SubmitFeedback",
+                "Feedback",
+                feedback.Id,
+                "No student email found");
         }
 
         return Results.Ok(feedback);
     }
     catch (Exception ex)
     {
+        await auditService.LogErrorAsync(
+            "SubmitFeedback",
+            "Feedback",
+            null,
+            ex.Message);
+
         logger.LogError(ex, "Error submitting feedback for practice {PracticeId}", feedback.PracticeId);
         return Results.Problem("Failed to submit feedback");
     }
@@ -188,7 +210,8 @@ app.MapPost("/api/feedbacks", async (
 app.MapGet("/api/feedbacks/{practiceId:int}", async (
     int practiceId,
     [FromQuery] string? type,
-    IMongoDatabase db) =>
+    IMongoDatabase db,
+    IAuditService auditService) =>
 {
     var collection = db.GetCollection<Feedback>("feedbacks");
 
@@ -204,6 +227,12 @@ app.MapGet("/api/feedbacks/{practiceId:int}", async (
         .SortByDescending(f => f.UploadedAt)
         .ToListAsync();
 
+    await auditService.LogActionAsync(
+        "GetFeedbacks",
+        "Feedback",
+        null,
+        new { PracticeId = practiceId, Count = feedbacks.Count });
+
     return Results.Ok(feedbacks);
 });
 
@@ -214,7 +243,8 @@ app.MapPost("/api/text-works", async (
     IConfiguration config,
     IPublishEndpoint publishEndpoint,
     PracticeService practiceService,
-    ILogger<Program> logger) =>
+    ILogger<Program> logger,
+    IAuditService auditService) =>
 {
     try
     {
@@ -250,12 +280,10 @@ app.MapPost("/api/text-works", async (
         var collection = db.GetCollection<TextWork>("textworks");
         await collection.InsertOneAsync(textWork);
 
-        // Get practice details for supervisor email
         var practice = await practiceService.GetPracticeAsync(model.PracticeId);
         var supervisorEmail = practice?.Supervisor?.Email;
         var studentEmail = practice?.Student?.Email;
 
-        // Publish event for supervisor
         if (!string.IsNullOrEmpty(supervisorEmail))
         {
             await publishEndpoint.Publish(new TextWorkSubmittedEvent(
@@ -267,6 +295,12 @@ app.MapPost("/api/text-works", async (
                 Version: textWork.Version,
                 SubmittedAt: textWork.UploadedAt));
 
+            await auditService.LogActionAsync(
+                "SubmitTextWork",
+                "TextWork",
+                textWork.Id,
+                new { textWork.PracticeId, textWork.Version, SupervisorEmail = supervisorEmail });
+
             logger.LogInformation(
                 "Text work submitted for practice {PracticeId}. Notification sent to supervisor: {SupervisorEmail}",
                 textWork.PracticeId,
@@ -277,6 +311,12 @@ app.MapPost("/api/text-works", async (
     }
     catch (Exception ex)
     {
+        await auditService.LogErrorAsync(
+            "SubmitTextWork",
+            "TextWork",
+            null,
+            ex.Message);
+
         logger.LogError(ex, "Error submitting text work for practice {PracticeId}", model.PracticeId);
         return Results.Problem("Failed to submit text work");
     }
@@ -284,7 +324,8 @@ app.MapPost("/api/text-works", async (
 
 app.MapGet("/api/text-works/{practiceId:int}", async (
     int practiceId,
-    IMongoDatabase db) =>
+    IMongoDatabase db,
+    IAuditService auditService) =>
 {
     var collection = db.GetCollection<TextWork>("textworks");
 
@@ -293,12 +334,19 @@ app.MapGet("/api/text-works/{practiceId:int}", async (
         .SortByDescending(t => t.Version)
         .ToListAsync();
 
+    await auditService.LogActionAsync(
+        "GetTextWorks",
+        "TextWork",
+        null,
+        new { PracticeId = practiceId, Count = textWorks.Count });
+
     return Results.Ok(textWorks);
 });
 
 app.MapGet("/api/text-works/latest/{practiceId:int}", async (
     int practiceId,
-    IMongoDatabase db) =>
+    IMongoDatabase db,
+    IAuditService auditService) =>
 {
     var collection = db.GetCollection<TextWork>("textworks");
 
@@ -306,6 +354,12 @@ app.MapGet("/api/text-works/latest/{practiceId:int}", async (
     var latest = await collection.Find(filter)
         .SortByDescending(t => t.Version)
         .FirstOrDefaultAsync();
+
+    await auditService.LogActionAsync(
+        "GetLatestTextWork",
+        "TextWork",
+        null,
+        new { PracticeId = practiceId });
 
     return latest is not null ? Results.Ok(latest) : Results.NotFound();
 });
@@ -316,7 +370,8 @@ app.MapPost("/api/text-works/{id}/comments", async (
     Comment input,
     IPublishEndpoint publishEndpoint,
     PracticeService practiceService,
-    ILogger<Program> logger) =>
+    ILogger<Program> logger,
+    IAuditService auditService) =>
 {
     try
     {
@@ -328,20 +383,23 @@ app.MapPost("/api/text-works/{id}/comments", async (
 
         if (result.MatchedCount == 0)
         {
+            await auditService.LogErrorAsync(
+                "AddTextWorkComment",
+                "TextWork",
+                id,
+                "Text work not found");
+
             return Results.NotFound($"Text work with ID {id} not found");
         }
 
-        // Get the text work to get practice details
         var textWork = await collection.Find(t => t.Id == id).FirstOrDefaultAsync();
 
         if (textWork != null)
         {
-            // Get practice details for emails
             var practice = await practiceService.GetPracticeAsync(textWork.PracticeId);
             var studentEmail = practice?.Student?.Email;
             var supervisorEmail = practice?.Supervisor?.Email;
 
-            // Publish event for both student and supervisor
             if (!string.IsNullOrEmpty(studentEmail) || !string.IsNullOrEmpty(supervisorEmail))
             {
                 await publishEndpoint.Publish(new TextWorkCommentAddedEvent(
@@ -356,6 +414,12 @@ app.MapPost("/api/text-works/{id}/comments", async (
                     SupervisorEmail: supervisorEmail,
                     CreatedAt: input.CreatedAt));
 
+                await auditService.LogActionAsync(
+                    "AddTextWorkComment",
+                    "TextWork",
+                    id,
+                    new { Author = input.Author });
+
                 logger.LogInformation(
                     "Comment added to text work {TextWorkId} for practice {PracticeId}. Author: {Author}",
                     id,
@@ -368,6 +432,12 @@ app.MapPost("/api/text-works/{id}/comments", async (
     }
     catch (Exception ex)
     {
+        await auditService.LogErrorAsync(
+            "AddTextWorkComment",
+            "TextWork",
+            id,
+            ex.Message);
+
         logger.LogError(ex, "Error adding comment to text work {TextWorkId}", id);
         return Results.Problem("Failed to add comment");
     }
@@ -380,7 +450,8 @@ app.MapPost("/api/presentations", async (
     IConfiguration config,
     IPublishEndpoint publishEndpoint,
     PracticeService practiceService,
-    ILogger<Program> logger) =>
+    ILogger<Program> logger,
+    IAuditService auditService) =>
 {
     try
     {
@@ -416,12 +487,10 @@ app.MapPost("/api/presentations", async (
         var collection = db.GetCollection<Presentation>("presentations");
         await collection.InsertOneAsync(presentation);
 
-        // Get practice details for supervisor email
         var practice = await practiceService.GetPracticeAsync(model.PracticeId);
         var supervisorEmail = practice?.Supervisor?.Email;
         var studentEmail = practice?.Student?.Email;
 
-        // Publish event for supervisor
         if (!string.IsNullOrEmpty(supervisorEmail))
         {
             await publishEndpoint.Publish(new PresentationSubmittedEvent(
@@ -433,6 +502,12 @@ app.MapPost("/api/presentations", async (
                 Version: presentation.Version,
                 SubmittedAt: presentation.UploadedAt));
 
+            await auditService.LogActionAsync(
+                "SubmitPresentation",
+                "Presentation",
+                presentation.Id,
+                new { presentation.PracticeId, presentation.Version, SupervisorEmail = supervisorEmail });
+
             logger.LogInformation(
                 "Presentation submitted for practice {PracticeId}. Notification sent to supervisor: {SupervisorEmail}",
                 presentation.PracticeId,
@@ -443,6 +518,12 @@ app.MapPost("/api/presentations", async (
     }
     catch (Exception ex)
     {
+        await auditService.LogErrorAsync(
+            "SubmitPresentation",
+            "Presentation",
+            null,
+            ex.Message);
+
         logger.LogError(ex, "Error submitting presentation for practice {PracticeId}", model.PracticeId);
         return Results.Problem("Failed to submit presentation");
     }
@@ -450,7 +531,8 @@ app.MapPost("/api/presentations", async (
 
 app.MapGet("/api/presentations/{practiceId:int}", async (
     int practiceId,
-    IMongoDatabase db) =>
+    IMongoDatabase db,
+    IAuditService auditService) =>
 {
     var collection = db.GetCollection<Presentation>("presentations");
 
@@ -459,12 +541,19 @@ app.MapGet("/api/presentations/{practiceId:int}", async (
         .SortByDescending(p => p.Version)
         .ToListAsync();
 
+    await auditService.LogActionAsync(
+        "GetPresentations",
+        "Presentation",
+        null,
+        new { PracticeId = practiceId, Count = presentations.Count });
+
     return Results.Ok(presentations);
 });
 
 app.MapGet("/api/presentations/latest/{practiceId:int}", async (
     int practiceId,
-    IMongoDatabase db) =>
+    IMongoDatabase db,
+    IAuditService auditService) =>
 {
     var collection = db.GetCollection<Presentation>("presentations");
 
@@ -472,6 +561,12 @@ app.MapGet("/api/presentations/latest/{practiceId:int}", async (
     var latest = await collection.Find(filter)
         .SortByDescending(t => t.Version)
         .FirstOrDefaultAsync();
+
+    await auditService.LogActionAsync(
+        "GetLatestPresentation",
+        "Presentation",
+        null,
+        new { PracticeId = practiceId });
 
     return latest is not null ? Results.Ok(latest) : Results.NotFound();
 });
@@ -482,7 +577,8 @@ app.MapPost("/api/presentations/{id}/comments", async (
     Comment input,
     IPublishEndpoint publishEndpoint,
     PracticeService practiceService,
-    ILogger<Program> logger) =>
+    ILogger<Program> logger,
+    IAuditService auditService) =>
 {
     try
     {
@@ -494,20 +590,23 @@ app.MapPost("/api/presentations/{id}/comments", async (
 
         if (result.MatchedCount == 0)
         {
+            await auditService.LogErrorAsync(
+                "AddPresentationComment",
+                "Presentation",
+                id,
+                "Presentation not found");
+
             return Results.NotFound($"Presentation with ID {id} not found");
         }
 
-        // Get the presentation to get practice details
         var presentation = await collection.Find(t => t.Id == id).FirstOrDefaultAsync();
 
         if (presentation != null)
         {
-            // Get practice details for emails
             var practice = await practiceService.GetPracticeAsync(presentation.PracticeId);
             var studentEmail = practice?.Student?.Email;
             var supervisorEmail = practice?.Supervisor?.Email;
 
-            // Publish event for both student and supervisor
             if (!string.IsNullOrEmpty(studentEmail) || !string.IsNullOrEmpty(supervisorEmail))
             {
                 await publishEndpoint.Publish(new PresentationCommentAddedEvent(
@@ -522,6 +621,12 @@ app.MapPost("/api/presentations/{id}/comments", async (
                     SupervisorEmail: supervisorEmail,
                     CreatedAt: input.CreatedAt));
 
+                await auditService.LogActionAsync(
+                    "AddPresentationComment",
+                    "Presentation",
+                    id,
+                    new { Author = input.Author });
+
                 logger.LogInformation(
                     "Comment added to presentation {PresentationId} for practice {PracticeId}. Author: {Author}",
                     id,
@@ -534,6 +639,12 @@ app.MapPost("/api/presentations/{id}/comments", async (
     }
     catch (Exception ex)
     {
+        await auditService.LogErrorAsync(
+            "AddPresentationComment",
+            "Presentation",
+            id,
+            ex.Message);
+
         logger.LogError(ex, "Error adding comment to presentation {PresentationId}", id);
         return Results.Problem("Failed to add comment");
     }
@@ -544,7 +655,8 @@ app.MapPost("/api/goals-tasks", async (
     IMongoDatabase db,
     IPublishEndpoint publishEndpoint,
     PracticeService practiceService,
-    ILogger<Program> logger) =>
+    ILogger<Program> logger,
+    IAuditService auditService) =>
 {
     try
     {
@@ -552,12 +664,16 @@ app.MapPost("/api/goals-tasks", async (
 
         var existing = await collection.Find(x => x.PracticeId == input.PracticeId).FirstOrDefaultAsync();
 
-        // Get practice details from service
         var practice = await practiceService.GetPracticeAsync(input.PracticeId);
 
         if (practice == null)
         {
             logger.LogWarning("Practice {PracticeId} not found", input.PracticeId);
+            await auditService.LogErrorAsync(
+                "SaveGoalsTasks",
+                "GoalsTasks",
+                null,
+                $"Practice {input.PracticeId} not found");
             return Results.NotFound($"Practice with ID {input.PracticeId} not found");
         }
 
@@ -579,6 +695,12 @@ app.MapPost("/api/goals-tasks", async (
                 SupervisorEmail: supervisorEmail,
                 UpdatedAt: DateTime.UtcNow));
 
+            await auditService.LogActionAsync(
+                "UpdateGoalsTasks",
+                "GoalsTasks",
+                existing.Id,
+                new { input.PracticeId, Action = "Update" });
+
             logger.LogInformation("Goals and tasks updated for practice {PracticeId}", input.PracticeId);
             return Results.Ok(existing);
         }
@@ -593,21 +715,42 @@ app.MapPost("/api/goals-tasks", async (
             SupervisorEmail: supervisorEmail,
             UpdatedAt: DateTime.UtcNow));
 
+        await auditService.LogActionAsync(
+            "CreateGoalsTasks",
+            "GoalsTasks",
+            input.Id,
+            new { input.PracticeId, Action = "Create" });
+
         logger.LogInformation("Goals and tasks created for practice {PracticeId}", input.PracticeId);
         return Results.Created($"/api/goals-tasks/{input.PracticeId}", input);
     }
     catch (Exception ex)
     {
+        await auditService.LogErrorAsync(
+            "SaveGoalsTasks",
+            "GoalsTasks",
+            null,
+            ex.Message);
+
         logger.LogError(ex, "Error saving goals and tasks for practice {PracticeId}", input.PracticeId);
         return Results.Problem("Failed to save goals and tasks");
     }
 });
 
-app.MapGet("/api/goals-tasks/{practiceId:int}", async (IMongoDatabase db, int practiceId) =>
+app.MapGet("/api/goals-tasks/{practiceId:int}", async (
+    IMongoDatabase db,
+    int practiceId,
+    IAuditService auditService) =>
 {
     var collection = db.GetCollection<GoalsAndTasks>("goals_tasks");
 
     var result = await collection.Find(x => x.PracticeId == practiceId).FirstOrDefaultAsync();
+
+    await auditService.LogActionAsync(
+        "GetGoalsTasks",
+        "GoalsTasks",
+        null,
+        new { PracticeId = practiceId, Found = result != null });
 
     return result is not null ? Results.Ok(result) : Results.NotFound();
 });
@@ -617,7 +760,8 @@ app.MapPost("/api/reports", async (
     Report input,
     IPublishEndpoint publishEndpoint,
     PracticeService practiceService,
-    ILogger<Program> logger) =>
+    ILogger<Program> logger,
+    IAuditService auditService) =>
 {
     try
     {
@@ -626,12 +770,10 @@ app.MapPost("/api/reports", async (
         input.CreatedAt = DateTime.UtcNow;
         await collection.InsertOneAsync(input);
 
-        // Get practice details for emails
         var practice = await practiceService.GetPracticeAsync(input.PracticeId);
         var studentEmail = practice?.Student?.Email;
         var supervisorEmail = practice?.Supervisor?.Email;
 
-        // Publish event
         if (!string.IsNullOrEmpty(studentEmail) || !string.IsNullOrEmpty(supervisorEmail))
         {
             await publishEndpoint.Publish(new ReportSubmittedEvent(
@@ -640,6 +782,12 @@ app.MapPost("/api/reports", async (
                 StudentEmail: studentEmail,
                 SupervisorEmail: supervisorEmail,
                 SubmittedAt: input.CreatedAt));
+
+            await auditService.LogActionAsync(
+                "CreateReport",
+                "Report",
+                input.Id,
+                new { input.PracticeId });
 
             logger.LogInformation(
                 "Report submitted for practice {PracticeId}. Notifications sent.",
@@ -650,18 +798,33 @@ app.MapPost("/api/reports", async (
     }
     catch (Exception ex)
     {
+        await auditService.LogErrorAsync(
+            "CreateReport",
+            "Report",
+            null,
+            ex.Message);
+
         logger.LogError(ex, "Error submitting report for practice {PracticeId}", input.PracticeId);
         return Results.Problem("Failed to submit report");
     }
 });
 
-app.MapGet("/api/reports/{practiceId:int}", async (IMongoDatabase db, int practiceId) =>
+app.MapGet("/api/reports/{practiceId:int}", async (
+    IMongoDatabase db,
+    int practiceId,
+    IAuditService auditService) =>
 {
     var collection = db.GetCollection<Report>("reports");
     var reports = await collection
         .Find(r => r.PracticeId == practiceId)
         .SortByDescending(r => r.CreatedAt)
         .ToListAsync();
+
+    await auditService.LogActionAsync(
+        "GetReports",
+        "Report",
+        null,
+        new { PracticeId = practiceId, Count = reports.Count });
 
     return Results.Ok(reports);
 });
@@ -672,7 +835,8 @@ app.MapPost("/api/reports/{id}/comments", async (
     Comment input,
     IPublishEndpoint publishEndpoint,
     PracticeService practiceService,
-    ILogger<Program> logger) =>
+    ILogger<Program> logger,
+    IAuditService auditService) =>
 {
     try
     {
@@ -684,20 +848,23 @@ app.MapPost("/api/reports/{id}/comments", async (
 
         if (result.MatchedCount == 0)
         {
+            await auditService.LogErrorAsync(
+                "AddReportComment",
+                "Report",
+                id,
+                "Report not found");
+
             return Results.NotFound($"Report with ID {id} not found");
         }
 
-        // Get the report to get practice details
         var report = await collection.Find(r => r.Id == id).FirstOrDefaultAsync();
 
         if (report != null)
         {
-            // Get practice details for emails
             var practice = await practiceService.GetPracticeAsync(report.PracticeId);
             var studentEmail = practice?.Student?.Email;
             var supervisorEmail = practice?.Supervisor?.Email;
 
-            // Publish event for both student and supervisor
             if (!string.IsNullOrEmpty(studentEmail) || !string.IsNullOrEmpty(supervisorEmail))
             {
                 await publishEndpoint.Publish(new ReportCommentAddedEvent(
@@ -709,6 +876,12 @@ app.MapPost("/api/reports/{id}/comments", async (
                     StudentEmail: studentEmail,
                     SupervisorEmail: supervisorEmail,
                     CreatedAt: input.CreatedAt));
+
+                await auditService.LogActionAsync(
+                    "AddReportComment",
+                    "Report",
+                    id,
+                    new { Author = input.Author });
 
                 logger.LogInformation(
                     "Comment added to report {ReportId} for practice {PracticeId}. Author: {Author}",
@@ -722,12 +895,21 @@ app.MapPost("/api/reports/{id}/comments", async (
     }
     catch (Exception ex)
     {
+        await auditService.LogErrorAsync(
+            "AddReportComment",
+            "Report",
+            id,
+            ex.Message);
+
         logger.LogError(ex, "Error adding comment to report {ReportId}", id);
         return Results.Problem("Failed to add comment");
     }
 });
 
-app.MapPost("/api/repositories", async (IMongoDatabase db, Repository input) =>
+app.MapPost("/api/repositories", async (
+    IMongoDatabase db,
+    Repository input,
+    IAuditService auditService) =>
 {
     var collection = db.GetCollection<Repository>("repositories");
 
@@ -740,6 +922,13 @@ app.MapPost("/api/repositories", async (IMongoDatabase db, Repository input) =>
         existing.UploadedAt = DateTime.UtcNow;
 
         await collection.ReplaceOneAsync(r => r.Id == existing.Id, existing);
+
+        await auditService.LogActionAsync(
+            "UpdateRepository",
+            "Repository",
+            existing.Id,
+            new { input.PracticeId });
+
         return Results.Ok(existing);
     }
 
@@ -747,13 +936,29 @@ app.MapPost("/api/repositories", async (IMongoDatabase db, Repository input) =>
     input.UploadedAt = DateTime.UtcNow;
 
     await collection.InsertOneAsync(input);
+
+    await auditService.LogActionAsync(
+        "CreateRepository",
+        "Repository",
+        input.Id,
+        new { input.PracticeId });
+
     return Results.Created($"/api/repositories/{input.PracticeId}", input);
 });
 
-app.MapGet("/api/repositories/{practiceId:int}", async (IMongoDatabase db, int practiceId) =>
+app.MapGet("/api/repositories/{practiceId:int}", async (
+    IMongoDatabase db,
+    int practiceId,
+    IAuditService auditService) =>
 {
     var collection = db.GetCollection<Repository>("repositories");
     var repo = await collection.Find(r => r.PracticeId == practiceId).FirstOrDefaultAsync();
+
+    await auditService.LogActionAsync(
+        "GetRepository",
+        "Repository",
+        null,
+        new { PracticeId = practiceId, Found = repo != null });
 
     return repo != null ? Results.Ok(repo) : Results.NotFound();
 });
@@ -763,7 +968,8 @@ app.MapPost("/api/messages", async (
     Message input,
     IPublishEndpoint publishEndpoint,
     PracticeService practiceService,
-    ILogger<Program> logger) =>
+    ILogger<Program> logger,
+    IAuditService auditService) =>
 {
     try
     {
@@ -776,12 +982,10 @@ app.MapPost("/api/messages", async (
 
         await collection.InsertOneAsync(input);
 
-        // Get practice details for emails
         var practice = await practiceService.GetPracticeAsync(input.PracticeId);
         var studentEmail = practice?.Student?.Email;
         var supervisorEmail = practice?.Supervisor?.Email;
 
-        // Publish event
         if (!string.IsNullOrEmpty(studentEmail) || !string.IsNullOrEmpty(supervisorEmail))
         {
             await publishEndpoint.Publish(new MessageSentEvent(
@@ -793,6 +997,12 @@ app.MapPost("/api/messages", async (
                 MessageText: input.Text,
                 SentAt: input.CreatedAt));
 
+            await auditService.LogActionAsync(
+                "SendMessage",
+                "Message",
+                input.Id,
+                new { input.PracticeId, input.Author });
+
             logger.LogInformation(
                 "Message sent for practice {PracticeId}. Sender: {Sender}",
                 input.PracticeId,
@@ -803,12 +1013,21 @@ app.MapPost("/api/messages", async (
     }
     catch (Exception ex)
     {
+        await auditService.LogErrorAsync(
+            "SendMessage",
+            "Message",
+            null,
+            ex.Message);
+
         logger.LogError(ex, "Error sending message for practice {PracticeId}", input.PracticeId);
         return Results.Problem("Failed to send message");
     }
 });
 
-app.MapGet("/api/messages/{practiceId:int}", async (IMongoDatabase db, int practiceId) =>
+app.MapGet("/api/messages/{practiceId:int}", async (
+    IMongoDatabase db,
+    int practiceId,
+    IAuditService auditService) =>
 {
     var collection = db.GetCollection<Message>("messages");
 
@@ -816,6 +1035,12 @@ app.MapGet("/api/messages/{practiceId:int}", async (IMongoDatabase db, int pract
         .Find(x => x.PracticeId == practiceId)
         .SortBy(x => x.CreatedAt)
         .ToListAsync();
+
+    await auditService.LogActionAsync(
+        "GetMessages",
+        "Message",
+        null,
+        new { PracticeId = practiceId, Count = messages.Count });
 
     return messages.Count > 0 ? Results.Ok(messages) : Results.NotFound();
 });
