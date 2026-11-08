@@ -147,7 +147,23 @@ services:
         condition: service_healthy
     networks:
       - proxybackend
-        
+  
+  llm.api:
+    container_name: llm.api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - LLMSettings__ApiKey=${LLM_API_KEY}
+    build:
+      context: .
+      dockerfile: Services/LlmService.Api/Dockerfile
+    expose:
+      - "8080"
+    ports:
+      - "127.0.0.1:5005:8080"
+    networks:
+      - proxybackend
+    restart: unless-stopped
+
   practice-entities.db:
     image: mongo:6.0
     container_name: practice-entities.db
