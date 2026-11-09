@@ -89,6 +89,10 @@ builder.Services.AddAuthorization(options =>
 // Current environment
 var currentEnvironment = Environment.GetEnvironmentVariable("ENVIRONMENT") ?? "Default";
 
+// Only the listed origins (comma separated, Cors:AllowedOrigins) may call the API from a browser with credentials.
+var corsOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 builder.Services.AddCors(
     options =>
     {
@@ -97,7 +101,7 @@ builder.Services.AddCors(
             policyBuilder => policyBuilder
                 .AllowAnyMethod()
                 .AllowCredentials()
-                .SetIsOriginAllowed((_) => true)
+                .WithOrigins(corsOrigins)
                 .AllowAnyHeader());
     });
 

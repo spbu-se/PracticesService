@@ -237,6 +237,7 @@ public class AuthServiceTests : IAsyncDisposable
             Email = "refreshuser@example.com",
             FirstName = "Refreshuser",
             LastName = "Name",
+            EmailConfirmed = true,
         };
 
         await this.userManager.CreateAsync(user, "Password123!");
@@ -254,6 +255,40 @@ public class AuthServiceTests : IAsyncDisposable
             Assert.That(refreshedResponse.Token, Is.Not.Null);
             Assert.That(refreshedResponse.RefreshToken, Is.Not.Null);
         });
+    }
+
+    /// <summary>
+    /// Tests that a user with an unconfirmed e-mail cannot renew tokens.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
+    [Test]
+    public async Task RefreshToken_WithUnconfirmedEmail_IsRefused()
+    {
+        var user = await this.CreateUserAsync("unconfirmed@example.com", emailConfirmed: false);
+        var tokenService = this.CreateTokenService();
+        var token = await tokenService.GenerateJwtToken(user);
+        var refreshToken = await tokenService.GenerateRefreshToken(user);
+
+        var exception = Assert.ThrowsAsync<SecurityTokenException>(() => tokenService.RefreshTokenAsync(token, refreshToken));
+
+        Assert.That(exception!.Message, Does.Contain("not confirmed"));
+    }
+
+    /// <summary>
+    /// Tests that the confirmation can be switched off for a stand without a mail server.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
+    [Test]
+    public async Task RefreshToken_WithUnconfirmedEmail_WorksWhenConfirmationIsNotRequired()
+    {
+        var user = await this.CreateUserAsync("stand@example.com", emailConfirmed: false);
+        var tokenService = this.CreateTokenService(requireConfirmedEmail: false);
+        var token = await tokenService.GenerateJwtToken(user);
+        var refreshToken = await tokenService.GenerateRefreshToken(user);
+
+        var response = await tokenService.RefreshTokenAsync(token, refreshToken);
+
+        Assert.That(response.Token, Is.Not.Empty);
     }
 
     /// <summary>
@@ -374,11 +409,26 @@ public class AuthServiceTests : IAsyncDisposable
         await this.dbContext.DisposeAsync();
     }
 
+    private async Task<ApplicationUser> CreateUserAsync(string email, bool emailConfirmed)
+    {
+        var user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            FirstName = "Test",
+            LastName = "User",
+            EmailConfirmed = emailConfirmed,
+        };
+
+        await this.userManager.CreateAsync(user, "Password123!");
+        return user;
+    }
+
     /// <summary>
     /// Creates an instance of <see cref="TokenService"/> for testing.
     /// </summary>
     /// <returns>The configured <see cref="TokenService"/>.</returns>
-    private TokenService CreateTokenService()
+    private TokenService CreateTokenService(bool requireConfirmedEmail = true)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
@@ -387,6 +437,7 @@ public class AuthServiceTests : IAsyncDisposable
                 ["Jwt:Issuer"] = "TestIssuer",
                 ["Jwt:Audience"] = "TestAudience",
                 ["Jwt:ExpireMinutes"] = "30",
+                ["Auth:RequireConfirmedEmail"] = requireConfirmedEmail.ToString(),
             })
             .Build();
 

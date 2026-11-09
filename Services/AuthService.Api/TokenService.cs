@@ -112,6 +112,11 @@ namespace AuthService.Api
                 throw new SecurityTokenException("Invalid user");
             }
 
+            if (this.config.GetValue("Auth:RequireConfirmedEmail", true) && !user.EmailConfirmed)
+            {
+                throw new SecurityTokenException("E-mail is not confirmed");
+            }
+
             var storedRefreshToken = await this.context.RefreshTokens
                 .FirstOrDefaultAsync(x => x.Token == refreshToken && x.UserId == userId);
 

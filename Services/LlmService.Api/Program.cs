@@ -46,12 +46,16 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// Only the listed origins (comma separated, Cors:AllowedOrigins) may call the API from a browser with credentials.
+var corsOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
         policy.AllowAnyMethod()
               .AllowCredentials()
-              .SetIsOriginAllowed(_ => true)
+              .WithOrigins(corsOrigins)
               .AllowAnyHeader());
 });
 

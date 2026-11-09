@@ -1,5 +1,57 @@
+# Production overrides. Start with both files:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Set ASPNETCORE_ENVIRONMENT=Production, FRONTEND_URL, CORS_ORIGINS and PUBLIC_API_URL in .env.
+# Requires Docker Compose 2.24 or newer (the !reset and !override tags).
 services:
-  frontend:
-    environment:
-      - VITE_API_BASE_URL=https://projects.se.math.spbu.ru/practices-service/api
+  rabbitmq:
     restart: always
+    ports: !reset []
+
+  gateway.api:
+    restart: always
+
+  core.db:
+    restart: always
+
+  core.api:
+    restart: always
+    volumes: !reset []
+
+  audit.api:
+    restart: always
+
+  auth.db:
+    restart: always
+
+  auth.api:
+    restart: always
+    volumes: !reset []
+
+  practice-entities.db:
+    restart: always
+
+  practice-entities.api:
+    restart: always
+    volumes: !reset []
+
+  notification.api:
+    restart: always
+    volumes: !reset []
+
+  llm.api:
+    restart: always
+
+  # The site is a static build served by nginx, not the Vite dev server. The nginx of the host (TLS) forwards to it.
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_BASE_URL: ${PUBLIC_API_URL:?Set PUBLIC_API_URL in .env}
+    restart: always
+    ports: !override
+      - "127.0.0.1:8080:80"
+    environment: !reset []
+    volumes: !reset []
+    stdin_open: false
+    tty: false

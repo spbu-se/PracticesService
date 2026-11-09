@@ -9,7 +9,8 @@ import {
     Typography,
     Paper,
     Box,
-    Grid
+    Grid,
+    Alert
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import {UserRole} from "../entities/UserRoles";
@@ -23,6 +24,7 @@ export function RegisterPage() {
         middleName: ""
     });
 
+    const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
     const navigate = useNavigate();
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -44,6 +46,12 @@ export function RegisterPage() {
         formData.roles = [UserRole.STUDENT];
         register(formData)
             .then(response => {
+                if (response.data.requiresEmailConfirmation) {
+                    // The server gives no token until the address is confirmed.
+                    setRegisteredEmail(formData.email);
+                    return;
+                }
+
                 setJWTToken(response.data.token);
                 setRefreshToken(response.data.refreshToken);
                 navigate("/");
@@ -53,6 +61,29 @@ export function RegisterPage() {
                 alert("Не удалось зарегистрироваться: " + (e.response?.data?.message || e.message));
             });
     };
+
+    if (registeredEmail) {
+        return (
+            <Layout>
+                <Container maxWidth="sm" sx={{ minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Paper elevation={3} sx={{ padding: 4, width: "100%", borderRadius: 2 }}>
+                        <Typography variant="h5" align="center" gutterBottom>
+                            Проверьте почту
+                        </Typography>
+                        <Alert severity="success" sx={{ mt: 2 }}>
+                            Мы отправили письмо со ссылкой для подтверждения на адрес {registeredEmail}. Перейдите по ссылке, после этого можно войти.
+                        </Alert>
+                        <Button fullWidth variant="contained" sx={{ mt: 3 }} onClick={() => navigate('/login')}>
+                            Перейти ко входу
+                        </Button>
+                        <Button fullWidth variant="text" sx={{ mt: 1 }} onClick={() => navigate('/resend-confirmation')}>
+                            Письмо не пришло
+                        </Button>
+                    </Paper>
+                </Container>
+            </Layout>
+        );
+    }
 
     return (
         <Layout>

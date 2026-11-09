@@ -10,13 +10,15 @@ import {
     Typography,
     Paper,
     Box,
-    Link
+    Link,
+    Alert
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 export function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [error, setError] = useState<{ code: string; text: string } | null>(null);
     const navigate = useNavigate();
 
     const onChangeLogin = (event: ChangeEvent<HTMLInputElement>) => {
@@ -29,6 +31,7 @@ export function LoginPage() {
 
     const onSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        setError(null);
         login(email, password)
             .then(response => {
                 const loginResponse: LoginResponse = response.data;
@@ -38,7 +41,14 @@ export function LoginPage() {
             })
             .catch(e => {
                 console.log(e);
-                alert("Не удалось войти");
+                const status = e.response?.status;
+                if (status === 403 && e.response?.data?.error === "EmailNotConfirmed") {
+                    setError({ code: "EmailNotConfirmed", text: "Подтвердите адрес электронной почты: мы отправили письмо со ссылкой при регистрации." });
+                } else if (status === 429) {
+                    setError({ code: "LockedOut", text: "Слишком много неудачных попыток входа. Подождите несколько минут и попробуйте снова." });
+                } else {
+                    setError({ code: "Invalid", text: "Не удалось войти. Проверьте логин и пароль." });
+                }
             });
     };
 
@@ -77,6 +87,20 @@ export function LoginPage() {
                             onChange={onChangePassword}
                             required
                         />
+
+                        {error && (
+                            <Alert
+                                severity="warning"
+                                sx={{ mt: 1 }}
+                                action={error.code === "EmailNotConfirmed" ? (
+                                    <Button color="inherit" size="small" onClick={() => navigate('/resend-confirmation')}>
+                                        Отправить ещё раз
+                                    </Button>
+                                ) : undefined}
+                            >
+                                {error.text}
+                            </Alert>
+                        )}
 
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
                             <Link

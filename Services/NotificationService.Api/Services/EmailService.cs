@@ -34,6 +34,17 @@ public class EmailService : IEmailService
     /// <inheritdoc/>
     public async Task<bool> SendEmailAsync(SendEmailDto emailDto)
     {
+        if (string.IsNullOrWhiteSpace(this.smtpSettings.Host) || string.IsNullOrWhiteSpace(this.smtpSettings.Username))
+        {
+            // A stand without a mail server: the message is written to the log, so that links (e-mail confirmation, password reset) can be followed.
+            this.logger.LogWarning(
+                "SMTP is not configured, the e-mail was not sent. To: {To}, subject: {Subject}, body: {Body}",
+                emailDto.To,
+                emailDto.Subject,
+                emailDto.Body);
+            return true;
+        }
+
         try
         {
             var message = new MimeMessage();

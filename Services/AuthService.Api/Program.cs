@@ -74,6 +74,9 @@ builder.Services.AddAuthorization(
 
 var internalApiKey = builder.Configuration["Internal:ApiKey"];
 
+// Without a confirmed e-mail nobody can sign in. It can be switched off for a local stand without a mail server.
+var requireConfirmedEmail = builder.Configuration.GetValue("Auth:RequireConfirmedEmail", true);
+
 // Other services of the system (Core) call a few read endpoints without a user token, they prove themselves by the shared key.
 bool IsInternalCall(HttpContext http)
 {
@@ -129,6 +132,10 @@ builder.Services.AddSwaggerGen(c =>
         });
 });
 
+// Only the listed origins (comma separated, Cors:AllowedOrigins) may call the API from a browser with credentials.
+var corsOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 builder.Services.AddCors(
     options =>
     {
@@ -137,7 +144,7 @@ builder.Services.AddCors(
             policyBuilder => policyBuilder
                 .AllowAnyMethod()
                 .AllowCredentials()
-                .SetIsOriginAllowed((_) => true)
+                .WithOrigins(corsOrigins)
                 .AllowAnyHeader());
     });
 
@@ -241,20 +248,30 @@ app.MapPost("/register", async (
         assignedRoles.ToArray(),
         DateTime.UtcNow));
 
-    var emailToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
-    var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(emailToken));
-    var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:8000/practices-service";
-    var confirmLink = $"{frontendUrl}/confirm-email?token={encodedToken}&email={user.Email}";
+    if (IsAdmin(http))
+    {
+        // The administrator creates the account and vouches for the address.
+        user.EmailConfirmed = true;
+        await userManager.UpdateAsync(user);
+    }
+    else
+    {
+        var emailToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(emailToken));
+        var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:8000/practices-service";
+        var confirmLink = $"{frontendUrl}/confirm-email?token={encodedToken}&email={user.Email}";
 
-    await publishEndpoint.Publish(new EmailConfirmationRequestedEvent(
-        UserId: user.Id,
-        Email: user.Email!,
-        UserName: user.UserName!,
-        ConfirmLink: confirmLink,
-        RequestedAt: DateTime.UtcNow));
+        await publishEndpoint.Publish(new EmailConfirmationRequestedEvent(
+            UserId: user.Id,
+            Email: user.Email!,
+            UserName: user.UserName!,
+            ConfirmLink: confirmLink,
+            RequestedAt: DateTime.UtcNow));
+    }
 
-    var token = await tokenService.GenerateJwtToken(user);
-    var refreshToken = await tokenService.GenerateRefreshToken(user);
+    // A token given here would let the new user skip the confirmation, so it is issued only when confirmation is switched off.
+    var token = requireConfirmedEmail ? null : await tokenService.GenerateJwtToken(user);
+    var refreshToken = requireConfirmedEmail ? null : await tokenService.GenerateRefreshToken(user);
 
     await auditService.LogActionAsync(
         "UserRegistration",
@@ -270,6 +287,7 @@ app.MapPost("/register", async (
         AssignedRoles = assignedRoles,
         Token = token,
         RefreshToken = refreshToken,
+        RequiresEmailConfirmation = requireConfirmedEmail && !IsAdmin(http),
         Message = "Registration successful. Please confirm your email.",
     });
 })
@@ -298,7 +316,22 @@ app.MapPost("/login", async (
         return Results.BadRequest("Invalid credentials");
     }
 
-    var result = await signInManager.CheckPasswordSignInAsync(user, login.Password, false);
+    var result = await signInManager.CheckPasswordSignInAsync(user, login.Password, lockoutOnFailure: true);
+    if (result.IsLockedOut)
+    {
+        await auditService.LogErrorAsync(
+            "UserLogin",
+            "User",
+            user.Id,
+            "Account is locked after too many failed attempts",
+            user.Id,
+            user.Email);
+
+        return Results.Json(
+            new { error = "LockedOut", message = "Too many failed attempts, try again later." },
+            statusCode: StatusCodes.Status429TooManyRequests);
+    }
+
     if (!result.Succeeded)
     {
         await auditService.LogErrorAsync(
@@ -310,6 +343,22 @@ app.MapPost("/login", async (
             user.Email);
 
         return Results.BadRequest("Invalid credentials");
+    }
+
+    // Checked after the password, so that the state of an account is not shown to someone who does not know the password.
+    if (requireConfirmedEmail && !user.EmailConfirmed)
+    {
+        await auditService.LogErrorAsync(
+            "UserLogin",
+            "User",
+            user.Id,
+            "E-mail is not confirmed",
+            user.Id,
+            user.Email);
+
+        return Results.Json(
+            new { error = "EmailNotConfirmed", message = "Confirm your e-mail to sign in." },
+            statusCode: StatusCodes.Status403Forbidden);
     }
 
     var roles = await userManager.GetRolesAsync(user);
@@ -493,7 +542,7 @@ app.MapPost("/resend-confirmation", async (
 
     var emailToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
     var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(emailToken));
-    var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:8000";
+    var frontendUrl = configuration["Frontend:Url"] ?? "http://localhost:8000/practices-service";
     var confirmLink = $"{frontendUrl}/confirm-email?token={encodedToken}&email={user.Email}";
 
     await publishEndpoint.Publish(new EmailConfirmationRequestedEvent(

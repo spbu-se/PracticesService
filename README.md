@@ -50,15 +50,12 @@
 
 ### Production
 
-1. Соберите и запустите в production режиме:
+1. Скопируйте `.env.example` в `.env` и заполните (в том числе `ASPNETCORE_ENVIRONMENT=Production`, `FRONTEND_URL`, `PUBLIC_API_URL`, `CORS_ORIGINS`).
+2. Запустите:
     ```bash
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
     ```
-
-2. Проверьте логи:
-    ```bash
-    docker-compose logs -f
-    ```
+3. Настройте nginx
 
 ## Доступ к сервисам (разработка)
 
@@ -84,18 +81,17 @@
 
 ## Переменные окружения
 
-### Frontend
-- `VITE_API_BASE_URL` - Базовый URL API (по умолчанию: http://localhost:5000)
+Все значения задаются в `.env` (образец: `.env.example`), docker compose подставляет их в сервисы.
 
-### Backend
-- `ASPNETCORE_ENVIRONMENT` - Development/Production
-- `RabbitMQ__Host`, `RabbitMQ__Username`, `RabbitMQ__Password`
-- `RUN_MIGRATIONS` - Применять миграции при запуске (только Auth)
+- `ASPNETCORE_ENVIRONMENT` - Development (по умолчанию) или Production
+- `FRONTEND_URL`, `PUBLIC_API_URL`, `CORS_ORIGINS` - адреса сайта, API и разрешённые источники
+- `AUTH_REQUIRE_CONFIRMED_EMAIL` - вход только после подтверждения почты (по умолчанию true)
+- `JWT_KEY`, `INTERNAL_API_KEY`, пароли баз данных и RabbitMQ, `LLM_API_KEY`, SMTP и S3 - секреты
 
 ## Конфигурационные файлы
 
 - `docker-compose.yml` - Базовая конфигурация
-- `docker-compose.prod.yml` - Настройки для продакшена
+- `docker-compose.prod.yml` - Настройки для продакшена (сборка сайта, перезапуск, закрытые порты)
 
 ## Права доступа
 
