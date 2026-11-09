@@ -12,7 +12,7 @@ using MongoDB.Bson.Serialization.Attributes;
 /// <summary>
 /// Represents a presentation file associated with a practice.
 /// </summary>
-public class Presentation
+public class Presentation : IPracticeScoped
 {
     /// <summary>
     /// Gets or sets the unique identifier of the presentation.

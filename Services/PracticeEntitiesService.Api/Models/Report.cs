@@ -12,7 +12,7 @@ using MongoDB.Bson.Serialization.Attributes;
 /// <summary>
 /// Represents a report related to a practice.
 /// </summary>
-public class Report
+public class Report : IPracticeScoped
 {
     /// <summary>
     /// Gets or sets the unique identifier of the report.

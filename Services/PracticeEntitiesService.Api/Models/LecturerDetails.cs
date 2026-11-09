@@ -17,6 +17,11 @@ public class LecturerDetails
     /// <summary>
     /// Gets or sets the email.
     /// </summary>
+    public string? Userid { get; set; }
+
+    /// <summary>
+    /// Gets or sets the e-mail.
+    /// </summary>
     public string? Email { get; set; }
 
     /// <summary>

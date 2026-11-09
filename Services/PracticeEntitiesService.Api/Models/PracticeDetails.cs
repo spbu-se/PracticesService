@@ -28,4 +28,9 @@ public class PracticeDetails
     /// Gets or sets the supervisor details.
     /// </summary>
     public LecturerDetails? Supervisor { get; set; }
+
+    /// <summary>
+    /// Gets or sets the consultant.
+    /// </summary>
+    public ConsultantDetails? Consultant { get; set; }
 }

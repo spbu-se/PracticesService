@@ -8,6 +8,7 @@ using AuditService.Api.Models;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -52,11 +53,19 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddAuthentication("GatewayAuth")
-    .AddScheme<AuthenticationSchemeOptions, GatewayAuthHandler.GatewayAuthHandler>("GatewayAuth", null);
+    .AddScheme<AuthenticationSchemeOptions, GatewayAuthHandler.GatewayAuthHandler>("GatewayAuth", null)
+    .AddScheme<GatewayAuthHandler.InternalKeyOptions, GatewayAuthHandler.InternalKeyAuthHandler>(
+        "InternalKey",
+        options => options.ApiKey = builder.Configuration["Internal:ApiKey"] ?? string.Empty);
 
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Администратор"));
+
+    // Everything requires a signed-in user (or another service of the system) unless it is marked AllowAnonymous.
+    options.FallbackPolicy = new AuthorizationPolicyBuilder("GatewayAuth", "InternalKey")
+        .RequireAuthenticatedUser()
+        .Build();
 });
 
 builder.Services.AddCors(

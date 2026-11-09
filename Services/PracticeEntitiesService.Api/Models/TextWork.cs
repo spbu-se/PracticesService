@@ -12,7 +12,7 @@ using MongoDB.Bson.Serialization.Attributes;
 /// <summary>
 /// Represents a text work document related to a practice.
 /// </summary>
-public class TextWork
+public class TextWork : IPracticeScoped
 {
     /// <summary>
     /// Gets or sets the unique identifier of the text work.

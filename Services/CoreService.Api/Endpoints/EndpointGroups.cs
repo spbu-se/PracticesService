@@ -32,7 +32,8 @@ public static class EndpointGroups
                 var result = await queries.GetThemes();
                 await auditService.LogActionAsync("GetThemes", "Theme", null, new { Count = result.Count() });
                 return result;
-            });
+            })
+            .AllowAnonymous();
 
         group.MapGet(
             "/{themeId:int}",
@@ -42,7 +43,8 @@ public static class EndpointGroups
                 var result = await queries.GetThemes(themeId);
                 await auditService.LogActionAsync("GetTheme", "Theme", themeId.ToString(), null);
                 return result;
-            });
+            })
+            .AllowAnonymous();
 
         group.MapPost(
             "/",
@@ -53,7 +55,8 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("CreateTheme", "Theme", id.ToString(), new { Title = theme.Title });
                 return id;
             })
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequireThemeAuthorOnCreate();
 
         group.MapPut(
             "/",
@@ -64,7 +67,8 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("UpdateTheme", "Theme", theme.Id.ToString(), new { Title = theme.Title, IsArchived = theme.Isarchived });
                 return result;
             })
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequireThemeAuthor();
 
         group.MapDelete(
             "/{themeId:int}",
@@ -75,7 +79,8 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("DeleteTheme", "Theme", themeId.ToString(), null);
                 return result;
             })
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequireThemeAuthor();
 
         return group;
     }
@@ -112,7 +117,8 @@ public static class EndpointGroups
                 var result = await new ConsultantsQueries(context).GetConsultantByUserId(userId);
                 await auditService.LogActionAsync("GetConsultantByUserId", "Consultant", null, new { UserId = userId });
                 return result;
-            });
+            })
+            .RequireOwnUserId();
 
         group.MapPost(
             "/",
@@ -131,7 +137,7 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("CreateConsultant", "Consultant", consultant.Id.ToString(), new { consultant.Userid });
                 return result;
             })
-            .RequireAuthorization();
+            .RequireAuthorization("AdminOnly");
 
         group.MapPut(
             "/",
@@ -156,7 +162,8 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("UpdateConsultant", "Consultant", consultant.Id.ToString(), new { consultant.Userid });
                 return result;
             })
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequireConsultantSelfOrAdmin();
 
         group.MapDelete(
             "/{consultantId:int}",
@@ -176,7 +183,7 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("DeleteConsultant", "Consultant", consultantId.ToString(), null);
                 return result;
             })
-            .RequireAuthorization();
+            .RequireAuthorization("AdminOnly");
 
         return group;
     }
@@ -214,7 +221,7 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("CreateGroup", "Group", id.ToString(), new { group.Name });
                 return id;
             })
-            .RequireAuthorization();
+            .RequireAuthorization("AdminOnly");
 
         group.MapPut(
             "/",
@@ -224,7 +231,7 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("UpdateGroup", "Group", group.Id.ToString(), new { group.Name });
                 return result;
             })
-            .RequireAuthorization();
+            .RequireAuthorization("AdminOnly");
 
         group.MapDelete(
             "/{groupId:int}",
@@ -234,7 +241,7 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("DeleteGroup", "Group", groupId.ToString(), null);
                 return result;
             })
-            .RequireAuthorization();
+            .RequireAuthorization("AdminOnly");
 
         return group;
     }
@@ -271,7 +278,8 @@ public static class EndpointGroups
                 var result = await new LecturersQueries(context).GetLecturerByUserId(userId);
                 await auditService.LogActionAsync("GetLecturerByUserId", "Lecturer", null, new { UserId = userId });
                 return result;
-            });
+            })
+            .RequireOwnUserId();
 
         group.MapPost(
             "/",
@@ -315,7 +323,8 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("UpdateLecturer", "Lecturer", lecturer.Id.ToString(), new { lecturer.Userid });
                 return result;
             })
-            .RequireAuthorization("AdminOnly");
+            .RequireAuthorization()
+            .RequireLecturerSelfOrAdmin();
 
         group.MapDelete(
             "/{lecturerId:int}",
@@ -360,7 +369,8 @@ public static class EndpointGroups
                 var result = await queries.GetPractices();
                 await auditService.LogActionAsync("GetPractices", "Practice", null, new { Count = result.Count() });
                 return result;
-            });
+            })
+            .RequirePracticeList();
 
         group.MapGet(
             "/{practiceId:int}",
@@ -376,7 +386,8 @@ public static class EndpointGroups
 
                 await auditService.LogActionAsync("GetPractice", "Practice", practiceId.ToString(), null);
                 return Results.Ok(practice);
-            });
+            })
+            .RequirePracticeRead();
 
         group.MapGet(
             "/student",
@@ -386,7 +397,8 @@ public static class EndpointGroups
                 var result = await queries.GetPracticesByStudent(userId);
                 await auditService.LogActionAsync("GetPracticesByStudent", "Practice", null, new { UserId = userId });
                 return result;
-            });
+            })
+            .RequireOwnUserId(true);
 
         group.MapGet(
             "/supervisor",
@@ -396,7 +408,8 @@ public static class EndpointGroups
                 var result = await queries.GetPracticesBySupervisor(userId);
                 await auditService.LogActionAsync("GetPracticesBySupervisor", "Practice", null, new { UserId = userId });
                 return result;
-            });
+            })
+            .RequireOwnUserId(true);
 
         group.MapPost(
             "/",
@@ -407,7 +420,8 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("CreatePractice", "Practice", id.ToString(), new { practice.Type });
                 return id;
             })
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequirePracticeCreate();
 
         group.MapPut(
             "/",
@@ -418,7 +432,8 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("UpdatePractice", "Practice", practice.Id.ToString(), new { practice.Status, practice.Finalgrade });
                 return result;
             })
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequirePracticeUpdate();
 
         group.MapDelete(
             "/{practiceId:int}",
@@ -429,7 +444,8 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("DeletePractice", "Practice", practiceId.ToString(), null);
                 return result;
             })
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequirePracticeDelete();
 
         return group;
     }
@@ -448,7 +464,8 @@ public static class EndpointGroups
                 var result = await new StudentsQueries(context).GetStudents();
                 await auditService.LogActionAsync("GetStudents", "Student", null, new { Count = result.Count() });
                 return result;
-            });
+            })
+            .RequireAuthorization("Managers");
 
         group.MapGet(
             "/{studentId:int}",
@@ -457,7 +474,8 @@ public static class EndpointGroups
                 var result = await new StudentsQueries(context).GetStudents(studentId);
                 await auditService.LogActionAsync("GetStudent", "Student", studentId.ToString(), null);
                 return result;
-            });
+            })
+            .RequireAuthorization("Managers");
 
         group.MapGet(
             "/byUserId",
@@ -466,7 +484,8 @@ public static class EndpointGroups
                 var result = await new StudentsQueries(context).GetStudentByUserId(userId);
                 await auditService.LogActionAsync("GetStudentByUserId", "Student", null, new { UserId = userId });
                 return result;
-            });
+            })
+            .RequireOwnUserId();
 
         group.MapPost(
             "/",
@@ -485,7 +504,7 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("CreateStudent", "Student", student.Id.ToString(), new { student.Userid });
                 return result;
             })
-            .RequireAuthorization();
+            .RequireAuthorization("AdminOnly");
 
         group.MapPut(
             "/",
@@ -511,7 +530,8 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("UpdateStudent", "Student", student.Id.ToString(), new { student.Userid });
                 return result;
             })
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequireStudentSelfOrAdmin();
 
         group.MapDelete(
             "/{studentId:int}",
@@ -536,7 +556,7 @@ public static class EndpointGroups
                 await auditService.LogActionAsync("DeleteStudent", "Student", studentId.ToString(), null);
                 return result;
             })
-            .RequireAuthorization();
+            .RequireAuthorization("AdminOnly");
 
         return group;
     }

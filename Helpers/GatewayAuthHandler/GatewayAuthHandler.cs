@@ -45,7 +45,15 @@ namespace GatewayAuthHandler
 
             var token = authHeader.ToString().Replace("Bearer ", string.Empty, StringComparison.OrdinalIgnoreCase);
             var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
+            JwtSecurityToken jwtToken;
+            try
+            {
+                jwtToken = handler.ReadJwtToken(token);
+            }
+            catch (ArgumentException)
+            {
+                return Task.FromResult(AuthenticateResult.Fail("Malformed token"));
+            }
 
             var claims = jwtToken.Claims.ToList();
             var identity = new ClaimsIdentity(claims, "GatewayAuth");

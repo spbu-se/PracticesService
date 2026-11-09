@@ -10,7 +10,7 @@ using MongoDB.Bson.Serialization.Attributes;
 /// <summary>
 /// Represents the goals and tasks associated with a practice.
 /// </summary>
-public class GoalsAndTasks
+public class GoalsAndTasks : IPracticeScoped
 {
     /// <summary>
     /// Gets or sets the unique identifier of the goals and tasks record.

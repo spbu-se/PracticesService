@@ -12,6 +12,7 @@ using AuthService.Api.Models;
 using Contracts;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
@@ -63,7 +64,35 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddAuditService();
 
 builder.Services.AddAuthorization(
-    options => { options.AddPolicy("AdminOnly", policy => policy.RequireRole("Администратор")); });
+    options =>
+    {
+        options.AddPolicy("AdminOnly", policy => policy.RequireRole("Администратор"));
+
+        // Everything requires a signed-in user unless it is marked AllowAnonymous.
+        options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+    });
+
+var internalApiKey = builder.Configuration["Internal:ApiKey"];
+
+// Other services of the system (Core) call a few read endpoints without a user token, they prove themselves by the shared key.
+bool IsInternalCall(HttpContext http)
+{
+    if (!http.Request.Headers.TryGetValue("X-Internal-Key", out var provided)
+        || string.IsNullOrEmpty(internalApiKey)
+        || string.IsNullOrEmpty(provided))
+    {
+        return false;
+    }
+
+    return System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(
+        Encoding.UTF8.GetBytes(provided.ToString()),
+        Encoding.UTF8.GetBytes(internalApiKey));
+}
+
+bool IsAdmin(HttpContext http) => http.User.IsInRole(RoleNames.GetName(UserRoleType.Administrator));
+
+bool IsSelf(HttpContext http, string userId) =>
+    http.User.FindFirstValue(ClaimTypes.NameIdentifier) == userId;
 
 builder.Services.AddEndpointsApiExplorer();
 var gatewayBasePath = builder.Configuration["Swagger:GatewayBasePath"] ?? "/api";
@@ -172,6 +201,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapPost("/register", async (
+    HttpContext http,
     UserService userService,
     IPublishEndpoint publishEndpoint,
     ApplicationUserDTO userDto,
@@ -195,7 +225,11 @@ app.MapPost("/register", async (
         return Results.BadRequest(result.Errors);
     }
 
-    var assignedRoles = await userService.AssignRolesAsync(user, userDto.Roles);
+    // Self-registration always gives the Student role. Other roles can only be given by an administrator.
+    var requestedRoles = IsAdmin(http) && userDto.Roles?.Length > 0
+        ? userDto.Roles
+        : new[] { RoleNames.GetName(UserRoleType.Student) };
+    var assignedRoles = await userService.AssignRolesAsync(user, requestedRoles);
 
     await publishEndpoint.Publish(new UserCreatedEvent(
         user.Id,
@@ -563,6 +597,7 @@ app.MapPost("/confirm-email", async (
 .WithOpenApi();
 
 app.MapPut("/users/{userId}", async (
+    HttpContext http,
     string userId,
     UserService userService,
     UserManager<ApplicationUser> userManager,
@@ -570,6 +605,11 @@ app.MapPut("/users/{userId}", async (
     UserDTO userDto,
     IAuditService auditService) =>
 {
+    if (!IsAdmin(http) && !IsSelf(http, userId))
+    {
+        return Results.Forbid();
+    }
+
     var user = await userManager.FindByIdAsync(userId);
     if (user == null)
     {
@@ -583,6 +623,13 @@ app.MapPut("/users/{userId}", async (
     }
 
     var oldRoles = await userManager.GetRolesAsync(user);
+
+    // Only an administrator may change roles, a user editing the own profile keeps the current ones.
+    if (!IsAdmin(http))
+    {
+        userDto.Roles = oldRoles.ToArray();
+    }
+
     var oldFirstName = user.FirstName;
     var oldLastName = user.LastName;
     var oldMiddleName = user.MiddleName;
@@ -711,12 +758,19 @@ app.MapDelete("/users/{userId}", async (
         user.Email);
 
     return Results.Ok(new { UserId = userId });
-});
+})
+.RequireAuthorization("AdminOnly");
 
 app.MapGet("/users/{userId}", async (
+    HttpContext http,
     string userId,
     UserManager<ApplicationUser> userManager) =>
 {
+    if (!IsInternalCall(http) && !(http.User.Identity?.IsAuthenticated == true && (IsAdmin(http) || IsSelf(http, userId))))
+    {
+        return http.User.Identity?.IsAuthenticated == true ? Results.Forbid() : Results.Unauthorized();
+    }
+
     var user = await userManager.FindByIdAsync(userId);
     if (user == null)
     {
@@ -734,7 +788,8 @@ app.MapGet("/users/{userId}", async (
         user.MiddleName,
         Roles = roles,
     });
-});
+})
+.AllowAnonymous();
 
 app.MapPost("/refresh", async (
     TokenService tokenService,
@@ -774,7 +829,8 @@ app.MapPost("/refresh", async (
 
         return Results.BadRequest(ex.Message);
     }
-});
+})
+.AllowAnonymous();
 
 app.MapPost("/add-role", async (
     UserManager<ApplicationUser> userManager,
@@ -838,15 +894,22 @@ app.MapPost("/add-role", async (
 
     return Results.Ok($"Role '{role}' added to {email}");
 })
-.RequireAuthorization();
+.RequireAuthorization("AdminOnly");
 
 app.MapGet("/userId", async (
+    HttpContext http,
     UserManager<ApplicationUser> userManager,
     string userName) =>
 {
+    if (!IsInternalCall(http) && http.User.Identity?.IsAuthenticated != true)
+    {
+        return Results.Unauthorized();
+    }
+
     var user = await userManager.FindByNameAsync(userName);
-    return user?.Id;
-});
+    return Results.Text(user?.Id ?? string.Empty);
+})
+.AllowAnonymous();
 
 app.MapGet("/users", async (
     UserManager<ApplicationUser> userManager,

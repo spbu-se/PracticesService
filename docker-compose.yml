@@ -61,6 +61,7 @@ services:
     container_name: audit.api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - Internal__ApiKey=${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in .env}
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Username=${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
       - RabbitMQ__Password=${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
@@ -81,6 +82,7 @@ services:
     container_name: core.api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - Internal__ApiKey=${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in .env}
       - ENVIRONMENT=Docker
       - ConnectionStrings__Docker=Server=core.db;Database=postgres;Username=postgres;Password=${CORE_DB_PASSWORD:?Set CORE_DB_PASSWORD in .env}
       - RabbitMQ__Host=rabbitmq
@@ -126,6 +128,7 @@ services:
     container_name: auth.api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - Internal__ApiKey=${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in .env}
       - ENVIRONMENT=Docker
       - RUN_MIGRATIONS=true
       - ConnectionStrings__Docker=Server=auth.db;Database=postgres;Username=postgres;Password=${AUTH_DB_PASSWORD:?Set AUTH_DB_PASSWORD in .env}
@@ -156,6 +159,7 @@ services:
     container_name: practice-entities.api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - Internal__ApiKey=${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in .env}
       - ENVIRONMENT=Docker
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Username=${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
@@ -220,6 +224,7 @@ services:
     container_name: notification.api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - Internal__ApiKey=${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in .env}
       - ENVIRONMENT=Docker
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Username=${RABBITMQ_USER:?Set RABBITMQ_USER in .env}

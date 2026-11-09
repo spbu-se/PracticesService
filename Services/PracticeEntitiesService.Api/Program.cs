@@ -6,6 +6,8 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Contracts;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
@@ -43,6 +45,23 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpClient("CoreService", client =>
 {
     client.BaseAddress = new Uri("http://core.api:8080/");
+    client.DefaultRequestHeaders.Add(
+        GatewayAuthHandler.InternalKeyAuthHandler.HeaderName,
+        builder.Configuration["Internal:ApiKey"] ?? string.Empty);
+});
+
+builder.Services.AddAuthentication("GatewayAuth")
+    .AddScheme<AuthenticationSchemeOptions, GatewayAuthHandler.GatewayAuthHandler>("GatewayAuth", null)
+    .AddScheme<GatewayAuthHandler.InternalKeyOptions, GatewayAuthHandler.InternalKeyAuthHandler>(
+        "InternalKey",
+        options => options.ApiKey = builder.Configuration["Internal:ApiKey"] ?? string.Empty);
+
+builder.Services.AddAuthorization(options =>
+{
+    // Everything requires a signed-in user (or another service of the system) unless it is marked AllowAnonymous.
+    options.FallbackPolicy = new AuthorizationPolicyBuilder("GatewayAuth", "InternalKey")
+        .RequireAuthenticatedUser()
+        .Build();
 });
 
 // Add Audit Service
@@ -114,6 +133,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapPost("/api/feedbacks", async (
     [FromForm] Feedback feedback,
@@ -205,7 +227,8 @@ app.MapPost("/api/feedbacks", async (
         logger.LogError(ex, "Error submitting feedback for practice {PracticeId}", feedback.PracticeId);
         return Results.Problem("Failed to submit feedback");
     }
-}).DisableAntiforgery();
+}).DisableAntiforgery()
+    .RequireFeedbackAccess();
 
 app.MapGet("/api/feedbacks/{practiceId:int}", async (
     int practiceId,
@@ -234,7 +257,8 @@ app.MapGet("/api/feedbacks/{practiceId:int}", async (
         new { PracticeId = practiceId, Count = feedbacks.Count });
 
     return Results.Ok(feedbacks);
-});
+})
+    .RequirePracticeRead();
 
 app.MapPost("/api/text-works", async (
     [FromForm] TextWork model,
@@ -320,7 +344,8 @@ app.MapPost("/api/text-works", async (
         logger.LogError(ex, "Error submitting text work for practice {PracticeId}", model.PracticeId);
         return Results.Problem("Failed to submit text work");
     }
-}).DisableAntiforgery();
+}).DisableAntiforgery()
+    .RequirePracticeContribute();
 
 app.MapGet("/api/text-works/{practiceId:int}", async (
     int practiceId,
@@ -341,7 +366,8 @@ app.MapGet("/api/text-works/{practiceId:int}", async (
         new { PracticeId = practiceId, Count = textWorks.Count });
 
     return Results.Ok(textWorks);
-});
+})
+    .RequirePracticeRead();
 
 app.MapGet("/api/text-works/latest/{practiceId:int}", async (
     int practiceId,
@@ -362,7 +388,8 @@ app.MapGet("/api/text-works/latest/{practiceId:int}", async (
         new { PracticeId = practiceId });
 
     return latest is not null ? Results.Ok(latest) : Results.NotFound();
-});
+})
+    .RequirePracticeRead();
 
 app.MapPost("/api/text-works/{id}/comments", async (
     IMongoDatabase db,
@@ -441,7 +468,8 @@ app.MapPost("/api/text-works/{id}/comments", async (
         logger.LogError(ex, "Error adding comment to text work {TextWorkId}", id);
         return Results.Problem("Failed to add comment");
     }
-});
+})
+    .RequireTextWorkCommentAccess();
 
 app.MapPost("/api/presentations", async (
     [FromForm] Presentation model,
@@ -527,7 +555,8 @@ app.MapPost("/api/presentations", async (
         logger.LogError(ex, "Error submitting presentation for practice {PracticeId}", model.PracticeId);
         return Results.Problem("Failed to submit presentation");
     }
-}).DisableAntiforgery();
+}).DisableAntiforgery()
+    .RequirePracticeContribute();
 
 app.MapGet("/api/presentations/{practiceId:int}", async (
     int practiceId,
@@ -548,7 +577,8 @@ app.MapGet("/api/presentations/{practiceId:int}", async (
         new { PracticeId = practiceId, Count = presentations.Count });
 
     return Results.Ok(presentations);
-});
+})
+    .RequirePracticeRead();
 
 app.MapGet("/api/presentations/latest/{practiceId:int}", async (
     int practiceId,
@@ -569,7 +599,8 @@ app.MapGet("/api/presentations/latest/{practiceId:int}", async (
         new { PracticeId = practiceId });
 
     return latest is not null ? Results.Ok(latest) : Results.NotFound();
-});
+})
+    .RequirePracticeRead();
 
 app.MapPost("/api/presentations/{id}/comments", async (
     IMongoDatabase db,
@@ -648,7 +679,8 @@ app.MapPost("/api/presentations/{id}/comments", async (
         logger.LogError(ex, "Error adding comment to presentation {PresentationId}", id);
         return Results.Problem("Failed to add comment");
     }
-});
+})
+    .RequirePresentationCommentAccess();
 
 app.MapPost("/api/goals-tasks", async (
     [FromBody] GoalsAndTasks input,
@@ -735,7 +767,8 @@ app.MapPost("/api/goals-tasks", async (
         logger.LogError(ex, "Error saving goals and tasks for practice {PracticeId}", input.PracticeId);
         return Results.Problem("Failed to save goals and tasks");
     }
-});
+})
+    .RequirePracticeContribute();
 
 app.MapGet("/api/goals-tasks/{practiceId:int}", async (
     IMongoDatabase db,
@@ -753,7 +786,8 @@ app.MapGet("/api/goals-tasks/{practiceId:int}", async (
         new { PracticeId = practiceId, Found = result != null });
 
     return result is not null ? Results.Ok(result) : Results.NotFound();
-});
+})
+    .RequirePracticeRead();
 
 app.MapPost("/api/reports", async (
     IMongoDatabase db,
@@ -807,7 +841,8 @@ app.MapPost("/api/reports", async (
         logger.LogError(ex, "Error submitting report for practice {PracticeId}", input.PracticeId);
         return Results.Problem("Failed to submit report");
     }
-});
+})
+    .RequirePracticeContribute();
 
 app.MapGet("/api/reports/{practiceId:int}", async (
     IMongoDatabase db,
@@ -827,7 +862,8 @@ app.MapGet("/api/reports/{practiceId:int}", async (
         new { PracticeId = practiceId, Count = reports.Count });
 
     return Results.Ok(reports);
-});
+})
+    .RequirePracticeRead();
 
 app.MapPost("/api/reports/{id}/comments", async (
     IMongoDatabase db,
@@ -904,7 +940,8 @@ app.MapPost("/api/reports/{id}/comments", async (
         logger.LogError(ex, "Error adding comment to report {ReportId}", id);
         return Results.Problem("Failed to add comment");
     }
-});
+})
+    .RequireReportCommentAccess();
 
 app.MapPost("/api/repositories", async (
     IMongoDatabase db,
@@ -944,7 +981,8 @@ app.MapPost("/api/repositories", async (
         new { input.PracticeId });
 
     return Results.Created($"/api/repositories/{input.PracticeId}", input);
-});
+})
+    .RequirePracticeContribute();
 
 app.MapGet("/api/repositories/{practiceId:int}", async (
     IMongoDatabase db,
@@ -961,7 +999,8 @@ app.MapGet("/api/repositories/{practiceId:int}", async (
         new { PracticeId = practiceId, Found = repo != null });
 
     return repo != null ? Results.Ok(repo) : Results.NotFound();
-});
+})
+    .RequirePracticeRead();
 
 app.MapPost("/api/messages", async (
     IMongoDatabase db,
@@ -1022,7 +1061,8 @@ app.MapPost("/api/messages", async (
         logger.LogError(ex, "Error sending message for practice {PracticeId}", input.PracticeId);
         return Results.Problem("Failed to send message");
     }
-});
+})
+    .RequirePracticeContribute();
 
 app.MapGet("/api/messages/{practiceId:int}", async (
     IMongoDatabase db,
@@ -1043,6 +1083,7 @@ app.MapGet("/api/messages/{practiceId:int}", async (
         new { PracticeId = practiceId, Count = messages.Count });
 
     return messages.Count > 0 ? Results.Ok(messages) : Results.NotFound();
-});
+})
+    .RequirePracticeRead();
 
 app.Run();

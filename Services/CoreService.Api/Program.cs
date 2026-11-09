@@ -12,6 +12,7 @@ using CoreService.Api.Endpoints;
 using CoreService.Api.Services;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -63,14 +64,26 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddHttpClient("AuthService", client =>
 {
     client.BaseAddress = new Uri("http://auth.api:8080/");
+    client.DefaultRequestHeaders.Add(
+        GatewayAuthHandler.InternalKeyAuthHandler.HeaderName,
+        builder.Configuration["Internal:ApiKey"] ?? string.Empty);
 });
 
 builder.Services.AddAuthentication("GatewayAuth")
-    .AddScheme<AuthenticationSchemeOptions, GatewayAuthHandler.GatewayAuthHandler>("GatewayAuth", null);
+    .AddScheme<AuthenticationSchemeOptions, GatewayAuthHandler.GatewayAuthHandler>("GatewayAuth", null)
+    .AddScheme<GatewayAuthHandler.InternalKeyOptions, GatewayAuthHandler.InternalKeyAuthHandler>(
+        "InternalKey",
+        options => options.ApiKey = builder.Configuration["Internal:ApiKey"] ?? string.Empty);
 
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Администратор"));
+    options.AddPolicy("Managers", policy => policy.RequireRole("Администратор", "Руководитель практики"));
+
+    // Everything requires a signed-in user (or another service of the system) unless it is marked AllowAnonymous.
+    options.FallbackPolicy = new AuthorizationPolicyBuilder("GatewayAuth", "InternalKey")
+        .RequireAuthenticatedUser()
+        .Build();
 });
 
 // Current environment
@@ -144,6 +157,7 @@ builder.Services.AddMassTransit(x =>
 });
 
 builder.Services.AddScoped<UserResolverService>();
+builder.Services.AddScoped<CoreAccess>();
 
 // Add Audit Service
 builder.Services.AddAuditService();

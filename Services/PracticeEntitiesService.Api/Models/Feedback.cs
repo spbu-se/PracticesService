@@ -10,7 +10,7 @@ using MongoDB.Bson.Serialization.Attributes;
 /// <summary>
 /// Represents feedback associated with a practice report.
 /// </summary>
-public class Feedback
+public class Feedback : IPracticeScoped
 {
     /// <summary>
     /// Gets or sets the unique identifier of the feedback.

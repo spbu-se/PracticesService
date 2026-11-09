@@ -11,7 +11,7 @@ using MongoDB.Bson.Serialization.Attributes;
 /// <summary>
 /// Represents a code repository related to a practice.
 /// </summary>
-public class Repository
+public class Repository : IPracticeScoped
 {
     /// <summary>
     /// Gets or sets the unique identifier of the repository.

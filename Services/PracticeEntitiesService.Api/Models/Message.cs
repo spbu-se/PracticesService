@@ -11,7 +11,7 @@ using MongoDB.Bson.Serialization.Attributes;
 /// <summary>
 /// Represents a message associated with a report.
 /// </summary>
-public class Message
+public class Message : IPracticeScoped
 {
     /// <summary>
     /// Gets or sets the unique identifier of the message.
