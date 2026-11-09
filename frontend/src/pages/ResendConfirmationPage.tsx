@@ -12,6 +12,7 @@ import {
     Link
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { getErrorMessage } from "@/shared/services/errors";
 
 export function ResendConfirmationPage() {
     const [email, setEmail] = useState("");
@@ -35,8 +36,8 @@ export function ResendConfirmationPage() {
             } else {
                 setSuccess(true);
             }
-        } catch (err: any) {
-            const message = err.response?.data?.message || "Не удалось отправить письмо подтверждения";
+        } catch (err) {
+            const message = getErrorMessage(err, "Не удалось отправить письмо подтверждения");
             
             if (message?.includes("уже подтвержден")) {
                 setError("Email уже подтвержден. Вы можете войти в систему.");

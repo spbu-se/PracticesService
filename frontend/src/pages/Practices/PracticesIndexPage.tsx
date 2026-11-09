@@ -8,8 +8,6 @@ import { User } from "@/entities/User.ts";
 import {
     Container,
     Grid,
-    Card,
-    CardContent,
     Typography,
     Button,
     Tabs,
@@ -22,11 +20,13 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import { HandbookTab } from "./HandbookTab";
 import { PracticeCard } from "./PracticeCard";
+import { PracticeListSkeleton } from "./PracticeListSkeleton";
 
 export function PracticesIndexPage() {
     const tokenIsEmpty = getJWTToken() === "";
     const [practices, setPractices] = useState<Practice[]>([]);
-    const [me, setMe] = useState<User>();
+    const [loading, setLoading] = useState(true);
+    const [, setMe] = useState<User>();
     const [activeTab, setActiveTab] = useState(1);
     const navigate = useNavigate();
 
@@ -37,13 +37,15 @@ export function PracticesIndexPage() {
         getMe().then((response) => {
             const data: User = response.data;
             setMe(data);
-            getUserPractices(data.userId).then((response) => {
-                setPractices(response.data);
-            });
+            getUserPractices(data.userId)
+                .then((response) => {
+                    setPractices(response.data);
+                })
+                .finally(() => setLoading(false));
         });
     }, []);
 
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);
     };
 
@@ -91,10 +93,14 @@ export function PracticesIndexPage() {
                 </Paper>
 
                 <Grid container spacing={isMobile ? 1 : 3}>
-                    {activeTab === 1 ? (
+                    {loading && activeTab !== 0 ? (
+                        <Grid size={12}>
+                            <PracticeListSkeleton />
+                        </Grid>
+                    ) : activeTab === 1 ? (
                         activePractices.length > 0 ? (
                             activePractices.map((practice) => (
-                                <Grid item xs={12} sm={6} md={4} key={practice.id}>
+                                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={practice.id}>
                                     <PracticeCard
                                         practice={practice}
                                         onClick={() => navigate(`/practice/${practice.id}`)}
@@ -102,7 +108,7 @@ export function PracticesIndexPage() {
                                 </Grid>
                             ))
                         ) : (
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <Typography variant="h6" align="center">
                                     Нет активных практик
                                 </Typography>
@@ -111,7 +117,7 @@ export function PracticesIndexPage() {
                     ) : activeTab === 2 ? (
                         completedPractices.length > 0 ? (
                             completedPractices.map((practice) => (
-                                <Grid item xs={12} sm={6} md={4} key={practice.id}>
+                                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={practice.id}>
                                     <PracticeCard
                                         practice={practice}
                                         onClick={() => navigate(`/practice/${practice.id}`)}
@@ -119,14 +125,14 @@ export function PracticesIndexPage() {
                                 </Grid>
                             ))
                         ) : (
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <Typography variant="h6" align="center">
                                     Нет завершенных практик
                                 </Typography>
                             </Grid>
                         )
                     ) : (
-                        <Grid item xs={12}>
+                        <Grid size={12}>
                             <HandbookTab />
                         </Grid>
                     )}

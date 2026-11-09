@@ -54,10 +54,11 @@ function a11yProps(index: number) {
 
 export function PracticePage() {
     const { id } = useParams();
+    const practiceId = Number(id);
     const navigate = useNavigate();
     const [value, setValue] = useState(0);
 
-    const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+    const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
         setValue(newValue);
     };
 
@@ -99,31 +100,31 @@ export function PracticePage() {
                     </Box>
 
                     <TabPanel value={value} index={0}>
-                        <ThemeSelection practiceId={id} />
+                        <ThemeSelection practiceId={practiceId} />
                     </TabPanel>
 
                     <TabPanel value={value} index={1}>
-                        <GoalsAndTasks practiceId={id} />
+                        <GoalsAndTasks practiceId={practiceId} />
                     </TabPanel>
                     
                     <TabPanel value={value} index={2}>
-                        <Reporting practiceId={id} />
+                        <Reporting practiceId={practiceId} />
                     </TabPanel>
                     
                     <TabPanel value={value} index={3}>
-                        <Attachments practiceId={id} />
+                        <Attachments practiceId={practiceId} />
                     </TabPanel>
 
                     <TabPanel value={value} index={4}>
-                        <TextWorkHistory practiceId={id} />
+                        <TextWorkHistory practiceId={practiceId} />
                     </TabPanel>
 
                     <TabPanel value={value} index={5}>
-                        <PresentationHistory practiceId={id} />
+                        <PresentationHistory practiceId={practiceId} />
                     </TabPanel>
 
                     <TabPanel value={value} index={6}>
-                        <Messages practiceId={id} />
+                        <Messages practiceId={practiceId} />
                     </TabPanel>
                 </Paper>
             </Container>

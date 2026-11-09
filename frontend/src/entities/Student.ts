@@ -6,6 +6,6 @@ export interface Student {
     firstName: string;
     lastName: string;
     middleName: string;
-    groupId: number;
+    groupId: number | null;
     group: Group
 }

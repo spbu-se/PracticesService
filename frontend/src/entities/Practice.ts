@@ -8,22 +8,25 @@ export interface Practice {
     studentid: number;
     themeid: number;
     supervisorid: number;
-    consultantid: number;
+    consultantid: number | null;
     type: string;
-    finalgrade: string;
+    finalgrade: string | null;
     status: string;
     createddate: Date;
     updateddate: Date;
     student: Student;
     theme: Theme;
     supervisor: Lecturer;
-    consultant: Consultant;
+    consultant: Consultant | null;
 }
 
 export interface InputPractice {
+    id?: number;
     studentid: number;
     themeid: number;
+    supervisorid: number;
+    consultantid: number | null;
     type: string;
-    finalgrade: string;
+    finalgrade: string | null;
     status: string;
 }

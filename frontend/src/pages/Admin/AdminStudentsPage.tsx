@@ -22,7 +22,7 @@ import {
     FormControl,
     InputLabel,
     Select,
-    MenuItem
+    MenuItem, AlertColor, SelectChangeEvent
 } from "@mui/material";
 import {
     getAllStudents,
@@ -38,15 +38,17 @@ import { User } from "@/entities/User";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import { useNotifier } from "@/shared/ui/notifications/notificationContext";
 
 export function AdminStudentsPage() {
+    const notifier = useNotifier();
     const [students, setStudents] = useState<Student[]>([]);
     const [groups, setGroups] = useState<Group[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
-    const [snackbar, setSnackbar] = useState({
+    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: AlertColor }>({
         open: false,
         message: '',
         severity: 'success'
@@ -106,16 +108,15 @@ export function AdminStudentsPage() {
         }));
     };
 
-    const handleGroupChange = (e: any) => {
-        const groupId = e.target.value;
-        const selectedGroup = groups.find(g => g.id === groupId) || {} as Group;
+    const handleGroupChange = (e: SelectChangeEvent<number | string>) => {
+        const groupId = e.target.value === '' ? null : Number(e.target.value);
         setCurrentStudent(prev => ({
             ...prev!,
             groupId: groupId,
         }));
     };
 
-    const handleUserSelectChange = (e: any) => {
+    const handleUserSelectChange = (e: SelectChangeEvent) => {
         const selectedUserId = e.target.value as string;
         if (selectedUserId === '' || selectedUserId == null) {
             setCurrentStudent(prev => ({
@@ -160,8 +161,8 @@ export function AdminStudentsPage() {
             });
     };
 
-    const handleDelete = (id: number) => {
-        if (window.confirm('Вы уверены, что хотите удалить этого студента?')) {
+    const handleDelete = async (id: number) => {
+        if (await notifier.confirm({ message: "Вы уверены, что хотите удалить этого студента?", confirmText: "Удалить", danger: true })) {
             deleteStudent(id)
                 .then(() => {
                     loadData();
@@ -252,7 +253,7 @@ export function AdminStudentsPage() {
                     <FormControl fullWidth margin="dense">
                         <InputLabel>Пользователь</InputLabel>
                         <Select
-                            value={currentStudent?.userid ?? null}
+                            value={currentStudent?.userid ?? ''}
                             onChange={handleUserSelectChange}
                         >
                             <MenuItem value="">Не выбран</MenuItem>

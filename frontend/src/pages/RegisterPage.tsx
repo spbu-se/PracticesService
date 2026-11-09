@@ -1,6 +1,6 @@
 ﻿import { Layout } from "@shared/ui/layout/Layout.tsx";
 import { ChangeEvent, FormEvent, useState } from "react";
-import { register } from "@shared/services/axios.service.ts"; // You'll need to create this function
+import { clearMeCache, register } from "@shared/services/axios.service.ts"; // You'll need to create this function
 import { setJWTToken, setRefreshToken } from "@shared/services/localStorage.service.ts";
 import {
     Container,
@@ -14,8 +14,11 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import {UserRole} from "../entities/UserRoles";
+import {RegisterData} from "@/entities/RegisterData";
+import { useNotifier } from "@/shared/ui/notifications/notificationContext";
 
 export function RegisterPage() {
+    const notifier = useNotifier();
     const [formData, setFormData] = useState<RegisterData>({
         email: "",
         password: "",
@@ -39,7 +42,7 @@ export function RegisterPage() {
         event.preventDefault();
         
         if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
-            alert("Пожалуйста, заполните все обязательные поля");
+            notifier.notify("Пожалуйста, заполните все обязательные поля", "warning");
             return;
         }
 
@@ -52,13 +55,14 @@ export function RegisterPage() {
                     return;
                 }
 
+                clearMeCache();
                 setJWTToken(response.data.token);
                 setRefreshToken(response.data.refreshToken);
                 navigate("/");
             })
             .catch(e => {
                 console.error("Registration error:", e);
-                alert("Не удалось зарегистрироваться: " + (e.response?.data?.message || e.message));
+                notifier.error("Не удалось зарегистрироваться: " + (e.response?.data?.message || e.message));
             });
     };
 
@@ -95,7 +99,7 @@ export function RegisterPage() {
 
                     <Box component="form" onSubmit={onSubmit}>
                         <Grid container spacing={2}>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField
                                     fullWidth
                                     label="Имя"
@@ -108,7 +112,7 @@ export function RegisterPage() {
                                     inputProps={{ maxLength: 100 }}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField
                                     fullWidth
                                     label="Фамилия"
@@ -121,7 +125,7 @@ export function RegisterPage() {
                                     inputProps={{ maxLength: 100 }}
                                 />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField
                                     fullWidth
                                     label="Отчество (необязательно)"
@@ -133,7 +137,7 @@ export function RegisterPage() {
                                     inputProps={{ maxLength: 100 }}
                                 />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField
                                     fullWidth
                                     label="Email"
@@ -146,7 +150,7 @@ export function RegisterPage() {
                                     required
                                 />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <Typography variant="body2" color="textSecondary">
                                     Пароль должен содержать:
                                 </Typography>
@@ -157,7 +161,7 @@ export function RegisterPage() {
                                     <li>Хотя бы один спецсимвол (!@#$%^&*)</li>
                                 </ul>
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField
                                     fullWidth
                                     label="Пароль"

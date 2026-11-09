@@ -8,7 +8,7 @@ import { Report } from "@/entities/Report";
 import { Comment } from "@/entities/Comment";
 import { User } from "@/entities/User";
 
-export function StaffReporting({ practiceId }: { practiceId?: number }) {
+export function StaffReporting({ practiceId }: { practiceId: number }) {
     const [user, setUser] = useState<User>();
     const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -72,11 +72,11 @@ export function StaffReporting({ practiceId }: { practiceId?: number }) {
     return (
         <>
             <Grid container direction="column" spacing={4}>
-                <Grid item>
+                <Grid size="auto">
                     <Typography variant="h5" gutterBottom>Отчеты по практике</Typography>
                 </Grid>
 
-                <Grid item>
+                <Grid size="auto">
                     <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
                         {loading ? (
                             <Box display="flex" justifyContent="center">
@@ -98,8 +98,8 @@ export function StaffReporting({ practiceId }: { practiceId?: number }) {
 
                                                         <Box sx={{ mt: 1 }}>
                                                             <Typography variant="subtitle2">Комментарии:</Typography>
-                                                            {report?.comments?.length > 0 ? (
-                                                                report?.comments.map((comment, idx) => (
+                                                            {(report?.comments?.length ?? 0) > 0 ? (
+                                                                report?.comments?.map((comment, idx) => (
                                                                     <Box key={idx} sx={{ ml: 2, mt: 0.5 }}>
                                                                         <Typography variant="body2">
                                                                             <b>{comment.author}</b> ({new Date(comment.createdAt ?? '').toLocaleString()}): {comment.text}

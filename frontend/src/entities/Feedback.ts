@@ -10,6 +10,6 @@
 export interface FeedbackUploadInput {
     practiceId: number;
     feedbackType: string;
-    file?: File;
+    file?: File | null;
 }
 

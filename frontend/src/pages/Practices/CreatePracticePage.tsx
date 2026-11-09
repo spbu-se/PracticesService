@@ -1,7 +1,6 @@
 ﻿import { useEffect, useState } from "react";
 import {
     Container,
-    TextField,
     Button,
     MenuItem,
     Typography,
@@ -10,7 +9,8 @@ import {
     FormControl,
     InputLabel,
     Alert,
-    Select, Stack, FormControlLabel, Checkbox
+    Select,
+    FormHelperText
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { getThemes, getMe, postPractice, getStudentByUserId, getLecturers, getConsultants } from "@/shared/services/axios.service";
@@ -19,12 +19,14 @@ import { User } from "@/entities/User";
 import { InputPractice } from "@/entities/Practice";
 import {Student} from "../../entities/Student";
 import {Layout} from "@shared/ui/layout/Layout.tsx";
-import MDEditor from "@uiw/react-md-editor";
 import { Consultant } from "@/entities/Consultant";
+import { Group } from "@/entities/Group";
 import { Lecturer } from "@/entities/Lecturer";
 import {UserRole} from "../../entities/UserRoles";
+import { useNotifier } from "@/shared/ui/notifications/notificationContext";
 
 export function CreatePracticePage() {
+    const notifier = useNotifier();
     const [type, setType] = useState("");
     const [themeId, setThemeId] = useState<number | null>(null);
     const [themes, setThemes] = useState<Theme[]>([]);
@@ -57,8 +59,8 @@ export function CreatePracticePage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!me || themeId === "" || !type) {
-            alert("Пожалуйста, заполните все обязательные поля.");
+        if (!me || !currentStudent || themeId === null || supervisorId === null || !type) {
+            notifier.notify("Пожалуйста, заполните все обязательные поля.", "warning");
             return;
         }
 
@@ -77,11 +79,11 @@ export function CreatePracticePage() {
             navigate("/practices");
         } catch (error) {
             console.error("Ошибка при создании практики:", error);
-            alert("Не удалось создать практику. Попробуйте позже.");
+            notifier.error("Не удалось создать практику. Попробуйте позже.");
         }
     };
 
-    const getGroupName = (group: Group) => {
+    const getGroupName = (group?: Group | null) => {
         return group ? `${group.name} (${group.program}, ${group.year} год)` : 'Не указана';
     };
 
@@ -99,20 +101,20 @@ export function CreatePracticePage() {
 
                 <form onSubmit={handleSubmit}>
                     <Grid container direction="column" spacing={3}>
-                        <Grid item>
+                        <Grid size="auto">
                             <InputLabel>Ваша группа</InputLabel>
                             {getGroupName(currentStudent?.group)}
                         </Grid>
 
                         {!currentStudent?.group && (
-                            <Grid item>
+                            <Grid size="auto">
                                 <Alert severity="warning" sx={{ mt: 1 }}>
                                     Для создания практики необходимо сначала указать группу студента в разделе "Профиль"
                                 </Alert>
                             </Grid>
                         )}
 
-                        <Grid item>
+                        <Grid size="auto">
                             <FormControl fullWidth required>
                                 <InputLabel>Тип практики</InputLabel>
                                 <Select
@@ -120,7 +122,6 @@ export function CreatePracticePage() {
                                     label="Тип практики"
                                     onChange={(e) => setType(e.target.value)}
                                     disabled={!currentStudent?.group}
-                                    helperText={!currentStudent?.group ? "Сначала нужно указать группу студента" : ""}
                                 >
                                     {practiceTypes.map((type) => (
                                         <MenuItem key={type} value={type}>
@@ -128,10 +129,11 @@ export function CreatePracticePage() {
                                         </MenuItem>
                                     ))}
                                 </Select>
+                                {!currentStudent?.group && <FormHelperText>Сначала нужно указать группу студента</FormHelperText>}
                             </FormControl>
                         </Grid>
 
-                        <Grid item>
+                        <Grid size="auto">
                             <FormControl fullWidth required>
                                 <InputLabel>Тема</InputLabel>
                                 <Select
@@ -149,7 +151,7 @@ export function CreatePracticePage() {
                             </FormControl>
                         </Grid>
 
-                        <Grid item>
+                        <Grid size="auto">
                             <FormControl fullWidth required>
                                 <InputLabel>{UserRole.SUPERVISOR}</InputLabel>
                                 <Select
@@ -167,7 +169,7 @@ export function CreatePracticePage() {
                             </FormControl>
                         </Grid>
 
-                        <Grid item>
+                        <Grid size="auto">
                             <FormControl fullWidth>
                                 <InputLabel>{UserRole.CONSULTANT}</InputLabel>
                                 <Select
@@ -186,7 +188,7 @@ export function CreatePracticePage() {
                             </FormControl>
                         </Grid>
 
-                        <Grid item>
+                        <Grid size="auto">
                             <Button
                                 type="submit"
                                 variant="contained"

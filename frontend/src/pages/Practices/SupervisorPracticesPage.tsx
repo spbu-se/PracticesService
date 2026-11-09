@@ -27,12 +27,14 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import { PracticeCard } from "./PracticeCard";
 import { UserRole } from "../../entities/UserRoles";
+import { PracticeListSkeleton } from "./PracticeListSkeleton";
 
 export function SupervisorPracticesPage() {
     const tokenIsEmpty = getJWTToken() === "";
     const [practices, setPractices] = useState<Practice[]>([]);
+    const [loading, setLoading] = useState(true);
     const [groups, setGroups] = useState<Group[]>([]);
-    const [me, setMe] = useState<User>();
+    const [, setMe] = useState<User>();
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedGroup, setSelectedGroup] = useState<string>("");
     const [selectedType, setSelectedType] = useState<string>("");
@@ -63,9 +65,11 @@ export function SupervisorPracticesPage() {
 
             setMe(data);
             loadGroups();
-            getSupervisorPractices(data.userId).then((response) => {
-                setPractices(response.data);
-            });
+            getSupervisorPractices(data.userId)
+                .then((response) => {
+                    setPractices(response.data);
+                })
+                .finally(() => setLoading(false));
         });
     }, []);
 
@@ -75,7 +79,7 @@ export function SupervisorPracticesPage() {
             .catch(() => setGroups([]));
     };
 
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);
     };
 
@@ -104,6 +108,8 @@ export function SupervisorPracticesPage() {
     const filteredCompletedPractices = filterPractices(completedPractices);
 
     const renderPractices = (practicesList: Practice[], emptyMessage: string) => {
+        if (loading) return <PracticeListSkeleton />;
+
         if (practicesList.length === 0) {
             return (
                 <Paper
@@ -124,7 +130,7 @@ export function SupervisorPracticesPage() {
         return (
             <Grid container spacing={isMobile ? 1 : 3}>
                 {practicesList.map((practice) => (
-                    <Grid item xs={12} sm={6} md={4} lg={3} key={practice.id}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={practice.id}>
                         <PracticeCard
                             practice={practice}
                             onClick={() => navigate(`/practice-staff/${practice.id}`)}

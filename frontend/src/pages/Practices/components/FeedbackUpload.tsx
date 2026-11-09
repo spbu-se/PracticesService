@@ -3,8 +3,10 @@ import { Typography, Button, Link, Grid, Paper } from "@mui/material";
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import {getFeedbacksByPracticeId, postFeedback} from "@/shared/services/axios.service";
 import { Feedback } from "@/entities/Feedback";
+import { useNotifier } from "@/shared/ui/notifications/notificationContext";
 
-export function FeedbackUpload({ practiceId, setSnackbarMessage, setSnackbarSeverity, setSnackbarOpen }: any) {
+export function FeedbackUpload({ practiceId }: { practiceId: number }) {
+    const notifier = useNotifier();
     const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
     const [supervisorReview, setSupervisorReview] = useState<File | null>(null);
     const [consultantReview, setConsultantReview] = useState<File | null>(null);
@@ -33,14 +35,10 @@ export function FeedbackUpload({ practiceId, setSnackbarMessage, setSnackbarSeve
             const res = await getFeedbacksByPracticeId(practiceId);
             setFeedbacks(res.data);
 
-            setSnackbarMessage("Отзывы успешно загружены!");
-            setSnackbarSeverity("success");
-            setSnackbarOpen(true);
+            notifier.notify("Отзывы успешно загружены!", "success");
         } catch (error) {
             console.error("Ошибка загрузки отзывов:", error);
-            setSnackbarMessage("Не удалось загрузить отзывы.");
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
+            notifier.notify("Не удалось загрузить отзывы.", "error");
         } finally {
             setSupervisorReview(null);
             setConsultantReview(null);
@@ -62,7 +60,7 @@ export function FeedbackUpload({ practiceId, setSnackbarMessage, setSnackbarSeve
     };
 
     return (
-        <Grid item>
+        <Grid size="auto">
             <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
                 <Typography variant="h6">Отзывы</Typography>
                 <Button variant="outlined" component="label" startIcon={<UploadFileIcon />} sx={{ mt: 2 }}>
@@ -73,7 +71,7 @@ export function FeedbackUpload({ practiceId, setSnackbarMessage, setSnackbarSeve
                     Загрузить отзыв консультанта (PDF)
                     <input type="file" hidden accept=".pdf" onChange={handleFileChange(setConsultantReview)} />
                 </Button>
-                <Button variant="contained" sx={{ mt: 2 }} onClick={() => handleSubmit("reviews")}>
+                <Button variant="contained" sx={{ mt: 2 }} onClick={handleSubmit}>
                     Сохранить отзывы
                 </Button>
 

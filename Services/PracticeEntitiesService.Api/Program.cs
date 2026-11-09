@@ -387,7 +387,7 @@ app.MapGet("/api/text-works/latest/{practiceId:int}", async (
         null,
         new { PracticeId = practiceId });
 
-    return latest is not null ? Results.Ok(latest) : Results.NotFound();
+    return latest is not null ? Results.Ok(latest) : Results.NoContent();
 })
     .RequirePracticeRead();
 
@@ -598,7 +598,7 @@ app.MapGet("/api/presentations/latest/{practiceId:int}", async (
         null,
         new { PracticeId = practiceId });
 
-    return latest is not null ? Results.Ok(latest) : Results.NotFound();
+    return latest is not null ? Results.Ok(latest) : Results.NoContent();
 })
     .RequirePracticeRead();
 
@@ -785,7 +785,7 @@ app.MapGet("/api/goals-tasks/{practiceId:int}", async (
         null,
         new { PracticeId = practiceId, Found = result != null });
 
-    return result is not null ? Results.Ok(result) : Results.NotFound();
+    return result is not null ? Results.Ok(result) : Results.NoContent();
 })
     .RequirePracticeRead();
 
@@ -998,7 +998,7 @@ app.MapGet("/api/repositories/{practiceId:int}", async (
         null,
         new { PracticeId = practiceId, Found = repo != null });
 
-    return repo != null ? Results.Ok(repo) : Results.NotFound();
+    return repo != null ? Results.Ok(repo) : Results.NoContent();
 })
     .RequirePracticeRead();
 
@@ -1082,7 +1082,7 @@ app.MapGet("/api/messages/{practiceId:int}", async (
         null,
         new { PracticeId = practiceId, Count = messages.Count });
 
-    return messages.Count > 0 ? Results.Ok(messages) : Results.NotFound();
+    return Results.Ok(messages);
 })
     .RequirePracticeRead();
 

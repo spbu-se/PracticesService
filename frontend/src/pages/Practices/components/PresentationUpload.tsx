@@ -3,8 +3,10 @@ import { Typography, Button, TextField, Link, Grid, Paper } from "@mui/material"
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import {getLatestPresentationVersion, postPresentation} from "@/shared/services/axios.service";
 import {Presentation} from "@/entities/Presentation";
+import { useNotifier } from "@/shared/ui/notifications/notificationContext";
 
-export function PresentationUpload({ practiceId, setSnackbarMessage, setSnackbarSeverity, setSnackbarOpen }: any) {
+export function PresentationUpload({ practiceId }: { practiceId: number }) {
+    const notifier = useNotifier();
     const [presentationFile, setPresentationFile] = useState<File | null>(null);
     const [presentationLink, setPresentationLink] = useState("");
 
@@ -13,9 +15,7 @@ export function PresentationUpload({ practiceId, setSnackbarMessage, setSnackbar
 
     const handleSubmit = async () => {
         if (!practiceId || (!presentationLink.trim() && !presentationFile)) {
-            setSnackbarMessage("Пожалуйста, укажите ссылку или выберите файл презентации.");
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
+            notifier.notify("Пожалуйста, укажите ссылку или выберите файл презентации.", "error");
             return;
         }
 
@@ -27,23 +27,19 @@ export function PresentationUpload({ practiceId, setSnackbarMessage, setSnackbar
                 file: presentationFile,
             });
 
-            setSnackbarMessage("Презентация успешно загружена!");
-            setSnackbarSeverity("success");
-            setSnackbarOpen(true);
+            notifier.notify("Презентация успешно загружена!", "success");
             setPresentationFile(null);
             setPresentationVersion(prev => prev + 1);
         } catch (error) {
             console.error("Ошибка загрузки презентации:", error);
-            setSnackbarMessage("Не удалось загрузить презентацию.");
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
+            notifier.notify("Не удалось загрузить презентацию.", "error");
         }
     }
 
     useEffect(() => {
         getLatestPresentationVersion(practiceId)
-            .then(res => {
-                const presentation: Presentation = res.data;
+            .then(presentation => {
+                if (!presentation) return;
                 setLatestPresentation(presentation);
                 setPresentationVersion(presentation.version + 1);
             })
@@ -59,7 +55,7 @@ export function PresentationUpload({ practiceId, setSnackbarMessage, setSnackbar
     };
 
     return (
-        <Grid item>
+        <Grid size="auto">
             <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
                 <Typography variant="h6">Презентация</Typography>
                 <Button variant="outlined" component="label" startIcon={<UploadFileIcon />} sx={{ mt: 2 }}>

@@ -8,7 +8,7 @@ import { getPractice, getConsultants, getThemes, getLecturers, putPractice, dele
 import { UserRole } from "@/entities/UserRoles";
 import { Practice } from "@/entities/Practice";
 import { Consultant } from "@/entities/Consultant";
-import { Supervisor } from "@/entities/Supervisor";
+import { Lecturer } from "@/entities/Lecturer";
 import { useNavigate } from "react-router-dom";
 
 const modalStyle = {
@@ -23,11 +23,11 @@ const modalStyle = {
     borderRadius: 2,
 };
 
-export function ThemeSelection({ practiceId }: { practiceId?: number }) {
+export function ThemeSelection({ practiceId }: { practiceId: number }) {
     const [practice, setPractice] = useState<Practice>();
     const [consultants, setConsultants] = useState<Consultant[]>([]);
     const [themes, setThemes] = useState<Theme[]>([]);
-    const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
+    const [supervisors, setSupervisors] = useState<Lecturer[]>([]);
 
     const [showConsultantInput, setShowConsultantInput] = useState(false);
     const [consultantId, setConsultantId] = useState<number | null>(null);
@@ -52,16 +52,16 @@ export function ThemeSelection({ practiceId }: { practiceId?: number }) {
     }, [practiceId]);
 
     const handleEditSave = async () => {
-        if (practice) {
+        if (practice && selectedTheme !== null && selectedSupervisor !== null) {
             const updatedPractice = {
                 ...practice,
                 themeid: selectedTheme,
                 supervisorid: selectedSupervisor,
-                consultantId: consultantId
+                consultantid: consultantId
             };
             await putPractice(updatedPractice);
             const response = await getPractice(practiceId);
-            const refreshedPractice = response.data.find((t: Practice) => t.id == practiceId);
+            const refreshedPractice: Practice = response.data;
             setPractice(refreshedPractice);
             setEditModalOpen(false);
             setShowConsultantInput(false);
@@ -82,7 +82,7 @@ export function ThemeSelection({ practiceId }: { practiceId?: number }) {
 
     return (
         <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid size={12}>
                 <Typography variant="h6" gutterBottom>Выбор темы практики</Typography>
                 {practice?.finalgrade && (
                     <Box sx={{ mb: 3, p: 2, borderRadius: 1 }}>
@@ -93,7 +93,7 @@ export function ThemeSelection({ practiceId }: { practiceId?: number }) {
                     </Box>
                 )}
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12}>
                 <Card variant="outlined" sx={{ border: 0 }}>
                     <CardContent sx={{ py: 1 }}>
                         <Typography variant="subtitle1" gutterBottom>Выбранная тема</Typography>

@@ -3,8 +3,10 @@ import { Typography, Button, TextField, Link, Grid, Paper } from "@mui/material"
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import {TextWork} from "../../../entities/TextWork";
 import {getLatestTextWorkVersion, postTextWork } from "@/shared/services/axios.service";
+import { useNotifier } from "@/shared/ui/notifications/notificationContext";
 
-export function TextWorkUpload({ practiceId, setSnackbarMessage, setSnackbarSeverity, setSnackbarOpen }: any) {
+export function TextWorkUpload({ practiceId }: { practiceId: number }) {
+    const notifier = useNotifier();
     const [textFile, setTextFile] = useState<File | null>(null);
     const [textLink, setTextLink] = useState("");
 
@@ -13,9 +15,7 @@ export function TextWorkUpload({ practiceId, setSnackbarMessage, setSnackbarSeve
     
     const handleSubmit = async () => {
         if (!practiceId || (!textLink.trim() && !textFile)) {
-            setSnackbarMessage("Пожалуйста, укажите ссылку или выберите файл текста работы.");
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
+            notifier.notify("Пожалуйста, укажите ссылку или выберите файл текста работы.", "error");
             return;
         }
         try {
@@ -26,23 +26,19 @@ export function TextWorkUpload({ practiceId, setSnackbarMessage, setSnackbarSeve
                 file: textFile,
             });
 
-            setSnackbarMessage("Текст работы успешно загружен!");
-            setSnackbarSeverity("success");
-            setSnackbarOpen(true);
+            notifier.notify("Текст работы успешно загружен!", "success");
             setTextFile(null);
             setTextVersion((prev) => prev + 1);
         } catch (error) {
             console.error("Ошибка загрузки текста:", error);
-            setSnackbarMessage("Не удалось загрузить текст работы.");
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
+            notifier.notify("Не удалось загрузить текст работы.", "error");
         }
     }
 
     useEffect(() => {
         getLatestTextWorkVersion(practiceId)
-            .then(res => {
-                const text: TextWork = res.data;
+            .then(text => {
+                if (!text) return;
                 setLatestTextWorks(text);
                 setTextVersion(text.version + 1);
             });
@@ -57,7 +53,7 @@ export function TextWorkUpload({ practiceId, setSnackbarMessage, setSnackbarSeve
     };
 
     return (
-        <Grid item>
+        <Grid size="auto">
             <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
                 <Typography variant="h6">Текст работы</Typography>
                 <Button variant="outlined" component="label" startIcon={<UploadFileIcon />} sx={{ mt: 2 }}>

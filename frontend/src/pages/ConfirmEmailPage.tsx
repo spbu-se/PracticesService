@@ -12,6 +12,7 @@ import {
     CircularProgress
 } from "@mui/material";
 import { CheckCircle, Error as ErrorIcon } from "@mui/icons-material";
+import { getErrorMessage } from "@/shared/services/errors";
 
 export function ConfirmEmailPage() {
     const [searchParams] = useSearchParams();
@@ -33,8 +34,8 @@ export function ConfirmEmailPage() {
             try {
                 await confirmEmail({ token, email });
                 setSuccess(true);
-            } catch (err: any) {
-                const message = err.response?.data?.message || "Не удалось подтвердить email. Возможно, ссылка устарела или недействительна.";
+            } catch (err) {
+                const message = getErrorMessage(err, "Не удалось подтвердить email. Возможно, ссылка устарела или недействительна.");
                 setError(message);
             } finally {
                 setLoading(false);

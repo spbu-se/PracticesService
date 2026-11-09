@@ -16,15 +16,17 @@ import {
     Stack
 } from "@mui/material";
 import {useNavigate, useParams} from "react-router-dom";
-import {InputTheme, Theme} from "@/entities/Theme.ts";
-import {getConsultants, getLecturers, getMe, getTheme, postTheme, putTheme} from "@/shared/services/axios.service.ts";
+import {Theme} from "@/entities/Theme.ts";
+import {getConsultants, getLecturers, getMe, getTheme, putTheme} from "@/shared/services/axios.service.ts";
 import MDEditor from '@uiw/react-md-editor';
 import {Lecturer} from "@/entities/Lecturer.ts";
 import {Consultant} from "@/entities/Consultant.ts";
 import { User } from "@/entities/User.ts";
 import {UserRole} from "../../entities/UserRoles";
+import { useNotifier } from "@/shared/ui/notifications/notificationContext";
 
 export function EditThemePage() {
+    const notifier = useNotifier();
     const {id} = useParams();
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -39,28 +41,27 @@ export function EditThemePage() {
     const departments = useMemo(() => ["Кафедра системного программирования", "Кафедра параллельных алгоритмов",
         "Кафедра информатики", "Кафедра информационно-аналитических систем"], [])
     const [department, setDepartment] = useState<string>();
-    const [sources, setSources] = useState<string[]>();
+    const [, setSources] = useState<string[]>();
     const [source, setSource] = useState("")
     const [me, setMe] = useState<User>()
     const navigate = useNavigate();
     const [lecturers, setLecturers] = useState<Lecturer[]>();
     const [consultants, setConsultants] = useState<Consultant[]>();
 
-    const [isMdTouched, setIsMdTouched] = useState(false);
 
-    const isMdError = isMdTouched && !description;
 
     useEffect(() => {
-        getTheme(parseInt(id)).then(response => {
+        getTheme(Number(id)).then(response => {
             const themes: Theme[] = response.data;
-            const currentTheme = themes.find(s => s.id == id);
+            const currentTheme = themes.find(s => s.id === Number(id));
+            if (!currentTheme) return;
             setTitle(currentTheme?.title ?? title);
             setDescription(currentTheme?.description ?? description);
             setDepartment(currentTheme?.department ?? department);
             setSource(currentTheme?.source ?? source);
             transformStringToLevels(currentTheme?.level);
-            setLecturerId(currentTheme.supervisorid);
-            setConsultantId(currentTheme.consultantid);
+            setLecturerId(currentTheme.supervisorid ?? undefined);
+            setConsultantId(currentTheme.consultantid ?? undefined);
 
             setSources(Array.from(new Set(themes.map((t) => t.source))));
         });
@@ -118,18 +119,19 @@ export function EditThemePage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!me) return;
 
         try {
-            const theme: Theme = {
-                id: id,
+            const theme: Partial<Theme> & { id: number } = {
+                id: Number(id),
                 title: title,
                 description: description,
                 level: transformLevelsToString(levels),
                 source: source,
                 suggestedby: me.userId,
-                department: department,
-                supervisorid: lecturerId,
-                consultantid: consultantId
+                department: department ?? "",
+                supervisorid: lecturerId ?? null,
+                consultantid: consultantId ?? null
             };
 
             await putTheme(theme);
@@ -137,7 +139,7 @@ export function EditThemePage() {
 
         } catch (error) {
             console.error("Ошибка при обновлении темы:", error);
-            alert("Не удалось создать тему. Проверьте данные и повторите попытку. " + error);
+            notifier.error("Не удалось сохранить тему. Проверьте данные и повторите попытку. " + error);
         }
     };
 
@@ -155,7 +157,7 @@ export function EditThemePage() {
 
                     <form onSubmit={handleSubmit}>
                         <Grid container direction="column" spacing={3}>
-                            <Grid item>
+                            <Grid size="auto">
                                 <Typography variant="subtitle1" gutterBottom>
                                     Название:
                                 </Typography>
@@ -168,15 +170,14 @@ export function EditThemePage() {
                                 />
                             </Grid>
 
-                            <Grid item>
+                            <Grid size="auto">
                                 <Typography variant="subtitle1" gutterBottom>
                                     Описание:
                                 </Typography>
                                 <MDEditor
                                     value={description}
                                     onChange={(val) => {
-                                        setDescription(val);
-                                        setIsMdTouched(true);
+                                        setDescription(val ?? "");
                                     }}
                                     height={200}
                                     preview="edit"
@@ -187,7 +188,7 @@ export function EditThemePage() {
                                 />
                             </Grid>
 
-                            <Grid item>
+                            <Grid size="auto">
                                 <Typography variant="subtitle1" gutterBottom>
                                     Уровень
                                 </Typography>
@@ -215,7 +216,7 @@ export function EditThemePage() {
                                 </Stack>
                             </Grid>
 
-                            <Grid item>
+                            <Grid size="auto">
                                 <Typography variant="subtitle1" gutterBottom>
                                     Кафедра:
                                 </Typography>
@@ -233,7 +234,7 @@ export function EditThemePage() {
                                 </FormControl>
                             </Grid>
 
-                            <Grid item>
+                            <Grid size="auto">
                                 <Typography variant="subtitle1" gutterBottom>
                                     Источник темы:
                                 </Typography>
@@ -248,7 +249,7 @@ export function EditThemePage() {
                                 </FormControl>
                             </Grid>
 
-                            <Grid item>
+                            <Grid size="auto">
                                 <Typography variant="subtitle1" gutterBottom>
                                     {UserRole.CONSULTANT}:
                                 </Typography>
@@ -257,7 +258,7 @@ export function EditThemePage() {
                                     <Select
                                         value={consultantId}
                                         label={UserRole.CONSULTANT}
-                                        onChange={(e) => setConsultantId(e.target.value)}
+                                        onChange={(e) => setConsultantId(e.target.value === "" ? undefined : Number(e.target.value))}
                                     >
                                         {(consultants || []).map((con, i) => (
                                             <MenuItem key={i} value={con.id}>{con.lastName} {con.firstName} {con.middleName}</MenuItem>
@@ -266,7 +267,7 @@ export function EditThemePage() {
                                 </FormControl>
                             </Grid>
 
-                            <Grid item>
+                            <Grid size="auto">
                                 <Typography variant="subtitle1" gutterBottom>
                                     {UserRole.SUPERVISOR}:
                                 </Typography>
@@ -275,7 +276,7 @@ export function EditThemePage() {
                                     <Select
                                         value={lecturerId}
                                         label={UserRole.SUPERVISOR}
-                                        onChange={(e) => setLecturerId(e.target.value)}
+                                        onChange={(e) => setLecturerId(e.target.value === "" ? undefined : Number(e.target.value))}
                                     >
                                         {(lecturers || []).map((lecturer, i) => (
                                             <MenuItem key={i} value={lecturer.id}>{lecturer.lastName} {lecturer.firstName} {lecturer.middleName}</MenuItem>
@@ -284,7 +285,7 @@ export function EditThemePage() {
                                 </FormControl>
                             </Grid>
 
-                            <Grid item>
+                            <Grid size="auto">
                                 <Button
                                     type="submit"
                                     variant="contained"

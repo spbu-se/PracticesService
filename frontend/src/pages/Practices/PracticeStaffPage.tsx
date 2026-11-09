@@ -54,10 +54,11 @@ function a11yProps(index: number) {
 
 export function PracticeStaffPage() {
     const { id } = useParams();
+    const practiceId = Number(id);
     const navigate = useNavigate();
     const [value, setValue] = useState(0);
 
-    const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+    const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
         setValue(newValue);
     };
 
@@ -99,31 +100,31 @@ export function PracticeStaffPage() {
                     </Box>
 
                     <TabPanel value={value} index={0}>
-                        <StaffThemeSelection practiceId={id} />
+                        <StaffThemeSelection practiceId={practiceId} />
                     </TabPanel>
 
                     <TabPanel value={value} index={1}>
-                        <StaffGoalsAndTasks practiceId={id} />
+                        <StaffGoalsAndTasks practiceId={practiceId} />
                     </TabPanel>
 
                     <TabPanel value={value} index={2}>
-                        <StaffReporting practiceId={id} />
+                        <StaffReporting practiceId={practiceId} />
                     </TabPanel>
 
                     <TabPanel value={value} index={3}>
-                        <Attachments practiceId={id} />
+                        <Attachments practiceId={practiceId} />
                     </TabPanel>
 
                     <TabPanel value={value} index={4}>
-                        <TextWorkHistory practiceId={id} />
+                        <TextWorkHistory practiceId={practiceId} />
                     </TabPanel>
                     
                     <TabPanel value={value} index={5}>
-                        <PresentationHistory practiceId={id} />
+                        <PresentationHistory practiceId={practiceId} />
                     </TabPanel>
 
                     <TabPanel value={value} index={6}>
-                        <Messages practiceId={id} />
+                        <Messages practiceId={practiceId} />
                     </TabPanel>
                 </Paper>
             </Container>

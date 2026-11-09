@@ -9,7 +9,7 @@ import { PresentationUpload } from "./PresentationUpload";
 
 
 
-export function Attachments({ practiceId }: { practiceId?: number }) {
+export function Attachments({ practiceId }: { practiceId: number }) {
     const [codeLink, setCodeLink] = useState("");
     const [accountName, setAccountName] = useState("");
     const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -44,9 +44,9 @@ export function Attachments({ practiceId }: { practiceId?: number }) {
     };
 
     useEffect(() => {
-        getRepositoryByPracticeId(practiceId).then(res => {
-            const repo: Repository = res.data;
-            
+        getRepositoryByPracticeId(practiceId).then(repo => {
+            if (!repo) return;
+
             setAccountName(repo.accountName);
             setCodeLink(repo.repositoryLink);
         })
@@ -54,17 +54,17 @@ export function Attachments({ practiceId }: { practiceId?: number }) {
 
     return (
         <Grid container spacing={4} direction="column">
-            <Grid item>
+            <Grid size="auto">
                 <Typography variant="h5">Загрузка файлов и ссылок</Typography>
             </Grid>
             
-            <TextWorkUpload practiceId={practiceId} setSnackbarMessage={setSnackbarMessage} setSnackbarSeverity={setSnackbarSeverity} setSnackbarOpen={setSnackbarOpen}/>
+            <TextWorkUpload practiceId={practiceId}/>
 
-            <FeedbackUpload practiceId={practiceId} setSnackbarMessage={setSnackbarMessage} setSnackbarSeverity={setSnackbarSeverity} setSnackbarOpen={setSnackbarOpen}/>
+            <FeedbackUpload practiceId={practiceId}/>
 
-            <PresentationUpload practiceId={practiceId} setSnackbarMessage={setSnackbarMessage} setSnackbarSeverity={setSnackbarSeverity} setSnackbarOpen={setSnackbarOpen}/>
+            <PresentationUpload practiceId={practiceId}/>
             
-            <Grid item>
+            <Grid size="auto">
                 <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
                     <Typography variant="h6">Реализация</Typography>
                     <TextField

@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
+import axios from "axios";
 import { Navigate } from "react-router-dom";
 import {
     Alert,
@@ -53,8 +54,9 @@ function agentIcon(name: string) {
 }
 
 /// Error responses of blob requests are blobs too, so the message has to be read from the body.
-async function readError(error: any): Promise<string> {
-    const data = error?.response?.data;
+async function readError(error: unknown): Promise<string> {
+    const response = axios.isAxiosError(error) ? error.response : undefined;
+    const data = response?.data;
     try {
         const body = data instanceof Blob ? JSON.parse(await data.text()) : data;
         if (body?.error) return body.error;
@@ -62,7 +64,7 @@ async function readError(error: any): Promise<string> {
     } catch {
         // fall through to the generic message
     }
-    return error?.response?.status === 502
+    return response?.status === 502
         ? "Языковая модель сейчас недоступна. Попробуйте позже."
         : "Не удалось проверить документ. Попробуйте ещё раз.";
 }

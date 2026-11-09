@@ -22,7 +22,7 @@ import {
     Alert,
     Chip,
     Box,
-    Grid
+    Grid, AlertColor, SelectChangeEvent
 } from "@mui/material";
 import {
     getAllUsers,
@@ -35,13 +35,15 @@ import { UserRole } from "@/entities/UserRoles";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import { useNotifier } from "@/shared/ui/notifications/notificationContext";
 
 export function AdminUsersPage() {
+    const notifier = useNotifier();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [snackbar, setSnackbar] = useState({
+    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: AlertColor }>({
         open: false,
         message: '',
         severity: 'success'
@@ -95,10 +97,11 @@ export function AdminUsersPage() {
         }));
     };
 
-    const handleRolesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedRoles = typeof e.target.value === 'string'
-            ? e.target.value.split(',')
-            : e.target.value;
+    const handleRolesChange = (e: SelectChangeEvent<unknown>) => {
+        const value = e.target.value;
+        const selectedRoles = typeof value === 'string'
+            ? value.split(',')
+            : (value as string[]);
 
         let updatedRoles = [...selectedRoles];
 
@@ -116,7 +119,7 @@ export function AdminUsersPage() {
 
         setCurrentUser(prev => ({
             ...prev!,
-            roles: updatedRoles
+            roles: updatedRoles as UserRole[]
         }));
     };
 
@@ -144,8 +147,8 @@ export function AdminUsersPage() {
             });
     };
 
-    const handleDelete = (userId: string) => {
-        if (window.confirm('Вы уверены, что хотите удалить этого пользователя?')) {
+    const handleDelete = async (userId: string) => {
+        if (await notifier.confirm({ message: "Вы уверены, что хотите удалить этого пользователя?", confirmText: "Удалить", danger: true })) {
             deleteUser(userId)
                 .then(() => {
                     loadUsers();
@@ -304,7 +307,7 @@ export function AdminUsersPage() {
                                 onChange={handleInputChange}
                                 required
                             />
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <Typography variant="body2" color="textSecondary">
                                     Пароль должен содержать:
                                 </Typography>

@@ -2,9 +2,8 @@
 import { Grid, Typography, Paper, Box, CircularProgress } from "@mui/material";
 import MDEditor from "@uiw/react-md-editor";
 import { getGoalsTasksByPracticeId } from "@/shared/services/axios.service";
-import { GoalsTasks } from "@/entities/GoalsTasks";
 
-export function StaffGoalsAndTasks({ practiceId }: { practiceId?: number }) {
+export function StaffGoalsAndTasks({ practiceId }: { practiceId: number }) {
     const [goals, setGoals] = useState<string>("");
     const [tasks, setTasks] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
@@ -14,10 +13,9 @@ export function StaffGoalsAndTasks({ practiceId }: { practiceId?: number }) {
 
         setLoading(true);
         getGoalsTasksByPracticeId(practiceId)
-            .then((response) => {
-                const data: GoalsTasks = response.data;
-                setGoals(data.goals ?? "");
-                setTasks(data.tasks ?? "");
+            .then((data) => {
+                setGoals(data?.goals ?? "");
+                setTasks(data?.tasks ?? "");
             })
             .catch((error) => {
                 console.warn("Ошибка при получении целей/задач:", error);
@@ -33,7 +31,7 @@ export function StaffGoalsAndTasks({ practiceId }: { practiceId?: number }) {
                 </Box>
             ) : (
                 <>
-                    <Grid item>
+                    <Grid size="auto">
                         <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
                             <Typography variant="h6" gutterBottom>Цели работы</Typography>
                             <MDEditor.Markdown
@@ -43,7 +41,7 @@ export function StaffGoalsAndTasks({ practiceId }: { practiceId?: number }) {
                         </Paper>
                     </Grid>
 
-                    <Grid item>
+                    <Grid size="auto">
                         <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
                             <Typography variant="h6" gutterBottom>Задачи</Typography>
                             <MDEditor.Markdown

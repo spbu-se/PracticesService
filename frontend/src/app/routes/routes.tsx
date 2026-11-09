@@ -1,132 +1,129 @@
+import {ComponentType} from "react";
 import {createBrowserRouter} from "react-router-dom";
-import {LoginPage} from "@pages/LoginPage.tsx";
-import {ThemesIndexPage} from "@pages/Themes/ThemesIndexPage.tsx";
-import {ThemePage} from "@pages/Themes/ThemePage.tsx";
-import {CreateThemePage} from "@pages/Themes/CreateThemePage.tsx";
-import {EditThemePage} from "@pages/Themes/EditThemePage.tsx";
-import {ProfilePage} from "@pages/ProfilePage.tsx";
-import {BasePage} from "@pages/BasePage.tsx";
-import {PracticesIndexPage} from "@pages/Practices/PracticesIndexPage.tsx";
-import {CreatePracticePage} from "@pages/Practices/CreatePracticePage.tsx";
-import {AdminBasePage} from "@pages/Admin/AdminBasePage";
-import {AdminUsersPage} from "@pages/Admin/AdminUsersPage";
-import {AdminConsultantsPage} from "@pages/Admin/AdminConsultantsPage";
-import {AdminLecturersPage} from "@pages/Admin/AdminLecturersPage";
-import {AdminStudentsPage} from "@pages/Admin/AdminStudentsPage";
-import {AdminGroupsPage} from "@pages/Admin/AdminGroupsPage";
-import { RegisterPage } from "@/pages/RegisterPage";
-import { PracticePage } from "@/pages/Practices/PracticePage";
-import { SupervisorPracticesPage } from "@/pages/Practices/SupervisorPracticesPage";
-import { ManagerPracticesPage } from "@/pages/Practices/ManagerPracticesPage";
-import { PracticeStaffPage } from "@/pages/Practices/PracticeStaffPage";
-import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
-import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
-import { ConfirmEmailPage } from "@/pages/ConfirmEmailPage";
-import { ResendConfirmationPage } from "@/pages/ResendConfirmationPage";
-import { DocumentCheckPage } from "@/pages/DocumentCheck/DocumentCheckPage";
+
+type PageModule = Record<string, unknown>;
+
+const loaders: Array<() => Promise<PageModule>> = [];
+
+/// A page that is loaded when it is opened. Every page is also remembered, so that preloadPages can fetch them in advance.
+const lazyPage = (loader: () => Promise<PageModule>, name: string) => {
+    loaders.push(loader);
+    return () => loader().then((module) => ({ Component: module[name] as ComponentType }));
+};
+
+/// Fetches the code of all pages while the browser is idle: a click on a menu item then shows the page at once.
+export const preloadPages = () => {
+    let index = 0;
+    const next = () => {
+        if (index >= loaders.length) return;
+        loaders[index++]().catch(() => undefined);
+        setTimeout(next, 150);
+    };
+    next();
+};
 
 export const BASENAME = "/practices-service/";
 
 export const routes = createBrowserRouter([
     {
         path: "/",
-        element: <BasePage/>,
+        lazy: lazyPage(() => import("@pages/BasePage.tsx"), "BasePage"),
     },
     {
         path: "/themes",
-        element: <ThemesIndexPage/>,
+        lazy: lazyPage(() => import("@pages/Themes/ThemesIndexPage.tsx"), "ThemesIndexPage"),
     },
     {
         path: "/practices",
-        element: <PracticesIndexPage/>,
+        lazy: lazyPage(() => import("@pages/Practices/PracticesIndexPage.tsx"), "PracticesIndexPage"),
     },
     {
         path: "/document-check",
-        element: <DocumentCheckPage/>,
+        lazy: lazyPage(() => import("@/pages/DocumentCheck/DocumentCheckPage"), "DocumentCheckPage"),
     },
     {
         path: "/practices-staff",
-        element: <SupervisorPracticesPage/>,
+        lazy: lazyPage(() => import("@/pages/Practices/SupervisorPracticesPage"), "SupervisorPracticesPage"),
     },
     {
         path: "/practices-manager",
-        element: <ManagerPracticesPage/>,
+        lazy: lazyPage(() => import("@/pages/Practices/ManagerPracticesPage"), "ManagerPracticesPage"),
     },
     {
         path: "/practice/:id",
-        element: <PracticePage/>,
+        lazy: lazyPage(() => import("@/pages/Practices/PracticePage"), "PracticePage"),
     },
     {
         path: "/practice-staff/:id",
-        element: <PracticeStaffPage/>,
+        lazy: lazyPage(() => import("@/pages/Practices/PracticeStaffPage"), "PracticeStaffPage"),
     },
     {
         path: "/create/practice",
-        element: <CreatePracticePage/>,
+        lazy: lazyPage(() => import("@pages/Practices/CreatePracticePage.tsx"), "CreatePracticePage"),
     },
     {
         path: "/login",
-        element: <LoginPage/>,
+        lazy: lazyPage(() => import("@pages/LoginPage.tsx"), "LoginPage"),
     },
     {
         path: "/register",
-        element: <RegisterPage/>,
+        lazy: lazyPage(() => import("@/pages/RegisterPage"), "RegisterPage"),
     },
     {
         path: "/forgot-password",
-        element: <ForgotPasswordPage/>,
+        lazy: lazyPage(() => import("@/pages/ForgotPasswordPage"), "ForgotPasswordPage"),
     },
     {
         path: "/reset-password",
-        element: <ResetPasswordPage/>,
+        lazy: lazyPage(() => import("@/pages/ResetPasswordPage"), "ResetPasswordPage"),
     },
     {
         path: "/confirm-email",
-        element: <ConfirmEmailPage/>,
+        lazy: lazyPage(() => import("@/pages/ConfirmEmailPage"), "ConfirmEmailPage"),
     },
     {
         path: "/resend-confirmation",
-        element: <ResendConfirmationPage/>,
+        lazy: lazyPage(() => import("@/pages/ResendConfirmationPage"), "ResendConfirmationPage"),
     },
     {
         path: "/theme/:id",
-        element: <ThemePage/>,
+        lazy: lazyPage(() => import("@pages/Themes/ThemePage.tsx"), "ThemePage"),
     },
     {
         path: "/create/theme",
-        element: <CreateThemePage/>,
+        lazy: lazyPage(() => import("@pages/Themes/CreateThemePage.tsx"), "CreateThemePage"),
     },
     {
         path: "/edit/theme/:id",
-        element: <EditThemePage/>,
+        lazy: lazyPage(() => import("@pages/Themes/EditThemePage.tsx"), "EditThemePage"),
     },
     {
         path: "/profile",
-        element: <ProfilePage/>,
+        lazy: lazyPage(() => import("@pages/ProfilePage.tsx"), "ProfilePage"),
     },
     {
         path: "/admin",
-        element: <AdminBasePage/>,
+        lazy: lazyPage(() => import("@pages/Admin/AdminBasePage"), "AdminBasePage"),
         children: [
             {
                 path: "users",
-                element: <AdminUsersPage />,
+                lazy: lazyPage(() => import("@pages/Admin/AdminUsersPage"), "AdminUsersPage"),
             },
             {
                 path: "consultants",
-                element: <AdminConsultantsPage />,
+                lazy: lazyPage(() => import("@pages/Admin/AdminConsultantsPage"), "AdminConsultantsPage"),
             },
             {
                 path: "lecturers",
-                element: <AdminLecturersPage />,
+                lazy: lazyPage(() => import("@pages/Admin/AdminLecturersPage"), "AdminLecturersPage"),
             },
             {
                 path: "students",
-                element: <AdminStudentsPage />,
+                lazy: lazyPage(() => import("@pages/Admin/AdminStudentsPage"), "AdminStudentsPage"),
             },
             {
                 path: "groups",
-                element: <AdminGroupsPage />,
+                lazy: lazyPage(() => import("@pages/Admin/AdminGroupsPage"), "AdminGroupsPage"),
             },
         ],
     },

@@ -18,7 +18,7 @@ import { Presentation } from "@/entities/Presentation";
 import { Comment } from "@/entities/Comment";
 import { User } from "@/entities/User";
 
-export function PresentationHistory({ practiceId }: any) {
+export function PresentationHistory({ practiceId }: { practiceId: number }) {
     const [presentations, setPresentations] = useState<Presentation[]>([]);
     const [newComments, setNewComments] = useState<{ [key: string]: string }>({});
     const [user, setUser] = useState<User>();
@@ -59,7 +59,7 @@ export function PresentationHistory({ practiceId }: any) {
     }, [practiceId]);
 
     return (
-        <Grid item>
+        <Grid size="auto">
             <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
                 <Typography variant="h6" gutterBottom>
                     История версий презентации

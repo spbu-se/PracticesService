@@ -5,6 +5,6 @@ export interface Report {
     practiceId: number;
     done: string;
     planned: string;
-    comments: Comment[];
+    comments?: Comment[];
     createdAt?: Date;
 }

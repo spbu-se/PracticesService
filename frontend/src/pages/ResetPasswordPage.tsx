@@ -24,8 +24,6 @@ import {
     Visibility,
     VisibilityOff,
     CheckCircle,
-    Cancel,
-    CheckCircleOutline,
     HighlightOff
 } from "@mui/icons-material";
 
@@ -48,7 +46,7 @@ export function ResetPasswordPage() {
     const [isUpperCaseValid, setIsUpperCaseValid] = useState(false);
     const [isLowerCaseValid, setIsLowerCaseValid] = useState(false);
     const [isSpecialCharValid, setIsSpecialCharValid] = useState(false);
-    const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+    const [, setIsPasswordFocused] = useState(false);
     
     useEffect(() => {
         if (!token || !email) {
@@ -143,6 +141,7 @@ export function ResetPasswordPage() {
         const resetData: ResetPassword = {
             token: token,
             newPassword: password,
+            confirmPassword: confirmPassword,
             email: email
         };
 

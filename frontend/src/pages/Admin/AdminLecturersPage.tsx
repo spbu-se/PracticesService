@@ -24,7 +24,7 @@ import {
     InputLabel,
     Select,
     MenuItem,
-    FormControl
+    FormControl, AlertColor, SelectChangeEvent
 } from "@mui/material";
 import {
     getAllLecturers,
@@ -38,14 +38,16 @@ import { User } from "@/entities/User";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import { useNotifier } from "@/shared/ui/notifications/notificationContext";
 
 export function AdminLecturersPage() {
+    const notifier = useNotifier();
     const [lecturers, setLecturers] = useState<Lecturer[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     const [currentLecturer, setCurrentLecturer] = useState<Lecturer | null>(null);
-    const [snackbar, setSnackbar] = useState({
+    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: AlertColor }>({
         open: false,
         message: '',
         severity: 'success'
@@ -104,7 +106,7 @@ export function AdminLecturersPage() {
             middleName: '',
             department: '',
             cansupervisevkr: false,
-            userId: null
+            userid: null
         });
         setOpenDialog(true);
     };
@@ -127,7 +129,7 @@ export function AdminLecturersPage() {
         }));
     };
 
-    const handleSelectChange = (e: any) => {
+    const handleSelectChange = (e: SelectChangeEvent) => {
         const { name, value } = e.target;
         setCurrentLecturer(prev => ({
             ...prev!,
@@ -135,7 +137,7 @@ export function AdminLecturersPage() {
         }));
     };
 
-    const handleUserSelectChange = (e: any) => {
+    const handleUserSelectChange = (e: SelectChangeEvent) => {
         const selectedUserId = e.target.value;
 
         if (selectedUserId === '') {
@@ -184,8 +186,8 @@ export function AdminLecturersPage() {
             });
     };
 
-    const handleDelete = (id: number) => {
-        if (window.confirm('Вы уверены, что хотите удалить этого преподавателя?')) {
+    const handleDelete = async (id: number) => {
+        if (await notifier.confirm({ message: "Вы уверены, что хотите удалить этого преподавателя?", confirmText: "Удалить", danger: true })) {
             deleteLecturer(id)
                 .then(() => {
                     loadLecturers();
@@ -374,7 +376,7 @@ export function AdminLecturersPage() {
             >
                 <Alert
                     onClose={handleCloseSnackbar}
-                    severity={snackbar.severity as any}
+                    severity={snackbar.severity}
                     sx={{ width: '100%' }}
                 >
                     {snackbar.message}

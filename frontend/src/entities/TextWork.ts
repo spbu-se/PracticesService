@@ -14,5 +14,5 @@ export interface TextWorkUploadInput {
     practiceId: number;
     link: string;
     version: number;
-    file?: File;
+    file?: File | null;
 }

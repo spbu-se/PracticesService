@@ -22,7 +22,7 @@ import {
     Select,
     MenuItem,
     InputLabel,
-    FormControl
+    FormControl, AlertColor, SelectChangeEvent
 } from "@mui/material";
 import {
     getAllConsultants,
@@ -36,13 +36,15 @@ import { User } from "@/entities/User";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import { useNotifier } from "@/shared/ui/notifications/notificationContext";
 
 export function AdminConsultantsPage() {
+    const notifier = useNotifier();
     const [consultants, setConsultants] = useState<Consultant[]>([]);
     const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     const [currentConsultant, setCurrentConsultant] = useState<Consultant | null>(null);
-    const [snackbar, setSnackbar] = useState({
+    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: AlertColor }>({
         open: false,
         message: '',
         severity: 'success'
@@ -101,8 +103,8 @@ export function AdminConsultantsPage() {
         }));
     };
 
-    const handleUserSelect = (e: React.ChangeEvent<{ value: unknown }>) => {
-        const selectedUserId = e.target.value as number;
+    const handleUserSelect = (e: SelectChangeEvent<string | null>) => {
+        const selectedUserId = e.target.value;
         const selectedUser = users.find(user => user.userId === selectedUserId);
         if (selectedUser) {
             setCurrentConsultant(prev => ({
@@ -144,8 +146,8 @@ export function AdminConsultantsPage() {
             });
     };
 
-    const handleDelete = (id: number) => {
-        if (window.confirm('Вы уверены, что хотите удалить этого консультанта?')) {
+    const handleDelete = async (id: number) => {
+        if (await notifier.confirm({ message: "Вы уверены, что хотите удалить этого консультанта?", confirmText: "Удалить", danger: true })) {
             deleteConsultant(id)
                 .then(() => {
                     loadConsultants();
@@ -309,7 +311,7 @@ export function AdminConsultantsPage() {
             >
                 <Alert
                     onClose={handleCloseSnackbar}
-                    severity={snackbar.severity as any}
+                    severity={snackbar.severity}
                     sx={{ width: '100%' }}
                 >
                     {snackbar.message}

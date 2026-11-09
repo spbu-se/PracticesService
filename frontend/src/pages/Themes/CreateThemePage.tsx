@@ -16,15 +16,17 @@ import {
     Stack
 } from "@mui/material";
 import {useNavigate} from "react-router-dom";
-import {InputTheme, Theme} from "@/entities/Theme.ts";
-import {getConsultants, getLecturers, getMe, getThemes, postTheme} from "@/shared/services/axios.service.ts";
+import {InputTheme} from "@/entities/Theme.ts";
+import {getConsultants, getLecturers, getMe, postTheme} from "@/shared/services/axios.service.ts";
 import MDEditor from '@uiw/react-md-editor';
 import {Lecturer} from "@/entities/Lecturer.ts";
 import {Consultant} from "@/entities/Consultant.ts";
 import { User } from "@/entities/User.ts";
 import {UserRole} from "../../entities/UserRoles";
+import { useNotifier } from "@/shared/ui/notifications/notificationContext";
 
 export function CreateThemePage() {
+    const notifier = useNotifier();
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [levels, setLevels] = useState({
@@ -44,14 +46,9 @@ export function CreateThemePage() {
     const [lecturers, setLecturers] = useState<Lecturer[]>();
     const [consultants, setConsultants] = useState<Consultant[]>();
 
-    const [isMdTouched, setIsMdTouched] = useState(false);
 
-    const isMdError = isMdTouched && !description;
 
     useEffect(() => {
-        getThemes().then(response => {
-            const themes: Theme[] = response.data;
-        });
 
         getLecturers().then(response => {
             setLecturers(response.data);
@@ -86,7 +83,7 @@ export function CreateThemePage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!Object.values(levels).some(v => v)) return;
+        if (!me || !Object.values(levels).some(v => v)) return;
 
         try {
             const theme: InputTheme = {
@@ -95,9 +92,9 @@ export function CreateThemePage() {
                 level: transformLevelsToString(levels),
                 source: source,
                 suggestedby: me.userId,
-                department: department,
-                supervisorid: lecturerId,
-                consultantid: consultantId
+                department: department ?? "",
+                supervisorid: lecturerId ?? null,
+                consultantid: consultantId ?? null
             };
 
             await postTheme(theme);
@@ -105,7 +102,7 @@ export function CreateThemePage() {
 
         } catch (error) {
             console.error("Ошибка при создании темы:", error);
-            alert("Не удалось создать тему. Проверьте данные и повторите попытку. " + error);
+            notifier.error("Не удалось создать тему. Проверьте данные и повторите попытку. " + error);
         }
     };
 
@@ -123,7 +120,7 @@ export function CreateThemePage() {
 
                     <form onSubmit={handleSubmit}>
                         <Grid container direction="column" spacing={3}>
-                            <Grid item>
+                            <Grid size="auto">
                                 <Typography variant="subtitle1" gutterBottom>
                                     Название:
                                 </Typography>
@@ -136,15 +133,14 @@ export function CreateThemePage() {
                                 />
                             </Grid>
 
-                            <Grid item>
+                            <Grid size="auto">
                                 <Typography variant="subtitle1" gutterBottom>
                                     Описание:
                                 </Typography>
                                 <MDEditor
                                     value={description}
                                     onChange={(val) => {
-                                        setDescription(val);
-                                        setIsMdTouched(true);
+                                        setDescription(val ?? "");
                                     }}
                                     height={200}
                                     preview="edit"
@@ -155,7 +151,7 @@ export function CreateThemePage() {
                                 />
                             </Grid>
 
-                            <Grid item>
+                            <Grid size="auto">
                                 <Typography variant="subtitle1" gutterBottom>
                                     Уровень
                                 </Typography>
@@ -183,7 +179,7 @@ export function CreateThemePage() {
                                 </Stack>
                             </Grid>
 
-                            <Grid item>
+                            <Grid size="auto">
                                 <Typography variant="subtitle1" gutterBottom>
                                     Кафедра:
                                 </Typography>
@@ -201,7 +197,7 @@ export function CreateThemePage() {
                                 </FormControl>
                             </Grid>
 
-                            <Grid item>
+                            <Grid size="auto">
                                 <Typography variant="subtitle1" gutterBottom>
                                     Источник темы:
                                 </Typography>
@@ -214,7 +210,7 @@ export function CreateThemePage() {
                                 />
                             </Grid>
 
-                            <Grid item>
+                            <Grid size="auto">
                                 <Typography variant="subtitle1" gutterBottom>
                                     {UserRole.CONSULTANT}:
                                 </Typography>
@@ -223,7 +219,7 @@ export function CreateThemePage() {
                                     <Select
                                         value={consultantId}
                                         label={UserRole.CONSULTANT}
-                                        onChange={(e) => setConsultantId(e.target.value)}
+                                        onChange={(e) => setConsultantId(e.target.value === "" ? undefined : Number(e.target.value))}
                                     >
                                         {(consultants || []).map((con, i) => (
                                             <MenuItem key={i} value={con.id}>{con.lastName} {con.firstName} {con.middleName}</MenuItem>
@@ -232,7 +228,7 @@ export function CreateThemePage() {
                                 </FormControl>
                             </Grid>
 
-                            <Grid item>
+                            <Grid size="auto">
                                 <Typography variant="subtitle1" gutterBottom>
                                     {UserRole.SUPERVISOR}:
                                 </Typography>
@@ -241,7 +237,7 @@ export function CreateThemePage() {
                                     <Select
                                         value={lecturerId}
                                         label={UserRole.SUPERVISOR}
-                                        onChange={(e) => setLecturerId(e.target.value)}
+                                        onChange={(e) => setLecturerId(e.target.value === "" ? undefined : Number(e.target.value))}
                                     >
                                         {(lecturers || []).map((lecturer, i) => (
                                             <MenuItem key={i} value={lecturer.id}>{lecturer.lastName} {lecturer.firstName} {lecturer.middleName}</MenuItem>
@@ -250,7 +246,7 @@ export function CreateThemePage() {
                                 </FormControl>
                             </Grid>
 
-                            <Grid item>
+                            <Grid size="auto">
                                 <Button
                                     type="submit"
                                     variant="contained"

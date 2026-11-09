@@ -9,7 +9,7 @@ import { Report } from "@/entities/Report";
 import { Comment } from "@/entities/Comment";
 import { User } from "@/entities/User";
 
-export function Reporting({ practiceId }: { practiceId?: number }) {
+export function Reporting({ practiceId }: { practiceId: number }) {
     const [user, setUser] = useState<User>();
     const [reports, setReports] = useState<Report[]>([]);
     const [doneContent, setDoneContent] = useState<string>("");
@@ -110,11 +110,11 @@ export function Reporting({ practiceId }: { practiceId?: number }) {
     return (
         <>
             <Grid container direction="column" spacing={4}>
-                <Grid item>
+                <Grid size="auto">
                     <Typography variant="h5" gutterBottom>Отчеты по практике</Typography>
                 </Grid>
 
-                <Grid item>
+                <Grid size="auto">
                     <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
                         <Typography variant="h5" gutterBottom>Создать новый отчет</Typography>
                         <Typography sx={{mt: 5}} variant="h6" gutterBottom>Сделано:</Typography>
@@ -155,7 +155,7 @@ export function Reporting({ practiceId }: { practiceId?: number }) {
                     </Paper>
                 </Grid>
 
-                <Grid item>
+                <Grid size="auto">
                     <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
                         <Typography variant="h6" gutterBottom>Отправленные отчеты</Typography>
                         {loading ? (
@@ -175,8 +175,8 @@ export function Reporting({ practiceId }: { practiceId?: number }) {
                                                         <Typography variant="body2"><b>Планируется:</b> {report.planned}</Typography>
                                                         <Box sx={{ mt: 1 }}>
                                                             <Typography variant="subtitle2">Комментарии:</Typography>
-                                                            {report?.comments?.length > 0 ? (
-                                                                report?.comments.map((comment, idx) => (
+                                                            {(report?.comments?.length ?? 0) > 0 ? (
+                                                                report?.comments?.map((comment, idx) => (
                                                                     <Box key={idx} sx={{ ml: 2, mt: 0.5 }}>
                                                                         <Typography variant="body2">
                                                                             <b>{comment.author}</b> ({new Date(comment.createdAt ?? '').toLocaleString()}): {comment.text}

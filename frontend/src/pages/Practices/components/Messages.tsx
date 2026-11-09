@@ -7,7 +7,7 @@ import { getMessagesByPracticeId, postMessage, getMe } from "@/shared/services/a
 import { Message } from "@/entities/Message";
 import { User } from "@/entities/User";
 
-export function Messages({ practiceId }: { practiceId?: number }) {
+export function Messages({ practiceId }: { practiceId: number }) {
     const [user, setUser] = useState<User>();
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState<string>("");
@@ -76,11 +76,11 @@ export function Messages({ practiceId }: { practiceId?: number }) {
 
     return (
         <Grid container direction="column" spacing={2}>
-            <Grid item>
+            <Grid size="auto">
                 <Typography variant="h5" gutterBottom>Сообщения</Typography>
             </Grid>
 
-            <Grid item>
+            <Grid size="auto">
                 <Paper elevation={3} sx={{ p: 2, borderRadius: 2 }}>
                     <TextField
                         label="Введите сообщение"
@@ -104,7 +104,7 @@ export function Messages({ practiceId }: { practiceId?: number }) {
                 </Paper>
             </Grid>
 
-            <Grid item>
+            <Grid size="auto">
                 <Paper elevation={3} sx={{ p: 2, borderRadius: 2, maxHeight: 400, overflowY: "auto" }}>
                     {loading ? (
                         <Box display="flex" justifyContent="center">

@@ -22,7 +22,7 @@ import {
 } from "@/shared/services/axios.service";
 import { User } from "@/entities/User";
 
-export function TextWorkHistory({ practiceId }: any) {
+export function TextWorkHistory({ practiceId }: { practiceId: number }) {
     const [textWorks, setTextWorks] = useState<TextWork[]>([]); // Stores all versions of text work
     const [newComments, setNewComments] = useState<{ [key: string]: string }>({}); // Track comment input per text work ID
     const [user, setUser] = useState<User>();
@@ -64,7 +64,7 @@ export function TextWorkHistory({ practiceId }: any) {
     }, [practiceId]);
 
     return (
-        <Grid item>
+        <Grid size="auto">
             <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
                 <Typography variant="h6" gutterBottom>
                     История версий текста работы

@@ -1,6 +1,5 @@
 import { Layout } from "@shared/ui/layout/Layout.tsx";
-import { getJWTToken } from "@/shared/services/localStorage.service.ts";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getMePublic, getThemesPublic, putTheme } from "@/shared/services/axios.service.ts";
 import { Theme } from "@/entities/Theme.ts";
@@ -18,15 +17,18 @@ import {
     Box,
     Stack,
     Tabs,
-    Tab
+    Tab,
+    CircularProgress
 } from "@mui/material";
 import ArchiveIcon from "@mui/icons-material/Archive";
 import EditIcon from "@mui/icons-material/Edit";
 import { User } from "@/entities/User.ts";
 import { UserRole } from "../../entities/UserRoles";
+import { useNotifier } from "@/shared/ui/notifications/notificationContext";
 
 export function ThemesIndexPage() {
-    const tokenIsEmpty = getJWTToken() === "";
+    const notifier = useNotifier();
+    const [loading, setLoading] = useState(true);
     const [themes, setThemes] = useState<Theme[]>([]);
     const [filteredThemes, setFilteredThemes] = useState<Theme[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -43,7 +45,7 @@ export function ThemesIndexPage() {
     const isPracticeSupervisor = me?.roles?.includes(UserRole.PRACTICE_SUPERVISOR);
 
     const handleArchiveAll = async () => {
-        if (window.confirm("Вы уверены, что хотите архивировать все отфильтрованные темы?")) {
+        if (await notifier.confirm({ message: "Вы уверены, что хотите архивировать все отфильтрованные темы?", confirmText: "Архивировать" })) {
             try {
                 const archivePromises = filteredThemes.map(theme =>
                     putTheme({ ...theme, isarchived: !isArchived })
@@ -56,20 +58,22 @@ export function ThemesIndexPage() {
                     return isFiltered ? { ...theme, isarchived: !isArchived } : theme;
                 }));
 
-                alert(`Темы успешно ${isArchived ? 'восстановлены' : 'архивированы'}`);
+                notifier.success(`Темы успешно ${isArchived ? 'восстановлены' : 'архивированы'}`);
             } catch (error) {
                 console.error("Ошибка при архивировании:", error);
-                alert("Произошла ошибка при архивировании");
+                notifier.error("Произошла ошибка при архивировании");
             }
         }
     };
 
     useEffect(() => {
-        getThemesPublic().then(response => {
-            const data = Array.isArray(response.data) ? response.data : [];
-            setThemes(data);
-            setFilteredThemes(data);
-        });
+        getThemesPublic()
+            .then(response => {
+                const data = Array.isArray(response.data) ? response.data : [];
+                setThemes(data);
+                setFilteredThemes(data);
+            })
+            .finally(() => setLoading(false));
 
         getMePublic().then(response => {
             const data: User = response.data;
@@ -233,6 +237,8 @@ export function ThemesIndexPage() {
                                 )}
                             </Box>
                         ))
+                    ) : loading ? (
+                        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><CircularProgress /></Box>
                     ) : (
                         <Typography variant="h6" align="center">Нет доступных тем</Typography>
                     )}

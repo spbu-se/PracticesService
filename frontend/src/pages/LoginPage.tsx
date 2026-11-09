@@ -1,6 +1,6 @@
 import { Layout } from "@shared/ui/layout/Layout.tsx";
 import { ChangeEvent, FormEvent, useState } from "react";
-import { login } from "@shared/services/axios.service.ts";
+import { clearMeCache, login } from "@shared/services/axios.service.ts";
 import { LoginResponse } from "@entities/LoginResponse.ts";
 import { setJWTToken, setRefreshToken } from "@shared/services/localStorage.service.ts";
 import {
@@ -35,6 +35,7 @@ export function LoginPage() {
         login(email, password)
             .then(response => {
                 const loginResponse: LoginResponse = response.data;
+                clearMeCache();
                 setJWTToken(loginResponse.token);
                 setRefreshToken(loginResponse.refreshToken);
                 navigate("/");

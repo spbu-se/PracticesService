@@ -4,7 +4,7 @@ import MDEditor from "@uiw/react-md-editor";
 import { getGoalsTasksByPracticeId, postGoalsTasks } from "@/shared/services/axios.service"; // Adjust path if needed
 import { GoalsTasks } from "@/entities/GoalsTasks"; // Adjust path if needed
 
-export function GoalsAndTasks({ practiceId }: { practiceId?: number }) {
+export function GoalsAndTasks({ practiceId }: { practiceId: number }) {
     const [goals, setGoals] = useState<string>("");
     const [tasks, setTasks] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
@@ -18,10 +18,9 @@ export function GoalsAndTasks({ practiceId }: { practiceId?: number }) {
 
         setLoading(true);
         getGoalsTasksByPracticeId(practiceId)
-            .then((response) => {
-                const data: GoalsTasks = response.data;
-                setGoals(data.goals ?? "");
-                setTasks(data.tasks ?? "");
+            .then((data) => {
+                setGoals(data?.goals ?? "");
+                setTasks(data?.tasks ?? "");
             })
             .catch((error) => {
                 console.warn("No existing goals/tasks found or error:", error);
@@ -67,7 +66,7 @@ export function GoalsAndTasks({ practiceId }: { practiceId?: number }) {
                     </Box>
                 ) : (
                     <>
-                        <Grid item>
+                        <Grid size="auto">
                             <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
                                 <Typography variant="h6" gutterBottom>Цели работы</Typography>
                                 <MDEditor
@@ -84,7 +83,7 @@ export function GoalsAndTasks({ practiceId }: { practiceId?: number }) {
                             </Paper>
                         </Grid>
 
-                        <Grid item>
+                        <Grid size="auto">
                             <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
                                 <Typography variant="h6" gutterBottom>Задачи</Typography>
                                 <MDEditor
@@ -101,7 +100,7 @@ export function GoalsAndTasks({ practiceId }: { practiceId?: number }) {
                             </Paper>
                         </Grid>
 
-                        <Grid item>
+                        <Grid size="auto">
                             <Button
                                 variant="contained"
                                 color="primary"

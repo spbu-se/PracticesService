@@ -4,6 +4,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import {
     getMe,
+    clearMeCache,
     getAllGroups,
     getStudentByUserId,
     getConsultantByUserId,
@@ -36,8 +37,6 @@ import {
     Card,
     CardContent,
     Stack,
-    IconButton,
-    Tooltip,
     InputAdornment
 } from "@mui/material";
 import {
@@ -48,10 +47,9 @@ import {
     Edit as EditIcon,
     ArrowBack as ArrowBackIcon,
     Work as WorkIcon,
-    ContactPhone as ContactPhoneIcon,
-    Groups as GroupsIcon
+    ContactPhone as ContactPhoneIcon
 } from "@mui/icons-material";
-import { User } from "@/entities/User.ts";
+import { User, InputUser } from "@/entities/User.ts";
 import { Student } from "@/entities/Student";
 import { Lecturer } from "@/entities/Lecturer";
 import { Consultant } from "@/entities/Consultant";
@@ -131,11 +129,12 @@ export function ProfilePage() {
 
     const handleSaveChanges = async () => {
         try {
-            if (editedUser) await updateUser(editedUser);
-            if (user?.roles?.includes(UserRole.STUDENT)) await updateStudent(editedStudent);
-            if (user?.roles?.includes(UserRole.SUPERVISOR)) await updateLecturer(editedLecturer);
-            if (user?.roles?.includes(UserRole.CONSULTANT)) await updateConsultant(editedConsultant);
+            if (editedUser) await updateUser(editedUser as InputUser);
+            if (user?.roles?.includes(UserRole.STUDENT)) await updateStudent(editedStudent as Student);
+            if (user?.roles?.includes(UserRole.SUPERVISOR)) await updateLecturer(editedLecturer as Lecturer);
+            if (user?.roles?.includes(UserRole.CONSULTANT)) await updateConsultant(editedConsultant as Consultant);
 
+            clearMeCache();
             fetchUserData();
             setEditDialogOpen(false);
         } catch (error) {
@@ -163,6 +162,7 @@ export function ProfilePage() {
 
     return (
         <Layout>
+            <>
             <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                     <Button 
@@ -236,7 +236,7 @@ export function ProfilePage() {
                             <Divider sx={{ mb: 4 }} />
                             
                             <Grid container spacing={4} px={2}>
-                                <Grid item xs={12} md={6}>
+                                <Grid size={{ xs: 12, md: 6 }}>
                                     <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
                                         Личные данные
                                     </Typography>
@@ -271,7 +271,7 @@ export function ProfilePage() {
                                     />
                                 </Grid>
                                 
-                                <Grid item xs={12} md={6}>
+                                <Grid size={{ xs: 12, md: 6 }}>
                                     <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
                                         Информация об обучении/работе
                                     </Typography>
@@ -410,7 +410,7 @@ export function ProfilePage() {
                                                     <SchoolIcon color="action" />
                                                 </InputAdornment>
                                             }
-                                            onChange={(e) => setEditedStudent({...editedStudent, groupId: e.target.value as string})}
+                                            onChange={(e) => setEditedStudent({...editedStudent, groupId: Number(e.target.value)})}
                                         >
                                             <MenuItem value="">
                                                 <em>Не выбрана</em>
@@ -443,8 +443,7 @@ export function ProfilePage() {
                                                 <InputAdornment position="start" sx={{ mt: 1 }}>
                                                     <ContactPhoneIcon color="action" />
                                                 </InputAdornment>
-                                            ),
-                                            alignItems: 'flex-start'
+                                            )
                                         }}
                                     />
                                 </Box>
@@ -468,6 +467,7 @@ export function ProfilePage() {
                     </Button>
                 </DialogActions>
             </Dialog>
+            </>
         </Layout>
     );
 }

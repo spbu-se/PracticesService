@@ -27,12 +27,14 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import { PracticeCard } from "./PracticeCard";
 import { UserRole } from "../../entities/UserRoles";
+import { PracticeListSkeleton } from "./PracticeListSkeleton";
 
 export function ManagerPracticesPage() {
     const tokenIsEmpty = getJWTToken() === "";
     const [practices, setPractices] = useState<Practice[]>([]);
+    const [loading, setLoading] = useState(true);
     const [groups, setGroups] = useState<Group[]>([]);
-    const [me, setMe] = useState<User>();
+    const [, setMe] = useState<User>();
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedGroup, setSelectedGroup] = useState<string>("");
     const [selectedType, setSelectedType] = useState<string>("");
@@ -56,13 +58,14 @@ export function ManagerPracticesPage() {
     ];
 
     useEffect(() => {
+        // The lists are asked for at once, the role only decides whether the page stays open (the server checks the rights anyway).
+        loadGroups();
+        loadPractices();
         getMe().then(({ data }) => {
             if (!data.roles.includes(UserRole.PRACTICE_SUPERVISOR)) {
                 navigate("/");
             } else {
                 setMe(data);
-                loadGroups();
-                loadPractices();
             }
         });
     }, []);
@@ -76,10 +79,11 @@ export function ManagerPracticesPage() {
     const loadPractices = () => {
         getPractices()
             .then((res) => setPractices(res.data))
-            .catch(() => setPractices([]));
+            .catch(() => setPractices([]))
+            .finally(() => setLoading(false));
     };
 
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);
     };
 
@@ -108,6 +112,8 @@ export function ManagerPracticesPage() {
     const filteredCompletedPractices = filterPractices(completedPractices);
 
     const renderPractices = (practicesList: Practice[], emptyMessage: string) => {
+        if (loading) return <PracticeListSkeleton />;
+
         if (practicesList.length === 0) {
             return (
                 <Paper
@@ -131,7 +137,7 @@ export function ManagerPracticesPage() {
         return (
             <Grid container spacing={isMobile ? 1 : 3}>
                 {practicesList.map((practice) => (
-                    <Grid item xs={12} sm={6} md={4} lg={3} key={practice.id}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={practice.id}>
                         <PracticeCard
                             practice={practice}
                             onClick={() => navigate(`/practice-staff/${practice.id}`)}

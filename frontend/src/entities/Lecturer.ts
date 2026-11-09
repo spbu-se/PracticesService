@@ -1,6 +1,6 @@
 export interface Lecturer {
     id: number;
-    userid: string;
+    userid: string | null;
     firstName: string;
     lastName: string;
     middleName: string;

@@ -18,7 +18,7 @@ import {
     TextField,
     IconButton,
     Snackbar,
-    Alert
+    Alert, AlertColor
 } from "@mui/material";
 import {
     getAllGroups,
@@ -30,13 +30,15 @@ import { Group } from "@/entities/Group";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import { useNotifier } from "@/shared/ui/notifications/notificationContext";
 
 export function AdminGroupsPage() {
+    const notifier = useNotifier();
     const [groups, setGroups] = useState<Group[]>([]);
     const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     const [currentGroup, setCurrentGroup] = useState<Group | null>(null);
-    const [snackbar, setSnackbar] = useState({
+    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: AlertColor }>({
         open: false,
         message: '',
         severity: 'success'
@@ -116,8 +118,8 @@ export function AdminGroupsPage() {
             });
     };
 
-    const handleDelete = (id: number) => {
-        if (window.confirm('Вы уверены, что хотите удалить эту группу?')) {
+    const handleDelete = async (id: number) => {
+        if (await notifier.confirm({ message: "Вы уверены, что хотите удалить эту группу?", confirmText: "Удалить", danger: true })) {
             deleteGroup(id)
                 .then(() => {
                     loadGroups();

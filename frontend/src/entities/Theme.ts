@@ -11,22 +11,23 @@ export interface Theme {
     isarchived: boolean;
     suggestedby: string;
     source: string;
-    consultantid: number;
-    supervisorid: number;
+    consultantid: number | null;
+    supervisorid: number | null;
     createddate: Date;
     updateddate: Date;
-    consultant: Consultant;
-    supervisor: Lecturer;
+    consultant: Consultant | null;
+    supervisor: Lecturer | null;
 }
 
 export interface InputTheme {
     title: string;
     description: string;
-    tags: string;
+    tags?: string;
     level: string;
     department: string;
-    isarchived: boolean;
+    isarchived?: boolean;
+    source: string;
     suggestedby: string;
-    consultantid: number;
-    supervisorid: number;
+    consultantid: number | null;
+    supervisorid: number | null;
 }
