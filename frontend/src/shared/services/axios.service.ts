@@ -18,6 +18,7 @@ import {ForgotPassword} from "@/entities/ForgotPassword";
 import {ResetPassword} from "@/entities/ResetPassword";
 import {ConfirmEmail} from "@/entities/ConfirmEmail";
 import {ResendConfirmation} from "../../entities/ResendConfirmation";
+import {Agent, AnalyzeDocumentInput} from "@/entities/DocumentCheck";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -268,3 +269,20 @@ export const confirmEmail = (input: ConfirmEmail) =>
     axiosService.post(`/auth-api/confirm-email`, input);
 export const resendConfirmation = (input: ResendConfirmation) =>
     axiosService.post(`/auth-api/resend-confirmation`, input);
+
+export const getLlmAgents = () =>
+    axiosService.get<Agent[]>("llm-api/api/analysis/agents");
+
+/// Returns the PDF: the original with highlights ("annotate") or a summary report ("report").
+export const analyzeDocument = (input: AnalyzeDocumentInput) => {
+    const formData = new FormData();
+    formData.append("File", input.file);
+    formData.append("DocumentType", input.documentType);
+    formData.append("Agents", input.agents.join(","));
+    formData.append("Annotate", String(input.outputMode === "annotate"));
+    formData.append("GeneratePdf", String(input.outputMode === "report"));
+
+    return axiosService.post<Blob>("llm-api/api/analysis/analyze", formData, {
+        responseType: "blob",
+    });
+};

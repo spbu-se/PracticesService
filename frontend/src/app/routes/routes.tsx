@@ -23,6 +23,7 @@ import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 import { ConfirmEmailPage } from "@/pages/ConfirmEmailPage";
 import { ResendConfirmationPage } from "@/pages/ResendConfirmationPage";
+import { DocumentCheckPage } from "@/pages/DocumentCheck/DocumentCheckPage";
 
 export const BASENAME = "/practices-service/";
 
@@ -38,6 +39,10 @@ export const routes = createBrowserRouter([
     {
         path: "/practices",
         element: <PracticesIndexPage/>,
+    },
+    {
+        path: "/document-check",
+        element: <DocumentCheckPage/>,
     },
     {
         path: "/practices-staff",

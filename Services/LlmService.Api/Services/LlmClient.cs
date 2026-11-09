@@ -48,16 +48,28 @@ public class LlmClient : ILlmClient
         }
 
         var url = $"{this.settings.BaseUrl.TrimEnd('/')}/chat/completions";
-        var payload = new
+        var payload = new Dictionary<string, object>
         {
-            model = model ?? this.settings.Model,
-            temperature,
-            messages = new object[]
+            ["model"] = model ?? this.settings.Model,
+            ["temperature"] = temperature,
+            ["messages"] = new object[]
             {
                 new { role = "system", content = systemPrompt },
                 new { role = "user", content = userMessage },
             },
         };
+
+        payload["max_completion_tokens"] = this.settings.MaxOutputTokens;
+
+        if (this.settings.Seed is { } seed)
+        {
+            payload["seed"] = seed;
+        }
+
+        if (!string.IsNullOrWhiteSpace(this.settings.ReasoningEffort))
+        {
+            payload["reasoning_effort"] = this.settings.ReasoningEffort;
+        }
 
         for (var attempt = 1; ; attempt++)
         {
@@ -70,7 +82,15 @@ public class LlmClient : ILlmClient
                 using var json = await JsonDocument.ParseAsync(
                     await response.Content.ReadAsStreamAsync(cancellationToken),
                     cancellationToken: cancellationToken);
-                return json.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? string.Empty;
+                var choice = json.RootElement.GetProperty("choices")[0];
+
+                // A cut answer must never look like "no errors found".
+                if (choice.TryGetProperty("finish_reason", out var reason) && reason.GetString() == "length")
+                {
+                    throw new LlmException("The model answer was cut off by the token limit, increase LLMSettings:MaxOutputTokens.");
+                }
+
+                return choice.GetProperty("message").GetProperty("content").GetString() ?? string.Empty;
             }
 
             var retryable = response.StatusCode == HttpStatusCode.TooManyRequests || (int)response.StatusCode >= 500;

@@ -120,6 +120,7 @@ export default function Header() {
                                     <MenuItem onClick={() => handleNavigate("/admin")}>Админ панель</MenuItem>
                                 )}
                                 <MenuItem onClick={() => handleNavigate("/themes")}>Темы</MenuItem>
+                                {me && <MenuItem onClick={() => handleNavigate("/document-check")}>Проверка документов</MenuItem>}
                                 {me?.roles?.includes(UserRole.SUPERVISOR) && (
                                     <MenuItem onClick={() => handleNavigate("/practices-staff")}>Практики (Преподаватель)</MenuItem>
                                 )}
@@ -152,6 +153,11 @@ export default function Header() {
                             <Button color="inherit" onClick={() => navigate("/themes")}>
                                 Темы
                             </Button>
+                            {me && (
+                                <Button color="inherit" onClick={() => navigate("/document-check")}>
+                                    Проверка документов
+                                </Button>
+                            )}
                             {me?.roles?.includes(UserRole.SUPERVISOR) && (
                                 <Button color="inherit" onClick={() => navigate("/practices-staff")}>
                                     Практики (Преподаватель)

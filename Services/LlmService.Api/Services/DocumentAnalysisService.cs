@@ -52,22 +52,15 @@ public class DocumentAnalysisService : IDocumentAnalysisService
             for (var i = 0; i < chunks.Count; i++)
             {
                 var message = BuildMessage(documentType, chunks[i], i + 1, chunks.Count, this.settings.MaskPersonalData);
-                var answer = await this.llm.CompleteAsync(agent.Model, agent.Temperature, agent.Prompt, message, cancellationToken);
-
                 if (agent.ReturnsFindings)
                 {
-                    if (FindingsParser.TryParse(answer, out var summary, out var parsed))
-                    {
-                        summaries.Add(summary);
-                        findings.AddRange(parsed);
-                    }
-                    else
-                    {
-                        content.AppendLine(answer.Trim()).AppendLine();
-                    }
-
+                    var (summary, parsed) = await this.RunFindingsAgentAsync(agent, message, cancellationToken);
+                    summaries.Add(summary);
+                    findings.AddRange(parsed);
                     continue;
                 }
+
+                var answer = await this.llm.CompleteAsync(agent.Model, agent.Temperature, agent.Prompt, message, cancellationToken);
 
                 if (chunks.Count > 1)
                 {
@@ -91,6 +84,28 @@ public class DocumentAnalysisService : IDocumentAnalysisService
         }
 
         return results;
+    }
+
+    // An unreadable answer is retried once and then reported as an error, because silently returning
+    // "no findings" would present an unchecked fragment as clean.
+    private async Task<(string Summary, List<Finding> Findings)> RunFindingsAgentAsync(
+        AgentDefinition agent,
+        string message,
+        CancellationToken cancellationToken)
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            var answer = await this.llm.CompleteAsync(agent.Model, agent.Temperature, agent.Prompt, message, cancellationToken);
+            if (FindingsParser.TryParse(answer, out var summary, out var findings))
+            {
+                return (summary, findings);
+            }
+
+            if (attempt == 2)
+            {
+                throw new LlmException($"Agent '{agent.Name}' returned an answer that is not valid JSON.");
+            }
+        }
     }
 
     private static string BuildMessage(string documentType, string chunk, int index, int total, bool masked)
