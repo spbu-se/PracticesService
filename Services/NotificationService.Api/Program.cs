@@ -114,8 +114,10 @@ builder.Services.AddMassTransit(x =>
     x.UsingRabbitMq((context, cfg) =>
     {
         var host = builder.Configuration["RabbitMQ:Host"] ?? "rabbitmq";
-        var username = builder.Configuration["RabbitMQ:Username"] ?? "admin";
-        var password = builder.Configuration["RabbitMQ:Password"] ?? "admin123";
+        var username = builder.Configuration["RabbitMQ:Username"]
+            ?? throw new InvalidOperationException("RabbitMQ:Username is missing.");
+        var password = builder.Configuration["RabbitMQ:Password"]
+            ?? throw new InvalidOperationException("RabbitMQ:Password is missing.");
 
         cfg.Host(host, "/", h =>
         {

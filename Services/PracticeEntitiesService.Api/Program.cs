@@ -31,7 +31,7 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
 });
 
 var mongoConnectionString = builder.Configuration.GetValue<string>("MongoSettings:ConnectionString")
-    ?? "mongodb://admin:admin123@practice-entities.db:27017/admin";
+    ?? throw new InvalidOperationException("MongoSettings:ConnectionString is missing.");
 
 var mongoDatabaseName = builder.Configuration.GetValue<string>("MongoSettings:DatabaseName") ?? "practice_entities";
 

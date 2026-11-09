@@ -73,7 +73,7 @@ builder.Services.AddCors(
 
 // MongoDB
 var connectionString = builder.Configuration.GetValue<string>("MongoSettings:ConnectionString")
-    ?? "mongodb://admin:admin123@practice-entities.db:27017/admin";
+    ?? throw new InvalidOperationException("MongoSettings:ConnectionString is missing.");
 var databaseName = builder.Configuration.GetValue<string>("MongoSettings:DatabaseName") ?? "audit_db";
 
 builder.Services.AddSingleton<IMongoClient>(sp => new MongoClient(connectionString));
@@ -87,8 +87,8 @@ builder.Services.AddMassTransit(x =>
     {
         cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "rabbitmq", "/", h =>
         {
-            h.Username(builder.Configuration["RabbitMQ:Username"] ?? "admin");
-            h.Password(builder.Configuration["RabbitMQ:Password"] ?? "admin123");
+            h.Username(builder.Configuration["RabbitMQ:Username"] ?? throw new InvalidOperationException("RabbitMQ:Username is missing."));
+            h.Password(builder.Configuration["RabbitMQ:Password"] ?? throw new InvalidOperationException("RabbitMQ:Password is missing."));
             h.Heartbeat(TimeSpan.FromSeconds(30));
             h.RequestedConnectionTimeout(TimeSpan.FromSeconds(30));
         });

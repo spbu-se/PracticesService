@@ -7,8 +7,8 @@ services:
     expose:
       - "5672"
     environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=admin123
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "status"]
       interval: 30s
@@ -23,8 +23,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - RabbitMQ__Host=rabbitmq
-      - RabbitMQ__Username=admin
-      - RabbitMQ__Password=admin123
+      - RabbitMQ__Username=${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
+      - Jwt__Key=${JWT_KEY:?Set JWT_KEY in .env}
     build:
       context: .
       dockerfile: Gateway/Gateway.Api/Dockerfile
@@ -46,7 +47,7 @@ services:
       - "5432"
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=${CORE_DB_PASSWORD:?Set CORE_DB_PASSWORD in .env}
       - POSTGRES_DB=postgres
     # healthcheck:
     #   test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -61,9 +62,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - RabbitMQ__Host=rabbitmq
-      - RabbitMQ__Username=admin
-      - RabbitMQ__Password=admin123
-      - MongoSettings__ConnectionString=mongodb://admin:admin123@practice-entities.db:27017/admin
+      - RabbitMQ__Username=${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
+      - MongoSettings__ConnectionString=mongodb://${MONGO_USER:?Set MONGO_USER in .env}:${MONGO_PASSWORD:?Set MONGO_PASSWORD in .env}@practice-entities.db:27017/admin
       - MongoSettings__DatabaseName=audit_db
     build:
       context: .
@@ -81,9 +82,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ENVIRONMENT=Docker
+      - ConnectionStrings__Docker=Server=core.db;Database=postgres;Username=postgres;Password=${CORE_DB_PASSWORD:?Set CORE_DB_PASSWORD in .env}
       - RabbitMQ__Host=rabbitmq
-      - RabbitMQ__Username=admin
-      - RabbitMQ__Password=admin123
+      - RabbitMQ__Username=${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     build:
@@ -110,7 +112,7 @@ services:
       - "5432"
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=${AUTH_DB_PASSWORD:?Set AUTH_DB_PASSWORD in .env}
       - POSTGRES_DB=postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -126,9 +128,13 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ENVIRONMENT=Docker
       - RUN_MIGRATIONS=true
+      - ConnectionStrings__Docker=Server=auth.db;Database=postgres;Username=postgres;Password=${AUTH_DB_PASSWORD:?Set AUTH_DB_PASSWORD in .env}
+      - Jwt__Key=${JWT_KEY:?Set JWT_KEY in .env}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:?Set ADMIN_EMAIL in .env}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
       - RabbitMQ__Host=rabbitmq
-      - RabbitMQ__Username=admin
-      - RabbitMQ__Password=admin123
+      - RabbitMQ__Username=${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     build:
@@ -151,6 +157,14 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ENVIRONMENT=Docker
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
+      - MongoSettings__ConnectionString=mongodb://${MONGO_USER:?Set MONGO_USER in .env}:${MONGO_PASSWORD:?Set MONGO_PASSWORD in .env}@practice-entities.db:27017/admin
+      - S3Storage__ServiceURL=${S3_SERVICE_URL:-}
+      - S3Storage__AccessKey=${S3_ACCESS_KEY:-}
+      - S3Storage__SecretKey=${S3_SECRET_KEY:-}
+      - S3Storage__BucketName=${S3_BUCKET_NAME:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     build:
@@ -192,8 +206,8 @@ services:
     volumes:
       - ./mongo-data:/data/db
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=admin123
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:?Set MONGO_USER in .env}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:?Set MONGO_PASSWORD in .env}
     networks:
       - proxybackend
     healthcheck:
@@ -208,8 +222,12 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ENVIRONMENT=Docker
       - RabbitMQ__Host=rabbitmq
-      - RabbitMQ__Username=admin
-      - RabbitMQ__Password=admin123
+      - RabbitMQ__Username=${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
+      - SmtpSettings__Username=${SMTP_USERNAME:-}
+      - SmtpSettings__Password=${SMTP_PASSWORD:-}
+      - SmtpSettings__FromEmail=${SMTP_FROM_EMAIL:-}
+      - SmtpSettings__FromName=${SMTP_FROM_NAME:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     build:
